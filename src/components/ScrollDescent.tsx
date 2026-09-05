@@ -208,7 +208,7 @@ export function ScrollDescent() {
         <video
           ref={videoRef}
           className="absolute inset-0 h-full w-full object-cover"
-          src={videoAsset.url}
+          {...(src ? { src } : {})}
           poster={posterAsset.url}
           muted
           playsInline

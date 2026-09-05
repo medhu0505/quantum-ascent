@@ -123,27 +123,45 @@ export function ScrollDescent() {
     };
   }, [reducedMotion]);
 
-  // Loading gate: show a state until the browser can seek without stalling.
+  // Loading gate: fully buffer the file first so scrubbing never waits on
+  // range requests mid-scroll (all-keyframe encode + local blob = instant seeks).
   useEffect(() => {
     if (reducedMotion) return;
-    const video = videoRef.current;
-    if (!video) return;
-    const check = () => setReady(video.readyState >= 3);
-    check();
-    const onWaiting = () => setWaiting(true);
-    const onPlayable = () => {
-      setWaiting(false);
-      check();
-    };
-    video.addEventListener("canplaythrough", onPlayable);
-    video.addEventListener("loadeddata", check);
-    video.addEventListener("waiting", onWaiting);
+    let cancelled = false;
+    let objectUrl: string | null = null;
+
+    (async () => {
+      try {
+        const res = await fetch(videoAsset.url);
+        if (!res.ok) throw new Error(String(res.status));
+        const blob = await res.blob();
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(blob);
+        setSrc(objectUrl);
+      } catch {
+        if (!cancelled) setSrc(videoAsset.url);
+      }
+    })();
+
     return () => {
-      video.removeEventListener("canplaythrough", onPlayable);
-      video.removeEventListener("loadeddata", check);
-      video.removeEventListener("waiting", onWaiting);
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [reducedMotion]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !src) return;
+    const check = () => setReady(video.readyState >= 3);
+    check();
+    video.addEventListener("loadeddata", check);
+    video.addEventListener("canplaythrough", check);
+    return () => {
+      video.removeEventListener("loadeddata", check);
+      video.removeEventListener("canplaythrough", check);
+    };
+  }, [src]);
+
 
   const titleCard = (
     <div ref={titleRef} className="pointer-events-none absolute inset-0 z-20">

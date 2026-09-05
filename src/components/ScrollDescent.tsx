@@ -259,7 +259,7 @@ export function ScrollDescent() {
           <div className="scroll-hint mx-auto mt-4 h-10 w-px bg-gradient-to-b from-magenta to-transparent" />
         </div>
 
-        {(!ready || waiting) && (
+        {!ready && (
           <div className="absolute bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-full border border-border bg-ink/70 px-4 py-2 text-xs tracking-[0.2em] text-muted-foreground uppercase backdrop-blur">
             Loading descent…
           </div>

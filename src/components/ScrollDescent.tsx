@@ -42,7 +42,8 @@ export function ScrollDescent() {
 
   const [reducedMotion, setReducedMotion] = useState(false);
   const [ready, setReady] = useState(false);
-  const [waiting, setWaiting] = useState(false);
+  const [src, setSrc] = useState<string | null>(null);
+
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");

@@ -1,24 +1,37 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { ScrollDescent } from "@/components/ScrollDescent";
+import { ContactFooter, EventsSection, FaqSection, TeamSection } from "@/components/Sections";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "Quantum V2.0 — Inter-School Tech & Culture Fest" },
+      {
+        name: "description",
+        content:
+          "Quantum V2.0 at A.F.S. Bal Bharati School: six inter-school events — Quiz, Film Making, Ad Shoot, Online Gaming, Pitch and one sealed Surprise.",
+      },
+      { property: "og:title", content: "Quantum V2.0 — Inter-School Tech & Culture Fest" },
+      {
+        property: "og:description",
+        content:
+          "Six events, one championship. Descend into Quantum V2.0 at A.F.S. Bal Bharati School.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <main>
+      <ScrollDescent />
+      <EventsSection />
+      <TeamSection />
+      <FaqSection />
+      <ContactFooter />
+    </main>
   );
 }

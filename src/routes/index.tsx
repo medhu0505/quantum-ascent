@@ -29,7 +29,7 @@ function Index() {
     <main>
       <ScrollDescent />
       <EventsSection />
-      <TeamSection />
+      
       <FaqSection />
       <ContactFooter />
     </main>

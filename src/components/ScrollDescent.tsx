@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import videoAsset from "@/assets/quantum-descent.mp4.asset.json";
 import posterAsset from "@/assets/quantum-poster.jpg.asset.json";
-import { events, hologramKeyframes, timeline, type Keyframe } from "@/data/quantum";
+import { events, hologramKeyframes, team, timeline, type Keyframe } from "@/data/quantum";
+import { TeamSection } from "@/components/Sections";
 
 /** Scroll distance (in viewport heights) that the pinned descent consumes. */
 const SCROLL_VH = 7;
@@ -111,10 +112,11 @@ export function ScrollDescent() {
       });
 
       if (grateRef.current) {
-        const o = fade(t, timeline.grate[0] + 0.25, timeline.duration, 0.5);
+        const o = fade(t, timeline.sewer[0], timeline.duration, 0.45);
         grateRef.current.style.opacity = String(o);
-        grateRef.current.style.transform = `translate3d(0, ${(1 - o) * 30}px, 0)`;
+        grateRef.current.style.transform = `translate3d(0, ${(1 - o) * 28}px, 0)`;
       }
+
     };
 
     raf = requestAnimationFrame(tick);
@@ -184,23 +186,27 @@ export function ScrollDescent() {
 
   if (reducedMotion) {
     return (
-      <section className="relative min-h-screen overflow-hidden bg-ink">
-        <img
-          src={posterAsset.url}
-          alt="Quantum V2.0 — a full moon over a neon city skyline with a vertical beam of light"
-          className="absolute inset-0 h-full w-full object-cover opacity-90"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-ink/40 via-transparent to-background" />
-        {titleCard}
-        <div className="absolute inset-x-0 bottom-0 z-20 px-6 pb-24 pt-40">
-          <p className="mx-auto max-w-xl text-center text-sm text-muted-foreground">
-            Motion is reduced on your device, so the descent is shown as a still. Every event below
-            is fully available.
-          </p>
-        </div>
-      </section>
+      <>
+        <section className="relative min-h-screen overflow-hidden bg-ink">
+          <img
+            src={posterAsset.url}
+            alt="Quantum V2.0 — a full moon over a neon city skyline with a vertical beam of light"
+            className="absolute inset-0 h-full w-full object-cover opacity-90"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-ink/40 via-transparent to-background" />
+          {titleCard}
+          <div className="absolute inset-x-0 bottom-0 z-20 px-6 pb-24 pt-40">
+            <p className="mx-auto max-w-xl text-center text-sm text-muted-foreground">
+              Motion is reduced on your device, so the descent is shown as a still. Every event
+              below is fully available.
+            </p>
+          </div>
+        </section>
+        <TeamSection />
+      </>
     );
   }
+
 
   return (
     <section ref={sectionRef} className="relative" style={{ height: `${SCROLL_VH * 100}vh` }}>
@@ -246,18 +252,39 @@ export function ScrollDescent() {
           ))}
         </div>
 
-        {/* Grate reveal — Meet the Team entrance */}
+        {/* Sewer reveal — the team lives down here */}
         <div
           ref={grateRef}
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-20 px-6 pb-20 text-center"
+          id="team"
+          className="absolute inset-0 z-30 flex items-center justify-center px-6 py-16"
           style={{ opacity: 0 }}
         >
-          <span className="eyebrow">Below street level</span>
-          <p className="mt-3 font-display text-3xl font-bold sm:text-5xl">
-            Meet the people who built it
-          </p>
-          <div className="scroll-hint mx-auto mt-4 h-10 w-px bg-gradient-to-b from-magenta to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-ink/85 via-ink/70 to-ink/90" />
+          <div className="relative mx-auto w-full max-w-5xl text-center">
+            <span className="eyebrow">Below street level</span>
+            <h2 className="mt-3 font-display text-3xl font-bold sm:text-5xl">
+              Meet the crew in the tunnels
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground">
+              Quantum is student-run end to end — events, tech, design, media and logistics.
+            </p>
+            <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {team.map((member, i) => (
+                <div
+                  key={i}
+                  className="rounded-md border border-border/70 bg-card/70 p-4 text-left backdrop-blur-sm"
+                >
+                  <div className="h-8 w-8 rounded-sm bg-gradient-to-br from-cyan/70 to-magenta/70" />
+                  <p className="mt-3 font-display text-sm font-semibold sm:text-base">
+                    {member.name}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">{member.role}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
+
 
         {!ready && (
           <div className="absolute bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-full border border-border bg-ink/70 px-4 py-2 text-xs tracking-[0.2em] text-muted-foreground uppercase backdrop-blur">

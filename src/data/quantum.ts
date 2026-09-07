@@ -118,49 +118,50 @@ export type Keyframe = { t: number; x: number; y: number; s: number };
 
 export const hologramKeyframes: Record<string, Keyframe[]> = {
   quiz: [
-    { t: 4.8, x: 33, y: 32, s: 0.75 },
-    { t: 6.6, x: 30, y: 27, s: 1 },
-    { t: 8.4, x: 21, y: 15, s: 1.45 },
+    { t: 2.0, x: 34, y: 34, s: 0.72 },
+    { t: 3.1, x: 28, y: 28, s: 1.0 },
+    { t: 4.3, x: 16, y: 14, s: 1.5 },
   ],
   "film-making": [
-    { t: 4.8, x: 32, y: 62, s: 0.75 },
-    { t: 6.6, x: 25, y: 58, s: 1.05 },
-    { t: 8.4, x: 10, y: 49, s: 1.5 },
+    { t: 2.0, x: 31, y: 60, s: 0.72 },
+    { t: 3.1, x: 23, y: 57, s: 1.05 },
+    { t: 4.3, x: 8, y: 48, s: 1.55 },
   ],
   "ad-shoot": [
-    { t: 4.8, x: 45, y: 78, s: 0.7 },
-    { t: 6.6, x: 42, y: 82, s: 0.95 },
-    { t: 8.4, x: 35, y: 89, s: 1.35 },
+    { t: 2.0, x: 44, y: 76, s: 0.68 },
+    { t: 3.1, x: 41, y: 81, s: 0.95 },
+    { t: 4.3, x: 33, y: 90, s: 1.4 },
   ],
   surprise: [
-    { t: 4.8, x: 62, y: 35, s: 0.75 },
-    { t: 6.6, x: 66, y: 30, s: 1 },
-    { t: 8.4, x: 78, y: 18, s: 1.45 },
+    { t: 2.0, x: 63, y: 33, s: 0.72 },
+    { t: 3.1, x: 69, y: 28, s: 1.0 },
+    { t: 4.3, x: 83, y: 14, s: 1.5 },
   ],
   "online-gaming": [
-    { t: 4.8, x: 66, y: 60, s: 0.75 },
-    { t: 6.6, x: 72, y: 58, s: 1.05 },
-    { t: 8.4, x: 89, y: 50, s: 1.5 },
+    { t: 2.0, x: 68, y: 60, s: 0.72 },
+    { t: 3.1, x: 75, y: 57, s: 1.05 },
+    { t: 4.3, x: 91, y: 48, s: 1.55 },
   ],
   pitch: [
-    { t: 4.8, x: 60, y: 80, s: 0.7 },
-    { t: 6.6, x: 63, y: 84, s: 0.95 },
-    { t: 8.4, x: 72, y: 91, s: 1.35 },
+    { t: 2.0, x: 58, y: 78, s: 0.68 },
+    { t: 3.1, x: 62, y: 83, s: 0.95 },
+    { t: 4.3, x: 70, y: 91, s: 1.4 },
   ],
 };
 
 /**
- * Timing windows measured from the supplied film (actual duration ~10.05s).
- * The brief described the same beats across 30s; they are proportionally
- * compressed here to match the real file.
+ * Timing windows measured from the supplied film (actual duration ~8.0s):
+ * aerial moon/skyline, descent through the neon canyon of ad panels,
+ * street level, then a drop into the lit sewer tunnel.
  */
 export const timeline = {
-  duration: 10.05,
-  aerial: [0, 4.4] as const,
-  holograms: [4.6, 8.6] as const,
-  street: [8.0, 9.0] as const,
-  grate: [8.9, 10.05] as const,
+  duration: 8.0,
+  aerial: [0, 1.9] as const,
+  holograms: [1.9, 4.4] as const,
+  street: [4.2, 5.1] as const,
+  sewer: [5.3, 8.0] as const,
 };
+
 
 export type TeamMember = { name: string; role: string; placeholder?: boolean };
 

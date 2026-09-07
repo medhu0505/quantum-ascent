@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import videoAsset from "@/assets/quantum-descent.mp4.asset.json";
 import posterAsset from "@/assets/quantum-poster.jpg.asset.json";
-import { events, hologramKeyframes, timeline, type Keyframe } from "@/data/quantum";
+import { events, hologramKeyframes, team, timeline, type Keyframe } from "@/data/quantum";
+import { TeamSection } from "@/components/Sections";
 
 /** Scroll distance (in viewport heights) that the pinned descent consumes. */
 const SCROLL_VH = 7;

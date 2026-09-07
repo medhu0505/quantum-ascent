@@ -111,10 +111,11 @@ export function ScrollDescent() {
       });
 
       if (grateRef.current) {
-        const o = fade(t, timeline.grate[0] + 0.25, timeline.duration, 0.5);
+        const o = fade(t, timeline.sewer[0], timeline.duration, 0.45);
         grateRef.current.style.opacity = String(o);
-        grateRef.current.style.transform = `translate3d(0, ${(1 - o) * 30}px, 0)`;
+        grateRef.current.style.transform = `translate3d(0, ${(1 - o) * 28}px, 0)`;
       }
+
     };
 
     raf = requestAnimationFrame(tick);

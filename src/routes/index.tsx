@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ScrollDescent } from "@/components/ScrollDescent";
-import { ContactFooter, EventsSection, FaqSection, TeamSection } from "@/components/Sections";
+import { ContactFooter, EventsSection, FaqSection } from "@/components/Sections";
 
 export const Route = createFileRoute("/")({
   head: () => ({

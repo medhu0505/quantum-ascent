@@ -186,23 +186,27 @@ export function ScrollDescent() {
 
   if (reducedMotion) {
     return (
-      <section className="relative min-h-screen overflow-hidden bg-ink">
-        <img
-          src={posterAsset.url}
-          alt="Quantum V2.0 — a full moon over a neon city skyline with a vertical beam of light"
-          className="absolute inset-0 h-full w-full object-cover opacity-90"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-ink/40 via-transparent to-background" />
-        {titleCard}
-        <div className="absolute inset-x-0 bottom-0 z-20 px-6 pb-24 pt-40">
-          <p className="mx-auto max-w-xl text-center text-sm text-muted-foreground">
-            Motion is reduced on your device, so the descent is shown as a still. Every event below
-            is fully available.
-          </p>
-        </div>
-      </section>
+      <>
+        <section className="relative min-h-screen overflow-hidden bg-ink">
+          <img
+            src={posterAsset.url}
+            alt="Quantum V2.0 — a full moon over a neon city skyline with a vertical beam of light"
+            className="absolute inset-0 h-full w-full object-cover opacity-90"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-ink/40 via-transparent to-background" />
+          {titleCard}
+          <div className="absolute inset-x-0 bottom-0 z-20 px-6 pb-24 pt-40">
+            <p className="mx-auto max-w-xl text-center text-sm text-muted-foreground">
+              Motion is reduced on your device, so the descent is shown as a still. Every event
+              below is fully available.
+            </p>
+          </div>
+        </section>
+        <TeamSection />
+      </>
     );
   }
+
 
   return (
     <section ref={sectionRef} className="relative" style={{ height: `${SCROLL_VH * 100}vh` }}>

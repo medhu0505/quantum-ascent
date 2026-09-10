@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ExitToCrossroads } from "@/components/site/Bits";
+import { ExitToCrossroads, RegisterChip } from "@/components/site/Bits";
 import type { Scene } from "@/data/quantum";
 
 /**
@@ -26,6 +26,7 @@ export function InteriorShell({
   return (
     <>
       <ExitToCrossroads />
+      <RegisterChip hidden={scene.id === "register"} />
       <main id="main" className="room phase-enter" data-accent={scene.accent}>
         <div className="room-window" aria-hidden="true">
           <img src={scene.view} alt="" width={760} height={540} decoding="async" />

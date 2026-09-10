@@ -58,6 +58,16 @@ export function Descent() {
   useEffect(() => {
     if (!scrubbing) {
       setRevealed(true);
+      // The loop writes opacity and transform straight onto these nodes. If it
+      // ran before the descent collapsed — the layout changed, or the film
+      // failed to decode after hydration — those inline values survive and
+      // leave the plate at opacity 0 and the title mid-fade. Hand them back.
+      if (plateRef.current) plateRef.current.style.opacity = "";
+      if (titleRef.current) {
+        titleRef.current.style.opacity = "";
+        titleRef.current.style.transform = "";
+      }
+      stageRef.current?.style.removeProperty("--reveal");
       return;
     }
     setRevealed(false);
@@ -257,6 +267,16 @@ export function Descent() {
     >
       <div className="descent-pin">
         <div className="hub">
+          {/* Outside the stage on purpose: when the descent collapses, the
+              title leads the page instead of landing on the billboards. */}
+          <div ref={titleRef} className="descent-title">
+            <h1>
+              <span className="descent-title-word">{fest.name}</span>
+              <span className="descent-title-word text-gradient-neon">{fest.edition}</span>
+            </h1>
+            <p className="descent-title-school">{school.name}</p>
+          </div>
+
           <div className="hub-stage" ref={stageRef}>
             <video
               ref={videoRef}
@@ -274,24 +294,12 @@ export function Descent() {
             />
 
             {/* The film's final frame, faded in as the camera settles. */}
-            <div
-              ref={plateRef}
-              className="descent-plate"
-              style={{ opacity: scrubbing ? 0 : undefined }}
-            >
+            <div ref={plateRef} className="descent-plate" data-scrub={scrubbing || undefined}>
               <HubPlate />
             </div>
 
             <div className="hub-scrim" />
             <Ambient />
-
-            <div ref={titleRef} className="descent-title">
-              <h1>
-                <span className="descent-title-word">{fest.name}</span>
-                <span className="descent-title-word text-gradient-neon">{fest.edition}</span>
-              </h1>
-              <p className="descent-title-school">{school.name}</p>
-            </div>
 
             <HubSigns inert={scrubbing && !revealed} />
 

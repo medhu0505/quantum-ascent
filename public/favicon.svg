@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Quantum V2.0">
+  <defs>
+    <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7fd6ee" stop-opacity=".95"/>
+      <stop offset="1" stop-color="#7fd6ee" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="halo">
+      <stop offset="0" stop-color="#cfe9f5" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#cfe9f5" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="64" height="64" rx="13" fill="#12131f"/>
+  <circle cx="32" cy="23" r="17" fill="url(#halo)"/>
+  <rect x="29" y="23" width="6" height="34" fill="url(#beam)"/>
+  <circle cx="32" cy="23" r="10" fill="#eef4f8"/>
+  <circle cx="28" cy="20" r="2.2" fill="#cbd7e0"/>
+  <circle cx="35" cy="26" r="1.6" fill="#cbd7e0"/>
+  <circle cx="34" cy="18" r="1.1" fill="#cbd7e0"/>
+</svg>

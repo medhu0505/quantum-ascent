@@ -5,6 +5,41 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
+ * Self-hosted type.
+ *
+ * Chakra Petch (display) and Manrope (body), latin subsets only, served from
+ * the same origin as the rest of the site. Google Fonts costs a DNS lookup, a
+ * TLS handshake and a render-blocking round trip to a third party before the
+ * first heading can paint — and school and campus networks are exactly the
+ * kind that filter it. Manrope ships as one variable file covering 400-700.
+ */
+
+@font-face {
+  font-family: "Chakra Petch";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/ChakraPetch-600.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Chakra Petch";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/ChakraPetch-700.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/Manrope-var.woff2") format("woff2-variations");
+}
+
+
+/*
  * Quantum V2.0 design system.
  *
  * Hues are sampled from the descent film's own grade (cyan 215, magenta 323,
@@ -216,7 +251,7 @@
 .hub-plate {
   position: absolute;
   inset: 0;
-  z-index: -2;
+  z-index: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -228,7 +263,7 @@
 .hub-scrim {
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: 2;
   background: linear-gradient(
     180deg,
     oklch(0.12 0.026 265 / 0.55) 0%,
@@ -239,7 +274,7 @@
 
 .hub-signs {
   position: relative;
-  z-index: 3;
+  z-index: 5;
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
@@ -337,7 +372,9 @@
     justify-content: center;
     min-height: 100dvh;
     background:
-      radial-gradient(120% 90% at 50% 45%, oklch(0.19 0.038 265 / 0.6), transparent 70%),
+      radial-gradient(120% 95% at 50% 42%, oklch(0.24 0.05 265 / 0.7), transparent 62%),
+      radial-gradient(55% 60% at 8% 52%, oklch(0.5 0.11 215 / 0.14), transparent 72%),
+      radial-gradient(55% 60% at 92% 48%, oklch(0.5 0.14 325 / 0.14), transparent 72%),
       var(--ink);
   }
 
@@ -345,7 +382,7 @@
   .hub-stage {
     position: relative;
     width: 100%;
-    max-width: calc(100dvh * 16 / 9);
+    max-width: min(calc(100dvh * 16 / 9), 1720px);
     aspect-ratio: 16 / 9;
     margin-inline: auto;
     overflow: hidden;
@@ -360,13 +397,12 @@
       transparent 70%,
       oklch(0.12 0.026 265 / 0.35) 100%
     );
-    z-index: 1;
   }
 
   .hub-signs {
     position: absolute;
     inset: 0;
-    z-index: 3;
+    z-index: 5;
     display: block;
     padding: 0;
   }
@@ -498,7 +534,7 @@
     display: block;
     position: absolute;
     inset: 0;
-    z-index: 2;
+    z-index: 3;
     pointer-events: none;
     overflow: hidden;
   }
@@ -694,7 +730,7 @@
   top: 0;
   height: 44vh;
   min-height: 220px;
-  z-index: -2;
+  z-index: 0;
   overflow: hidden;
   mask-image: linear-gradient(180deg, oklch(0 0 0) 50%, transparent);
 }
@@ -728,7 +764,7 @@
   inset-inline: 0;
   top: 30vh;
   height: 28vh;
-  z-index: -1;
+  z-index: 1;
   pointer-events: none;
   background: radial-gradient(
     60% 100% at 50% 100%,
@@ -739,6 +775,7 @@
 
 .room-body {
   position: relative;
+  z-index: 2;
   margin-inline: auto;
   max-width: 76rem;
   padding: 5.5rem 1.25rem 6rem;
@@ -779,6 +816,27 @@
   margin: 0 0 1.5rem;
 }
 
+/* Closing call to action inside a scene. Registration is the point of the
+   site, so the room that people browse longest should end by offering it. */
+.room-cta {
+  margin-top: 3.5rem;
+  padding: clamp(1.5rem, 4vw, 2.25rem);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--accent-hue) 12%, transparent), transparent 70%),
+    oklch(0.185 0.032 267 / 0.8);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 32%, transparent);
+}
+
+.room-cta-note {
+  margin: 0 0 1.5rem;
+  max-width: var(--measure);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+  text-wrap: pretty;
+}
+
 /* ---- Console screens --------------------------------------------- */
 
 .screen {
@@ -814,7 +872,41 @@ a.screen {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: repeating-linear-gradient(0deg, oklch(1 0 0 / 0.04) 0 1px, transparent 1px 3px);
+  background:
+    linear-gradient(180deg, oklch(1 0 0 / 0.08), transparent 12%),
+    repeating-linear-gradient(0deg, oklch(1 0 0 / 0.04) 0 1px, transparent 1px 3px);
+}
+
+/* Glare crossing the panel. Parked off to the left until the pointer or
+   focus arrives, so it reads as a reflection rather than decoration. */
+.screen::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: -60%;
+  width: 45%;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    color-mix(in oklab, var(--accent-hue) 30%, oklch(1 0 0 / 0.16)),
+    transparent
+  );
+  transform: skewX(-14deg);
+  transition: left var(--dur-scene) var(--ease-out);
+}
+
+a.screen:hover::before,
+button.screen:hover::before,
+a.screen:focus-visible::before,
+button.screen:focus-visible::before {
+  left: 115%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen::before {
+    display: none;
+  }
 }
 
 a.screen:hover,
@@ -834,11 +926,24 @@ button.screen:active {
 }
 
 .screen-index {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-family: var(--font-display);
   font-size: 0.66rem;
   letter-spacing: 0.28em;
   text-transform: uppercase;
   color: color-mix(in oklab, var(--accent-hue) 78%, white);
+}
+
+.screen-index::before {
+  content: "";
+  width: 0.4rem;
+  height: 0.4rem;
+  flex: none;
+  border-radius: 999px;
+  background: var(--accent-hue);
+  box-shadow: 0 0 8px 1px color-mix(in oklab, var(--accent-hue) 70%, transparent);
 }
 
 .screen-title {
@@ -973,7 +1078,13 @@ button.screen:active {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: repeating-linear-gradient(0deg, oklch(1 0 0 / 0.05) 0 1px, transparent 1px 3px);
+  background:
+    repeating-linear-gradient(0deg, oklch(1 0 0 / 0.05) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--accent-hue) 10%, transparent) 0 1px,
+      transparent 1px 42px
+    );
 }
 
 .console-face:hover,
@@ -1047,6 +1158,7 @@ button.screen:active {
   border-radius: var(--radius-md);
   background: oklch(0.185 0.032 267 / 0.85);
   box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.06),
     inset 0 0 0 1px var(--border),
     0 16px 34px -26px oklch(0 0 0 / 0.9);
 }
@@ -1116,6 +1228,14 @@ button.screen:active {
   justify-content: flex-start;
 }
 
+.archive-index {
+  font-family: var(--font-display);
+  font-size: 0.66rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--accent-hue) 78%, white);
+}
+
 .archive-go {
   margin-top: auto;
   font-family: var(--font-display);
@@ -1124,11 +1244,12 @@ button.screen:active {
   color: color-mix(in oklab, var(--accent-hue) 72%, white);
 }
 
-/* Exit affordance, fixed so it is reachable from anywhere in a long room. */
-.exit {
+/* Scene chips. Fixed so they stay reachable from anywhere in a long room —
+   an interior can be several screens tall and the way out should never be a
+   scroll away. Registration sits opposite the exit for the same reason. */
+.chip {
   position: fixed;
   top: 1rem;
-  left: 1rem;
   z-index: 50;
   display: inline-flex;
   align-items: center;
@@ -1142,13 +1263,136 @@ button.screen:active {
   color: var(--foreground);
   background: oklch(0.14 0.028 265 / 0.84);
   box-shadow: inset 0 0 0 1px var(--border);
-  backdrop-filter: blur(8px);
-  transition: background var(--dur-ui) var(--ease-out);
+  backdrop-filter: blur(10px);
+  transition:
+    background var(--dur-ui) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
 }
 
-.exit:hover,
-.exit:focus-visible {
+.chip-left {
+  left: 1rem;
+}
+
+.chip-right {
+  right: 1rem;
+}
+
+.chip:hover,
+.chip:focus-visible {
   background: oklch(0.24 0.036 267 / 0.92);
+}
+
+.chip:active {
+  transform: scale(0.98);
+}
+
+.chip-accent {
+  color: oklch(0.13 0.026 265);
+  background: var(--neon-cyan);
+  box-shadow: 0 0 24px color-mix(in oklab, var(--neon-cyan) 38%, transparent);
+}
+
+.chip-accent:hover,
+.chip-accent:focus-visible {
+  background: color-mix(in oklab, var(--neon-cyan) 84%, white);
+}
+
+/* Two fixed chips plus a long label do not fit side by side on a phone. */
+@media (max-width: 30rem) {
+  .chip {
+    font-size: 0.76rem;
+    padding: 0.45rem 0.7rem;
+  }
+
+  .chip-left {
+    max-width: 58vw;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Site header — conventional pages only.
+ *
+ * Scenes get the chips instead: a sticky bar over a full-bleed plate reads
+ * as chrome bolted onto a picture, and the signboards are already the
+ * navigation there.
+ * ------------------------------------------------------------------ */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.85rem clamp(1rem, 4vw, 2.5rem);
+  background: oklch(0.13 0.027 265 / 0.82);
+  box-shadow: inset 0 -1px 0 var(--border);
+  backdrop-filter: blur(14px);
+}
+
+.site-mark {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.75rem, 2vw, 1.5rem);
+  margin-inline-start: auto;
+  font-size: 0.9rem;
+}
+
+.site-nav a {
+  position: relative;
+  padding-block: 0.5rem;
+  color: var(--muted-foreground);
+  transition: color var(--dur-ui) var(--ease-out);
+}
+
+.site-nav a:hover,
+.site-nav a:focus-visible {
+  color: var(--foreground);
+}
+
+/* Underline grows from the centre rather than fading in, so the active and
+   hovered states read differently from a colour change alone. */
+.site-nav a::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0.15rem;
+  height: 1px;
+  background: var(--neon-cyan);
+  transform: scaleX(0);
+  transition: transform var(--dur-ui) var(--ease-out);
+}
+
+.site-nav a:hover::after,
+.site-nav a:focus-visible::after,
+.site-nav a[aria-current="page"]::after {
+  transform: scaleX(1);
+}
+
+.site-nav a[aria-current="page"] {
+  color: var(--foreground);
+}
+
+@media (max-width: 34rem) {
+  .site-nav {
+    order: 3;
+    width: 100%;
+    margin-inline-start: 0;
+    justify-content: space-between;
+    font-size: 0.84rem;
+  }
 }
 
 /* ------------------------------------------------------------------ *
@@ -1204,6 +1448,123 @@ button.screen:active {
   width: 100%;
 }
 
+.btn-sm {
+  min-height: 2.25rem;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.84rem;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ *
+ * 404 — a wrong turn, not a system error.
+ *
+ * It stays in the world and does the one useful thing a not-found page can:
+ * name every place that does exist, rather than offering a single Go home.
+ * ------------------------------------------------------------------ */
+
+.lost {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: var(--ink);
+  isolation: isolate;
+}
+
+.lost-plate {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lost-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    100deg,
+    oklch(0.12 0.026 265 / 0.94) 30%,
+    oklch(0.12 0.026 265 / 0.72) 65%,
+    oklch(0.12 0.026 265 / 0.5)
+  );
+}
+
+.lost-body {
+  position: relative;
+  z-index: 2;
+  margin-inline: auto;
+  width: 100%;
+  max-width: 60rem;
+  padding: 6rem clamp(1.25rem, 5vw, 3rem);
+}
+
+.lost-title {
+  margin: 0.5rem 0 0;
+  font-size: clamp(2.25rem, 7vw, 3.75rem);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.lost-lede {
+  margin: 1rem 0 2.25rem;
+  max-width: var(--measure);
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: var(--muted-foreground);
+  text-wrap: pretty;
+}
+
+.lost-links {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0 0 2.25rem;
+  padding: 0;
+  list-style: none;
+  /* Two by two: four destinations in a row reads as a toolbar, and the
+     blurbs need the width. */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+  max-width: 44rem;
+}
+
+.lost-link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-height: 4.25rem;
+  justify-content: center;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--accent-hue) 18%, oklch(0.17 0.03 265 / 0.85));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 50%, transparent);
+  transition:
+    background var(--dur-ui) var(--ease-out),
+    transform var(--dur-ui) var(--ease-out);
+}
+
+.lost-link:hover,
+.lost-link:focus-visible {
+  transform: translateY(-2px);
+  background: color-mix(in oklab, var(--accent-hue) 30%, oklch(0.17 0.03 265 / 0.85));
+}
+
+.lost-link-label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.lost-link-blurb {
+  font-size: 0.82rem;
+  color: oklch(0.99 0 0 / 0.8);
+}
+
 /* ------------------------------------------------------------------ *
  * Conventional pages — the calm register.
  *
@@ -1252,11 +1613,11 @@ button.screen:active {
 }
 
 .page-lede {
-  margin: 1rem 0 0;
-  max-width: var(--measure);
-  font-size: 1.05rem;
-  line-height: 1.65;
-  color: var(--muted-foreground);
+  margin: 1.15rem 0 0;
+  max-width: 46rem;
+  font-size: clamp(1.1rem, 2.1vw, 1.35rem);
+  line-height: 1.55;
+  color: var(--foreground);
   text-wrap: pretty;
 }
 
@@ -1338,12 +1699,85 @@ button.screen:active {
 
 /* ---- About --------------------------------------------------------- */
 
+/* Four flat facts, stated before the prose. Someone deciding whether to
+   enter wants the shape of the thing before the argument for it. */
+.facts {
+  display: grid;
+  gap: 1px;
+  margin: 2.75rem 0 3rem;
+  padding: 0;
+  grid-template-columns: repeat(auto-fit, minmax(min(50%, 9rem), 1fr));
+  background: var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.facts > div {
+  background: oklch(0.185 0.032 267);
+}
+
+.facts dd {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin: 0;
+  padding: 1.1rem 1.15rem;
+}
+
+.facts-value {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 4vw, 2.15rem);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--neon-cyan);
+}
+
+.facts-label {
+  font-size: 0.76rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+/* The closing line of the argument, set apart so it lands. */
+.pull-quote {
+  position: relative;
+  margin: 2.75rem 0 0;
+  max-width: 44rem;
+  padding-left: 1.5rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.15rem, 2.4vw, 1.5rem);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--foreground);
+  text-wrap: balance;
+}
+
+.pull-quote::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.15em;
+  bottom: 0.15em;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--grad-neon);
+}
+
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+
 .about-events {
   margin-top: 3.5rem;
 }
 
 .about-list {
-  margin: 0 0 1.75rem;
+  margin: 0 0 2rem;
   padding: 0;
   list-style: none;
   display: grid;
@@ -1352,13 +1786,25 @@ button.screen:active {
 }
 
 .about-list li {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
-  padding: 0.85rem 1rem;
+  padding: 0.85rem 1rem 0.85rem 1.15rem;
   border-radius: var(--radius-md);
   background: oklch(0.2 0.035 267 / 0.7);
   box-shadow: inset 0 0 0 1px var(--border);
+  overflow: hidden;
+}
+
+/* Each event carries its own accent through from the crossroads. */
+.about-list li::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 3px;
+  background: var(--accent-hue, var(--neon-cyan));
 }
 
 .about-list-name {
@@ -1440,14 +1886,24 @@ button.screen:active {
 
 /* ---- Contact -------------------------------------------------------- */
 
-.contact-list {
+.channels {
   display: grid;
-  gap: 1.5rem;
-  margin: 0;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: 1rem;
+  margin: 0 0 3.5rem;
+  padding: 0;
+  list-style: none;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
 }
 
-.contact-list dt {
+.channels li {
+  padding: 1.15rem 1.25rem 1.25rem;
+  border-radius: var(--radius-md);
+  background: oklch(0.2 0.035 267 / 0.7);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.channel-label {
+  margin: 0;
   font-family: var(--font-display);
   font-size: 0.72rem;
   letter-spacing: 0.24em;
@@ -1455,16 +1911,38 @@ button.screen:active {
   color: var(--muted-foreground);
 }
 
-.contact-list dd {
-  margin: 0.5rem 0 0;
-  font-size: 1rem;
-  line-height: 1.55;
+.channel-value {
+  margin: 0.5rem 0 0.7rem;
+  font-size: 1.02rem;
+  line-height: 1.4;
+  word-break: break-word;
 }
 
-.contact-list a {
+.channel-value a {
   color: var(--neon-cyan);
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+.channel-note {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+  text-wrap: pretty;
+}
+
+.venue + .venue {
+  margin-top: 3rem;
+}
+
+.venue-address {
+  margin: 0 0 0.9rem;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 1.45;
 }
 
 /* ---- Form ----------------------------------------------------------- */
@@ -1661,21 +2139,27 @@ button.screen:active {
 }
 
 .descent-film {
-  z-index: -3;
+  z-index: 0;
   background: var(--ink);
 }
 
-/* Sits with the film, under the scrim, so the signs and title stay on top
-   in both layouts. */
+/* Sits directly over the film, under the scrim, so the signs and the title
+   stay on top in both layouts. While the scrub is live it starts hidden and
+   is faded in by the loop as the camera settles; everywhere else it is the
+   scene, so it stays visible. */
 .descent-plate {
   position: absolute;
   inset: 0;
-  z-index: -2;
+  z-index: 1;
+}
+
+.descent-plate[data-scrub] {
+  opacity: 0;
 }
 
 .descent-title {
   position: absolute;
-  z-index: 2;
+  z-index: 4;
   inset-inline: 0;
   top: 11%;
   padding-inline: 1.25rem;
@@ -1724,7 +2208,7 @@ button.screen:active {
 
 .descent-controls {
   position: absolute;
-  z-index: 4;
+  z-index: 6;
   inset-inline: 0;
   bottom: 1.5rem;
   display: flex;
@@ -1837,11 +2321,11 @@ button.screen:active {
   }
 
   .descent-title h1 {
-    font-size: clamp(3rem, 13cqi, 10rem);
+    font-size: clamp(3rem, min(23dvh, 13vw), 12rem);
   }
 
   .descent-title-school {
-    font-size: clamp(0.7rem, 1.5cqi, 1rem);
+    font-size: clamp(0.7rem, min(2.6dvh, 1.5vw), 1rem);
   }
 
   /* Lit by the scrub loop as the camera settles. Defaults to 1 so the hub is
@@ -1856,6 +2340,31 @@ button.screen:active {
      They arrive with the plate they belong to. */
   .descent-pin .ambient {
     opacity: var(--reveal, 1);
+  }
+}
+
+@media (min-width: 48rem) and (min-aspect-ratio: 5 / 4) {
+  .descent[data-film="failed"] .descent-title,
+  .descent[data-collapsed="true"] .descent-title {
+    position: static;
+    padding-block: 3.5rem 2rem;
+  }
+
+  .descent[data-film="failed"] .hub,
+  .descent[data-collapsed="true"] .hub {
+    justify-content: flex-start;
+    height: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) and (min-width: 48rem) and (min-aspect-ratio: 5 / 4) {
+  .descent-title {
+    position: static;
+    padding-block: 3.5rem 2rem;
+  }
+
+  .descent-pin .hub {
+    justify-content: flex-start;
   }
 }
 
@@ -1963,5 +2472,103 @@ button.screen:active {
   *::before,
   *::after {
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Print.
+ *
+ * People print the event list and their own details before the fest. Drop
+ * the scenery, keep the words, and make links resolvable on paper.
+ * ------------------------------------------------------------------ */
+
+@media print {
+  :root {
+    --foreground: #000;
+    --muted-foreground: #333;
+    --border: #bbb;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  .descent,
+  .hub,
+  .lost-plate,
+  .lost-scrim,
+  .room-window,
+  .room-rim,
+  .ambient,
+  .phase-veil,
+  .skip-link,
+  .chip,
+  .site-header,
+  .page-actions,
+  .form-actions,
+  .scroll-hint {
+    display: none !important;
+  }
+
+  .room,
+  .page,
+  .lost {
+    min-height: 0;
+    padding: 0;
+    background: #fff;
+  }
+
+  .room-body,
+  .page-inner,
+  .lost-body {
+    max-width: none;
+    padding: 0;
+  }
+
+  .screen,
+  .frame,
+  .console,
+  .channels li,
+  .about-list li,
+  .facts > div {
+    background: #fff !important;
+    color: #000;
+    box-shadow: none !important;
+    border: 1px solid #bbb;
+    break-inside: avoid;
+  }
+
+  .screen::after,
+  .screen::before,
+  .console-face::after,
+  .sign-face::after {
+    display: none;
+  }
+
+  /* Every screen's detail is worth having on paper, open or not. */
+  .screen-panel[hidden],
+  .faq-panel[hidden] {
+    display: block !important;
+  }
+
+  .screen-title,
+  .page-title,
+  .room-title,
+  .facts-value {
+    color: #000 !important;
+  }
+
+  /* Resolve links the reader cannot click. */
+  .prose-quantum a::after,
+  .channel-value a::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    word-break: break-all;
+  }
+
+  .site-footer {
+    border-top: 1px solid #bbb;
+    background: #fff;
   }
 }

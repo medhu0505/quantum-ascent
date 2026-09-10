@@ -12,28 +12,47 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { PhaseProvider } from "@/components/scene/PhaseTransition";
-import { SkipLink } from "@/components/site/Bits";
+import { RouteAnnouncer, SkipLink } from "@/components/site/Bits";
+import { SiteFooter } from "@/components/site/PageShell";
+import { crossroadsPlate, scenes } from "@/data/quantum";
+import { festJsonLd } from "@/lib/structured-data";
 import { fest, school } from "@/data/quantum";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
-        </p>
-        <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Go home
+    <>
+      <div className="lost">
+        <picture>
+          <source srcSet={crossroadsPlate.webp} type="image/webp" />
+          <img className="lost-plate" src={crossroadsPlate.jpg} alt="" aria-hidden="true" />
+        </picture>
+        <div className="lost-scrim" />
+
+        <main id="main" className="lost-body">
+          <p className="eyebrow">Error 404</p>
+          <h1 className="lost-title">You took a wrong turn</h1>
+          <p className="lost-lede">
+            There is no street here. Every part of {fest.fullName} is one of these four.
+          </p>
+
+          <ul className="lost-links">
+            {scenes.map((scene) => (
+              <li key={scene.id} data-accent={scene.accent}>
+                <Link to={scene.to} className="lost-link">
+                  <span className="lost-link-label">{scene.label}</span>
+                  <span className="lost-link-blurb">{scene.blurb}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+
+          <Link to="/" className="btn btn-ghost">
+            Back to the crossroads
           </Link>
-        </div>
+        </main>
       </div>
-    </div>
+      <SiteFooter />
+    </>
   );
 }
 
@@ -94,13 +113,26 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      // Type is self-hosted; these two are what the first heading and the first
+      // paragraph need, so they lead rather than waiting on the stylesheet.
       {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;600&display=swap",
+        rel: "preload",
+        as: "font",
+        type: "font/woff2",
+        href: "/fonts/ChakraPetch-700.woff2",
+        crossOrigin: "anonymous",
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      {
+        rel: "preload",
+        as: "font",
+        type: "font/woff2",
+        href: "/fonts/Manrope-var.woff2",
+        crossOrigin: "anonymous",
+      },
+      { rel: "icon", href: "/favicon.ico", sizes: "32x32" },
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "apple-touch-icon", href: "/favicon.svg" },
+      { rel: "manifest", href: "/site.webmanifest" },
     ],
   }),
 
@@ -131,8 +163,13 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <PhaseProvider>
         <SkipLink />
+        <RouteAnnouncer />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(festJsonLd()) }}
+        />
       </PhaseProvider>
     </QueryClientProvider>
   );

@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { contact, fest, school } from "@/data/quantum";
-import { Value } from "@/components/site/Bits";
+import { SiteHeader, Value } from "@/components/site/Bits";
 
 /**
  * Layout for the conventional pages.
@@ -13,22 +13,15 @@ import { Value } from "@/components/site/Bits";
 export function PageShell({
   title,
   lede,
-  back = { to: "/resources", label: "Resources" },
   children,
 }: {
   title: string;
   lede?: string | undefined;
-  /** Where the exit goes. Defaults to Resources, which is where the FAQ,
-   *  About and Contact pages are reached from. */
-  back?: { to: string; label: string } | undefined;
   children: ReactNode;
 }) {
   return (
     <>
-      <Link to={back.to} className="exit">
-        <span aria-hidden="true">←</span>
-        {back.label}
-      </Link>
+      <SiteHeader />
 
       <main id="main" className="page">
         <div className="page-inner">

@@ -328,13 +328,23 @@ export const faqs = [
  * About — final editorial copy.
  * ------------------------------------------------------------------ */
 
+/** Facts worth stating flat, above the prose. */
+export const festFacts = [
+  { value: String(events.length), label: "events" },
+  { value: "1", label: "day" },
+  { value: "9–12", label: "classes" },
+  { value: "100%", label: "student-run" },
+] as const;
+
 export const about = {
   lede: "Quantum is the inter-school tech and culture fest run by the students of A.F.S. Bal Bharati School. V2.0 is the second edition, and it is bigger in the only way that matters: more schools in the building, competing on the same day for the same trophy.",
   body: [
     "The format is deliberately simple. Six events run across one day — Quiz, Film Making, Ad Shoot, Online Gaming, Pitch, and one that stays sealed until the morning. Every event is scored the same way and carries the same weight, so a school that is strong in one discipline cannot coast. The cumulative score across all six decides the overall champion.",
     "Everything you see on the day is student-run. Students write the quiz, judge the prelims, cut the highlight reel, manage the brackets, staff the help desk and run the tech. Faculty are there as coordinators and nothing more. That is the point of the fest: not a showcase put on for students, but one put on by them.",
-    "We built it for people who want to make something under pressure. Thirty-six hours to shoot a film. Sixty seconds to sell a product you were handed on the spot. Five minutes to defend a business case to a panel that will interrupt you. Bring a team, pick your events, and come find out what you can do with a deadline.",
+    "We built it for people who want to make something under pressure. Thirty-six hours to shoot a film. Sixty seconds to sell a product you were handed on the spot. Five minutes to defend a business case to a panel that will interrupt you. None of it rewards preparation alone.",
   ],
+  /** Pulled out as the page's closing line. */
+  kicker: "Bring a team, pick your events, and come find out what you can do with a deadline.",
 } as const;
 
 /* ------------------------------------------------------------------ *

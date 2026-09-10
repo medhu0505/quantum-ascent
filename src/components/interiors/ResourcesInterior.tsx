@@ -36,9 +36,10 @@ export function ResourcesInterior() {
       lead="Everything that is not an event or a form. Answers to the questions we get most, the background on the fest, and how to reach the people running it."
     >
       <ul className="archive-wall">
-        {links.map((link) => (
+        {links.map((link, i) => (
           <li key={link.to}>
             <Link to={link.to} className="screen archive-link">
+              <span className="archive-index">File {String(i + 1).padStart(2, "0")}</span>
               <span className="screen-title">{link.label}</span>
               <span className="screen-body">{link.blurb}</span>
               <span className="archive-go" aria-hidden="true">

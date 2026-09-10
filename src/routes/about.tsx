@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/site/PageShell";
-import { about, events, school } from "@/data/quantum";
+import { about, events, festFacts, school } from "@/data/quantum";
 import { seo } from "@/lib/seo";
 
 export const Route = createFileRoute("/about")({
@@ -16,11 +16,25 @@ export const Route = createFileRoute("/about")({
 function About() {
   return (
     <PageShell title="About Quantum" lede={about.lede}>
+      <dl className="facts">
+        {festFacts.map((fact) => (
+          <div key={fact.label}>
+            <dt className="sr-only">{fact.label}</dt>
+            <dd>
+              <span className="facts-value">{fact.value}</span>
+              <span className="facts-label">{fact.label}</span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+
       <div className="prose-quantum measure">
         {about.body.map((paragraph) => (
           <p key={paragraph.slice(0, 40)}>{paragraph}</p>
         ))}
       </div>
+
+      <p className="pull-quote">{about.kicker}</p>
 
       <section className="about-events" aria-labelledby="the-six">
         <h2 id="the-six" className="page-subhead">
@@ -28,15 +42,20 @@ function About() {
         </h2>
         <ul className="about-list">
           {events.map((event) => (
-            <li key={event.id}>
+            <li key={event.id} data-accent={event.accent}>
               <span className="about-list-name">{event.name}</span>
               <span className="about-list-note">{event.tagline}</span>
             </li>
           ))}
         </ul>
-        <Link to="/events" className="btn btn-ghost">
-          Read the full event details
-        </Link>
+        <div className="page-actions">
+          <Link to="/register/form" className="btn btn-accent">
+            Register your school
+          </Link>
+          <Link to="/events" className="btn btn-ghost">
+            Read the full event details
+          </Link>
+        </div>
       </section>
     </PageShell>
   );

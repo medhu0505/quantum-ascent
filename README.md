@@ -104,6 +104,35 @@ CSS keyframes, not video. They are interface effects dressed as scene content,
 so a clip would cost bandwidth and sync trouble for something a keyframe does
 deterministically and for free.
 
+## Navigation
+
+Three registers, matched to what the visitor is doing:
+
+- **Crossroads** — the four signboards *are* the navigation. No chrome over them.
+- **Interiors** — two fixed chips: back to the crossroads on the left, Register
+  on the right (suppressed on the Register scene itself). Registration is the
+  site's job, so it stays one click away from every room.
+- **Conventional pages** — a real sticky header: wordmark, inline nav, Register.
+
+The 404 stays in the world and names all four destinations, which is the one
+useful thing a not-found page can do.
+
+`/events?event=<id>` opens that event's screen on arrival, so a single event can
+be shared. The open screen is mirrored back into the URL with `replace`, so
+opening and closing screens does not fill the back button.
+
+## Type
+
+Chakra Petch (display) and Manrope (body) are **self-hosted** from `public/fonts`,
+latin subsets only, 56 KB for all three files. Manrope ships as one variable file
+covering 400-700 — Google serves the same variable woff2 for every weight, so
+requesting four gets you the same file four times.
+
+This is not only a performance choice. A font CDN is a render-blocking round trip
+to a third party before the first heading can paint, and school and campus
+networks are exactly the kind that filter it. There are no third-party requests
+on any route; a test asserts it.
+
 ## Responsive behaviour
 
 The hub is **one set of markup with two layouts**. Above `48rem` *and* wider
@@ -132,3 +161,32 @@ the same layout:
 
 With JavaScript off, the hub renders at full opacity and every sign is a real
 `<a href>`.
+
+Print styles drop the scenery, force every collapsed disclosure open, and
+resolve link targets in the margin — people print the event list before the day.
+
+## Verification
+
+```bash
+npm run build && npm run lint          # both clean
+```
+
+Checked with Playwright and axe-core against a running dev server:
+
+- **0 axe violations** (WCAG 2.0 / 2.1 / 2.2, A and AA) on all ten routes.
+- Every crossroads sign reaches its interior and back; each page's `h1` matches
+  the sign that led to it.
+- Registration reachable in one click from every interior and every page header.
+- Event deep links open, mirror to the URL, and clear on close.
+- The form's validation, focus-to-first-error, `aria-invalid` /
+  `aria-describedby` wiring, and the pre-launch details check.
+- Reduced motion: pin collapses, ambient stops, and the title does not land on
+  the signs.
+- Decode failure: detected, pin collapses, hub stays reachable, no stuck
+  loading message.
+- Self-hosted fonts load and no request leaves the origin.
+
+One caveat worth knowing: the bundled Chromium used for these checks has **no
+H.264 decoder**, so it always takes the decode-failure path. The scrub itself
+was verified separately by temporarily swapping in a VP9 encode of the same
+film.

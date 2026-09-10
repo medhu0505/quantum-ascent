@@ -136,7 +136,6 @@ function RegisterForm() {
   return (
     <PageShell
       title="Register"
-      back={{ to: "/register", label: "Register" }}
       lede="One form covers every event. Enter the team lead's details, pick what you are entering, and list the rest of the team."
     >
       {!registrationOpen ? (

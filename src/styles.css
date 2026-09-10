@@ -798,6 +798,62 @@
   transform: scale(0.99);
 }
 
+/* ------------------------------------------------------------------ *
+ * Parallax depth.
+ *
+ * --px/--py are the pointer's offset from the centre of the stage, -1 to 1,
+ * written per frame by useStageParallax. Each layer multiplies them by its
+ * own distance, which is what produces the depth cue. Travel is deliberately
+ * small: this should register as the scene having volume, not as the page
+ * sliding around under the cursor.
+ * ------------------------------------------------------------------ */
+
+@media (min-width: 48rem) and (min-aspect-ratio: 5 / 4) and (pointer: fine) {
+  /* Uses the individual `translate` and `scale` properties rather than
+     `transform`, so a layer's own transform — the signs' skew and yaw, the
+     scrub loop's inline transform on the title — composes with the parallax
+     instead of being overwritten by it. */
+
+  /* Furthest away, so it barely moves. Scaled so the pull can never drag an
+     edge of the photograph into frame. */
+  .hub-stage .hub-plate,
+  .hub-stage .descent-plate {
+    scale: 1.045;
+    translate: calc(var(--px, 0) * -0.5%) calc(var(--py, 0) * -0.5%);
+  }
+
+  .hub-stage .crowd {
+    translate: calc(var(--px, 0) * -0.9%) calc(var(--py, 0) * -0.55%);
+  }
+
+  .hub-stage .ambient {
+    translate: calc(var(--px, 0) * -1.3%) calc(var(--py, 0) * -0.8%);
+  }
+
+  /* Nearest the camera, so the most travel. */
+  .hub-stage .hub-signs {
+    translate: calc(var(--px, 0) * -2%) calc(var(--py, 0) * -1.2%);
+  }
+
+  /* The title sits in front of everything and gets the most of all, which is
+     what separates it from the picture behind it. */
+  .descent-title {
+    translate: calc(var(--px, 0) * -2.6%) calc(var(--py, 0) * -1.5%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hub-stage .hub-plate,
+  .hub-stage .descent-plate,
+  .hub-stage .crowd,
+  .hub-stage .ambient,
+  .hub-stage .hub-signs,
+  .descent-title {
+    translate: none;
+    scale: none;
+  }
+}
+
 /* -- Stage layout ------------------------------------------------- *
  * Only wide-and-tall-enough viewports get the billboards. Below this the
  * 16:9 frame collapses to a band a couple of centimetres deep and the

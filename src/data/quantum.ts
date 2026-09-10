@@ -184,6 +184,19 @@ export type SignGeometry = {
   height: number;
   /** Degrees of vertical skew matching the billboard's plane. */
   skew: number;
+  /**
+   * Degrees of yaw, so the panel sits on the building's wall rather than
+   * flat to the camera. Positive turns the right edge away, which is what a
+   * panel on the left-hand side of the street does; right-hand panels take a
+   * negative value.
+   */
+  yaw: number;
+  /**
+   * How much of the scene's atmospheric haze sits between camera and panel,
+   * 0 (at the kerb) to 1 (far down the street). A panel that ignores the haze
+   * in the plate reads as being in front of the picture rather than in it.
+   */
+  haze: number;
   /** Stack the label vertically, for the tall blade sign. */
   vertical?: boolean;
   /**
@@ -215,7 +228,7 @@ export const scenes: Scene[] = [
     blurb: "Six events. One championship.",
     to: "/events",
     accent: "cyan",
-    sign: { left: 18.44, top: 25.0, width: 11.48, height: 12.08, skew: -1.5 },
+    sign: { left: 18.44, top: 25.0, width: 11.48, height: 12.08, skew: -1.5, yaw: 8, haze: 0.45 },
     view: "/media/view-events.webp",
     room: "A control room lined with six screens, one per event.",
   },
@@ -225,7 +238,7 @@ export const scenes: Scene[] = [
     blurb: "Get your school on the list.",
     to: "/register",
     accent: "magenta",
-    sign: { left: 68.28, top: 26.1, width: 11.48, height: 13.9, skew: -6.4 },
+    sign: { left: 68.28, top: 26.1, width: 11.48, height: 13.9, skew: -6.4, yaw: -10, haze: 0.45 },
     view: "/media/view-register.webp",
     room: "A registration terminal facing a window over the city.",
   },
@@ -235,7 +248,16 @@ export const scenes: Scene[] = [
     blurb: "The students running it.",
     to: "/team",
     accent: "cyan",
-    sign: { left: 20.55, top: 50.69, width: 13.75, height: 4.58, skew: 2.5, compact: true },
+    sign: {
+      left: 20.55,
+      top: 50.69,
+      width: 13.75,
+      height: 4.58,
+      skew: 2.5,
+      yaw: 5,
+      haze: 0.25,
+      compact: true,
+    },
     view: "/media/view-team.webp",
     room: "A crew room hung with framed portraits of the organising team.",
   },
@@ -245,7 +267,16 @@ export const scenes: Scene[] = [
     blurb: "Questions, background, contact.",
     to: "/resources",
     accent: "violet",
-    sign: { left: 89.77, top: 2.78, width: 5.31, height: 24.3, skew: 0, vertical: true },
+    sign: {
+      left: 89.77,
+      top: 2.78,
+      width: 5.31,
+      height: 24.3,
+      skew: 0,
+      yaw: -14,
+      haze: 0.1,
+      vertical: true,
+    },
     view: "/media/view-resources.webp",
     room: "An archive room with a wall of labelled links.",
   },

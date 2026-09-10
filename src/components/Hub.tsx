@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Ambient } from "@/components/scene/Ambient";
+import { Crowd } from "@/components/scene/Crowd";
 import { usePhaseLink } from "@/components/scene/PhaseTransition";
 import { crossroadsPlate, scenes, type Scene } from "@/data/quantum";
 
@@ -29,6 +30,8 @@ function Sign({ scene }: { scene: Scene }) {
           "--sign-width": scene.sign.width,
           "--sign-height": scene.sign.height,
           "--sign-skew": `${scene.sign.skew}deg`,
+          "--sign-yaw": `${scene.sign.yaw}deg`,
+          "--sign-haze": scene.sign.haze,
         } as React.CSSProperties
       }
     >
@@ -87,6 +90,7 @@ export function Hub() {
         <HubPlate eager />
         <div className="hub-scrim" />
         <Ambient />
+        <Crowd />
         <HubSigns />
       </div>
     </div>

@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Ambient } from "@/components/scene/Ambient";
+import { Crowd } from "@/components/scene/Crowd";
 import { HubPlate, HubSigns } from "@/components/Hub";
 import { fest, school, descentFilm, timeline } from "@/data/quantum";
 import { clamp, lerp, progress, usePrefersReducedMotion, useStageLayout } from "@/lib/motion";
@@ -22,6 +23,31 @@ import { clamp, lerp, progress, usePrefersReducedMotion, useStageLayout } from "
 
 /** Total scroll the pinned descent consumes, in viewport heights. */
 const SCROLL_VH = 620;
+
+/**
+ * Remembers, for this tab only, that the visitor has already made the descent.
+ * Interiors are only reachable from the crossroads, so coming back should
+ * return them to the crossroads — not to the top of a six-screen scroll they
+ * have already sat through. Session-scoped on purpose: a fresh visit
+ * tomorrow gets the film again.
+ */
+const ARRIVED_KEY = "quantum:arrived";
+
+function markArrived() {
+  try {
+    sessionStorage.setItem(ARRIVED_KEY, "1");
+  } catch {
+    /* Private mode or blocked storage: the descent simply replays. */
+  }
+}
+
+function hasArrived(): boolean {
+  try {
+    return sessionStorage.getItem(ARRIVED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
 
 /** Scroll progress at which the film finishes and the hub starts arriving. */
 const SCRUB_END = 0.78;
@@ -74,6 +100,42 @@ export function Descent() {
       ? "still"
       : "play";
 
+  /* ---- Returning to the crossroads --------------------------------- *
+   * Runs before paint so the visitor never sees the top of the descent
+   * flash past on the way to where they actually left off.
+   */
+  const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
+  useIsomorphicLayoutEffect(() => {
+    if (!scrubbing || !hasArrived()) return;
+
+    let frame = 0;
+    let tries = 0;
+
+    // Two things fight this jump. The document is still the previous route's
+    // height for a frame or two, so an early scrollTo silently clamps to
+    // nothing; and the router restores scroll after the route commits, which
+    // would drop the visitor back at the top. So keep re-asserting until the
+    // scroll actually lands, then stop.
+    const jump = () => {
+      const section = sectionRef.current;
+      if (!section) return;
+
+      const target = section.offsetTop + section.offsetHeight - window.innerHeight;
+      if (target <= 0) return;
+
+      if (Math.abs(window.scrollY - target) > 2) {
+        window.scrollTo({ top: target, behavior: "auto" });
+      }
+
+      // Landed, or out of patience (~30 frames is half a second).
+      if (Math.abs(window.scrollY - target) <= 2 || ++tries > 30) return;
+      frame = requestAnimationFrame(jump);
+    };
+
+    jump();
+    return () => cancelAnimationFrame(frame);
+  }, [scrubbing]);
+
   /* ---- Scroll scrub ------------------------------------------------ */
   useEffect(() => {
     if (!scrubbing) {
@@ -108,6 +170,7 @@ export function Descent() {
     video.addEventListener("error", onSeeked);
 
     let lastRevealed: boolean | null = null;
+    let lastReveal = -1;
 
     const tick = () => {
       raf = requestAnimationFrame(tick);
@@ -145,13 +208,17 @@ export function Descent() {
       // pixels by this point, so the swap itself is invisible; it exists so
       // the hub is sitting on an image rather than on a paused video.
       const reveal = progress(p, SCRUB_END, REVEAL_END);
-      if (plateRef.current) plateRef.current.style.opacity = String(reveal);
-      stageRef.current?.style.setProperty("--reveal", String(reveal));
+      if (reveal !== lastReveal) {
+        lastReveal = reveal;
+        if (plateRef.current) plateRef.current.style.opacity = String(reveal);
+        stageRef.current?.style.setProperty("--reveal", String(reveal));
+      }
 
       const isRevealed = reveal > 0.55;
       if (isRevealed !== lastRevealed) {
         lastRevealed = isRevealed;
         setRevealed(isRevealed);
+        if (isRevealed) markArrived();
       }
     };
 
@@ -199,16 +266,44 @@ export function Descent() {
     return remove;
   }, [scrubbing]);
 
-  /* ---- Decode failure ---------------------------------------------- */
+  /* ---- Decode failure ----------------------------------------------- *
+   * Only two things count as failure: the element firing `error`, or the
+   * element still having nothing at all well after mount.
+   *
+   * Reading networkState synchronously here does not work. On a client-side
+   * remount — coming back to the crossroads from an interior — the effect can
+   * run before React has committed `src` and resource selection has begun, so
+   * networkState is momentarily NETWORK_NO_SOURCE on a video that is about to
+   * load perfectly well. That false positive collapsed the whole pinned
+   * descent to a short page and never reset, which is what made the city
+   * unscrollable after a round trip.
+   */
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
     const fail = () => setFilmFailed(true);
+    const recovered = () => setFilmFailed(false);
+
     video.addEventListener("error", fail);
-    // `error` does not fire when no source matched at all, so check directly.
-    if (video.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) fail();
-    return () => video.removeEventListener("error", fail);
+    video.addEventListener("loadeddata", recovered);
+
+    // A source that never resolves fires no event, so confirm on a delay —
+    // by which point a healthy element has long since started loading.
+    const grace = window.setTimeout(() => {
+      if (
+        video.readyState === HTMLMediaElement.HAVE_NOTHING &&
+        video.networkState === HTMLMediaElement.NETWORK_NO_SOURCE
+      ) {
+        fail();
+      }
+    }, 6000);
+
+    return () => {
+      window.clearTimeout(grace);
+      video.removeEventListener("error", fail);
+      video.removeEventListener("loadeddata", recovered);
+    };
   }, []);
 
   /* ---- Buffer gate -------------------------------------------------- *
@@ -292,6 +387,7 @@ export function Descent() {
   const skipToHub = () => {
     const section = sectionRef.current;
     if (!section) return;
+    markArrived();
     const top = section.offsetTop + section.offsetHeight - window.innerHeight;
     window.scrollTo({ top, behavior: reducedMotion ? "auto" : "smooth" });
   };
@@ -338,6 +434,7 @@ export function Descent() {
 
             <div className="hub-scrim" />
             <Ambient />
+            <Crowd />
 
             <HubSigns inert={scrubbing && !revealed} />
 

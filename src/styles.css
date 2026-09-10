@@ -616,13 +616,70 @@
     text-align: center;
     border-radius: 1px;
     background: color-mix(in oklab, var(--accent-hue) 30%, oklch(0.16 0.03 265 / 0.5));
-    box-shadow:
-      inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 65%, transparent),
-      0 0 22px color-mix(in oklab, var(--accent-hue) 40%, transparent),
-      0 0 64px color-mix(in oklab, var(--accent-hue) 22%, transparent);
-    /* Idle breath, so the signs read as interactive before the pointer
-       arrives. Container units keep type sized to the stage, not the window. */
+    /* Only the panel's own edge here. The light it throws is a separate,
+       screen-blended layer — see .sign-face::before — because a box-shadow
+       paints over the photograph instead of brightening it, which is what
+       made these read as stickers with a halo. */
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 65%, transparent);
+    /* A lit panel photographed at this distance has no razor edge. */
+    filter: blur(0.35px);
     animation: sign-breathe 5.5s var(--ease-out) infinite;
+  }
+
+  /* The light the panel throws onto the building around it. Screen blending
+     means it genuinely brightens the plate's pixels rather than laying a
+     coloured rectangle over them. */
+  .sign-face::before {
+    content: "";
+    position: absolute;
+    inset: -55%;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(
+      50% 50% at 50% 50%,
+      color-mix(in oklab, var(--accent-hue) 55%, transparent),
+      transparent 70%
+    );
+    mix-blend-mode: screen;
+    opacity: 0.75;
+    transition: opacity var(--dur-2) var(--ease);
+  }
+
+  .sign:hover .sign-face::before,
+  .sign:focus-visible .sign-face::before {
+    opacity: 1;
+  }
+
+  /* Atmosphere. The plate has haze between the camera and the far signage;
+     a panel that ignores it sits in front of the picture instead of inside
+     it. Depth is set per sign from its position in the frame. */
+  .sign-face::after {
+    background:
+      linear-gradient(
+        180deg,
+        oklch(0.62 0.05 265 / calc(0.16 * var(--sign-haze, 0))),
+        oklch(0.62 0.05 265 / calc(0.06 * var(--sign-haze, 0)))
+      ),
+      repeating-linear-gradient(0deg, oklch(1 0 0 / 0.08) 0 1px, transparent 1px 3px);
+  }
+
+  /* Sit the panel on the building's plane rather than flat to the camera. */
+  .hub-signs > li {
+    perspective: 900px;
+  }
+
+  .sign {
+    transform: skewY(var(--sign-skew, 0deg)) rotateY(var(--sign-yaw, 0deg));
+  }
+
+  .sign:hover,
+  .sign:focus-visible {
+    transform: skewY(var(--sign-skew, 0deg)) rotateY(var(--sign-yaw, 0deg)) scale(1.055);
+    filter: brightness(1.3) saturate(1.1);
+  }
+
+  .sign:active {
+    transform: skewY(var(--sign-skew, 0deg)) rotateY(var(--sign-yaw, 0deg)) scale(0.985);
   }
 
   .sign-label {
@@ -711,6 +768,152 @@
     z-index: 3;
     pointer-events: none;
     overflow: hidden;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * The crowd.
+ *
+ * Silhouettes on the pavements and the crossing. Everything about a figure
+ * derives from one --depth value so size, speed, haze and brightness can
+ * never disagree with each other — disagreement between those is precisely
+ * what makes a layered element look pasted on.
+ * ------------------------------------------------------------------ */
+
+.crowd {
+  display: none;
+}
+
+@media (min-width: 48rem) and (min-aspect-ratio: 5 / 4) {
+  .crowd {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    overflow: hidden;
+  }
+}
+
+.walker {
+  position: absolute;
+  /* --y is the ground line, so the feet sit on the pavement rather than the
+     head sitting at the given height. */
+  bottom: calc(100% - var(--y));
+  left: 0;
+  /* Container units so figures scale with the stage, not the window.
+     3.6cqi is roughly adult height at the near kerb. */
+  height: calc(3.6cqi * (0.28 + 0.72 * var(--depth)));
+  aspect-ratio: 0.38;
+  /* Distance hazes and dims, exactly as it does in the plate behind them. */
+  filter: blur(calc((1 - var(--depth)) * 0.7px));
+  opacity: calc(0.55 + 0.4 * var(--depth));
+  transform-origin: bottom center;
+  animation:
+    walk-path var(--dur) linear var(--delay) infinite,
+    walk-bob calc(0.72s + (1 - var(--depth)) * 0.5s) ease-in-out var(--delay) infinite;
+  will-change: transform;
+}
+
+/* Head. Separated from the body because a single blob reads as a bollard,
+   and the head-to-shoulder ratio is what makes a 20px mark read as a person. */
+.walker::before {
+  content: "";
+  position: absolute;
+  inset: 0 33% 79% 33%;
+  border-radius: 50%;
+  background: var(--figure);
+  box-shadow: calc(var(--rim-x) * 0.5px) 0 0 0 var(--rim-color);
+}
+
+/* Torso and legs. The clip-path splits the lower half into two limbs and
+   swaps the stride, which is the whole of the walk cycle at this scale. */
+.walker::after {
+  content: "";
+  position: absolute;
+  /* Overlaps the head slightly: a visible seam between the two reads as a
+     floating dot above a block rather than as a person. */
+  inset: 15% 8% 0 8%;
+  background: var(--figure);
+  box-shadow: calc(var(--rim-x) * 0.5px) 0 0 0 var(--rim-color);
+  animation: walk-stride calc(0.66s + (1 - var(--depth)) * 0.45s) steps(2, end)
+    var(--delay) infinite;
+}
+
+.walker {
+  --figure: oklch(0.13 0.025 265 / 0.95);
+}
+
+/* Which bank of signage is lighting them. */
+.walker[data-rim="cyan"] {
+  --rim-color: color-mix(in oklab, var(--neon-cyan) 70%, transparent);
+  --rim-x: 1;
+}
+
+.walker[data-rim="magenta"] {
+  --rim-color: color-mix(in oklab, var(--neon-magenta) 70%, transparent);
+  --rim-x: -1;
+}
+
+@keyframes walk-path {
+  from {
+    transform: translate3d(var(--from), 0, 0) scaleX(1);
+  }
+  49.9% {
+    transform: translate3d(var(--to), 0, 0) scaleX(1);
+  }
+  /* Turn around rather than teleport back. */
+  50% {
+    transform: translate3d(var(--to), 0, 0) scaleX(-1);
+  }
+  to {
+    transform: translate3d(var(--from), 0, 0) scaleX(-1);
+  }
+}
+
+@keyframes walk-bob {
+  0%,
+  100% {
+    margin-top: 0;
+  }
+  50% {
+    margin-top: -0.14cqi;
+  }
+}
+
+/* A tapered torso with arms, and two legs that swap lead on each step. The
+   taper matters more than the detail: a straight rectangle reads as a post
+   at any size, a shouldered silhouette reads as a person even at 20px. */
+@keyframes walk-stride {
+  0% {
+    clip-path: polygon(
+      26% 4%,
+      74% 4%,
+      88% 20%,
+      78% 46%,
+      86% 100%,
+      62% 100%,
+      50% 66%,
+      38% 100%,
+      14% 100%,
+      22% 46%,
+      12% 20%
+    );
+  }
+  50% {
+    clip-path: polygon(
+      26% 4%,
+      74% 4%,
+      88% 20%,
+      78% 46%,
+      62% 100%,
+      38% 100%,
+      50% 66%,
+      38% 100%,
+      14% 100%,
+      22% 46%,
+      12% 20%
+    );
   }
 }
 
@@ -2542,7 +2745,8 @@ button.screen:active {
   /* The ambient fixtures are positioned against the crossroads frame, so
      during the aerial and canyon beats they would be floating in open sky.
      They arrive with the plate they belong to. */
-  .descent-pin .ambient {
+  .descent-pin .ambient,
+  .descent-pin .crowd {
     opacity: var(--reveal, 1);
   }
 }
@@ -2630,7 +2834,8 @@ button.screen:active {
     scroll-behavior: auto;
   }
 
-  .ambient {
+  .ambient,
+  .crowd {
     display: none;
   }
 

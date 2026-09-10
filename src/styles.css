@@ -5,17 +5,17 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Design system definition.
+ * Quantum V2.0 design system.
  *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
+ * Hues are sampled from the descent film's own grade (cyan 215, magenta 323,
+ * violet 279 in OKLCH) so DOM signage sits on the billboard plates instead of
+ * floating above them as a separate layer. Chroma is raised above the film's
+ * washed-out average because interface colour has to survive at small sizes.
  *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
+ * Two registers, deliberately opposed:
+ *   - Scenes (hero, crossroads, interiors) are full-bleed, kinetic, neon.
+ *   - Conventional pages are calm, measured and quiet, so the actual
+ *     information — what to bring, how to register — reads without noise.
  */
 
 @theme inline {
@@ -53,36 +53,48 @@
 
 :root {
   --radius: 0.375rem;
-  --background: oklch(0.14 0.03 275);
-  --foreground: oklch(0.96 0.01 270);
-  --card: oklch(0.19 0.035 278);
-  --card-foreground: oklch(0.96 0.01 270);
-  --popover: oklch(0.17 0.035 278);
-  --popover-foreground: oklch(0.96 0.01 270);
-  --primary: oklch(0.82 0.15 195);
-  --primary-foreground: oklch(0.15 0.03 275);
-  --secondary: oklch(0.25 0.04 280);
-  --secondary-foreground: oklch(0.96 0.01 270);
-  --muted: oklch(0.24 0.035 280);
-  --muted-foreground: oklch(0.72 0.03 275);
-  --accent: oklch(0.72 0.22 335);
-  --accent-foreground: oklch(0.15 0.03 275);
-  --destructive: oklch(0.6 0.23 25);
-  --destructive-foreground: oklch(0.97 0.01 270);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.82 0.15 195);
 
-  --neon-cyan: oklch(0.85 0.14 197);
-  --neon-magenta: oklch(0.74 0.22 340);
-  --neon-violet: oklch(0.68 0.2 300);
-  --ink: oklch(0.11 0.025 275);
+  /* Ground. Darker than the plate's own haze so the scene reads as lit. */
+  --ink: oklch(0.12 0.026 265);
+  --background: oklch(0.155 0.03 265);
+  --foreground: oklch(0.965 0.008 265);
 
-  --grad-beam: linear-gradient(180deg, oklch(0.95 0.05 200 / 0.9), transparent);
+  --card: oklch(0.205 0.034 267);
+  --card-foreground: var(--foreground);
+  --popover: oklch(0.185 0.034 267);
+  --popover-foreground: var(--foreground);
+
+  /* Neons, hue-matched to the film. */
+  --neon-cyan: oklch(0.84 0.13 215);
+  --neon-magenta: oklch(0.75 0.2 325);
+  --neon-violet: oklch(0.7 0.17 280);
+
+  --primary: var(--neon-cyan);
+  --primary-foreground: oklch(0.15 0.03 265);
+  --secondary: oklch(0.26 0.038 268);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.245 0.034 268);
+  --muted-foreground: oklch(0.755 0.028 265);
+  --accent: var(--neon-magenta);
+  --accent-foreground: oklch(0.15 0.03 265);
+  --destructive: oklch(0.62 0.22 25);
+  --destructive-foreground: oklch(0.98 0.01 265);
+  --border: oklch(1 0 0 / 14%);
+  --input: oklch(1 0 0 / 18%);
+  --ring: var(--neon-cyan);
+
   --grad-neon: linear-gradient(100deg, var(--neon-cyan), var(--neon-violet), var(--neon-magenta));
-  --glow-cyan: 0 0 0 1px oklch(0.85 0.14 197 / 0.5), 0 0 28px oklch(0.85 0.14 197 / 0.45);
-  --glow-magenta: 0 0 0 1px oklch(0.74 0.22 340 / 0.5), 0 0 28px oklch(0.74 0.22 340 / 0.45);
-  --glow-violet: 0 0 0 1px oklch(0.68 0.2 300 / 0.5), 0 0 28px oklch(0.68 0.2 300 / 0.45);
+
+  /* Motion tokens. Scenes move on the slow pair; UI moves on the fast pair. */
+  --dur-fast: 140ms;
+  --dur-ui: 220ms;
+  --dur-scene: 620ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+
+  /* Stage: every scene is authored against the film's 1280x720 frame. */
+  --stage-aspect: 16 / 9;
+  --measure: 68ch;
 }
 
 @layer base {
@@ -90,11 +102,16 @@
     border-color: var(--color-border);
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
   h1,
@@ -109,19 +126,21 @@
     background: var(--neon-magenta);
     color: var(--ink);
   }
+
+  /* One focus treatment everywhere. Light core plus dark halo so the ring
+     survives on both the flat page and a busy photographic plate. */
+  :focus-visible {
+    outline: 2px solid var(--foreground);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 5px oklch(0.12 0.026 265 / 0.9);
+    border-radius: 2px;
+  }
 }
 
 @utility text-gradient-neon {
   background-image: var(--grad-neon);
   background-clip: text;
   color: transparent;
-}
-
-@utility rule-neon {
-  background-image: var(--grad-neon);
-  height: 1px;
-  width: 100%;
-  opacity: 0.55;
 }
 
 @utility eyebrow {
@@ -132,89 +151,1650 @@
   color: var(--muted-foreground);
 }
 
-/* Hologram hotspots */
-.holo {
-  --holo-color: var(--neon-cyan);
-  --holo-glow: var(--glow-cyan);
+@utility measure {
+  max-width: var(--measure);
+}
+
+/* Accent channel. Set `data-accent` on any ancestor and children pick it up. */
+[data-accent="cyan"] {
+  --accent-hue: var(--neon-cyan);
+}
+[data-accent="magenta"] {
+  --accent-hue: var(--neon-magenta);
+}
+[data-accent="violet"] {
+  --accent-hue: var(--neon-violet);
+}
+
+/* ------------------------------------------------------------------ *
+ * Skip link
+ * ------------------------------------------------------------------ */
+
+.skip-link {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 100;
+  transform: translateY(-160%);
+  padding: 0.6rem 1rem;
+  background: var(--foreground);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  transition: transform var(--dur-ui) var(--ease-out);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+/* ------------------------------------------------------------------ *
+ * The hub and its signboards.
+ *
+ * One set of markup, two layouts. On a wide viewport the four signs are
+ * absolutely positioned onto the billboards in the plate; on a phone the
+ * plate becomes a lit backdrop and the same four elements stack as cards.
+ * Same DOM either way — duplicating the list for mobile would double the
+ * focusable elements and give screen readers two copies of the hub.
+ *
+ * Geometry arrives as custom properties on each <li>, measured as
+ * percentages of the film's 1280x720 frame.
+ * ------------------------------------------------------------------ */
+
+.hub {
+  position: relative;
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+  background: var(--ink);
+  isolation: isolate;
+}
+
+.hub-plate {
   position: absolute;
-  top: 0;
-  left: 0;
-  transform-origin: center;
-  will-change: transform, opacity;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
-.holo[data-accent="magenta"] {
-  --holo-color: var(--neon-magenta);
-  --holo-glow: var(--glow-magenta);
+/* Narrow viewports darken the plate so stacked cards stay legible over it. */
+.hub-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    180deg,
+    oklch(0.12 0.026 265 / 0.55) 0%,
+    oklch(0.12 0.026 265 / 0.86) 55%,
+    oklch(0.12 0.026 265 / 0.94) 100%
+  );
 }
 
-.holo[data-accent="violet"] {
-  --holo-color: var(--neon-violet);
-  --holo-glow: var(--glow-violet);
+.hub-signs {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1.25rem 1.25rem 2rem;
+  margin: 0;
+  list-style: none;
 }
 
-.holo-panel {
+.sign {
   position: relative;
   display: block;
-  min-width: 9.5rem;
-  padding: 0.7rem 1rem;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
   text-align: left;
-  border: 1px solid color-mix(in oklab, var(--holo-color) 70%, transparent);
-  background: color-mix(in oklab, var(--holo-color) 12%, oklch(0.14 0.03 275 / 0.55));
-  box-shadow: var(--holo-glow);
-  backdrop-filter: blur(2px);
-  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%);
   transition:
-    transform 0.18s ease,
-    background 0.18s ease;
+    filter var(--dur-ui) var(--ease-out),
+    transform var(--dur-ui) var(--ease-out);
 }
 
-.holo-panel:hover,
-.holo-panel:focus-visible {
-  transform: scale(1.12);
-  background: color-mix(in oklab, var(--holo-color) 26%, oklch(0.14 0.03 275 / 0.55));
-  outline: none;
+.sign-face {
+  position: relative;
+  display: flex;
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.2rem;
+  overflow: hidden;
+  min-height: 4.25rem;
+  padding: 0.9rem 1.05rem;
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--accent-hue) 24%, oklch(0.16 0.03 265 / 0.82));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 62%, transparent),
+    0 0 26px color-mix(in oklab, var(--accent-hue) 28%, transparent);
+  transition: background var(--dur-ui) var(--ease-out);
 }
 
-.holo-panel::after {
+/* Panel scanlines, matched to the film's screen texture. */
+.sign-face::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    color-mix(in oklab, var(--holo-color) 20%, transparent) 0 1px,
-    transparent 1px 4px
-  );
-  opacity: 0.5;
-  pointer-events: none;
+  background: repeating-linear-gradient(0deg, oklch(1 0 0 / 0.08) 0 1px, transparent 1px 3px);
   mix-blend-mode: screen;
+  pointer-events: none;
 }
 
-.holo-name {
+.sign-label {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 0.95rem;
-  line-height: 1.1;
-  color: var(--foreground);
-  text-shadow: 0 0 12px color-mix(in oklab, var(--holo-color) 80%, transparent);
+  font-size: 1.15rem;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  color: oklch(0.99 0 0);
+  text-shadow: 0 0 14px color-mix(in oklab, var(--accent-hue) 85%, transparent);
+  text-wrap: balance;
 }
 
-.holo-meta {
-  font-size: 0.65rem;
-  letter-spacing: 0.14em;
+.sign-blurb {
+  font-size: 0.82rem;
+  line-height: 1.3;
+  color: oklch(0.99 0 0 / 0.84);
+  text-wrap: balance;
+}
+
+.sign:hover .sign-face,
+.sign:focus-visible .sign-face {
+  background: color-mix(in oklab, var(--accent-hue) 36%, oklch(0.16 0.03 265 / 0.82));
+}
+
+.sign:focus-visible {
+  outline: 2px solid oklch(0.99 0 0);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 7px oklch(0.12 0.026 265 / 0.92);
+  border-radius: var(--radius-md);
+}
+
+.sign:active {
+  transform: scale(0.99);
+}
+
+/* -- Stage layout ------------------------------------------------- *
+ * Only wide-and-tall-enough viewports get the billboards. Below this the
+ * 16:9 frame collapses to a band a couple of centimetres deep and the
+ * signage would be both unreadable and untappable.
+ */
+@media (min-width: 48rem) and (min-aspect-ratio: 5 / 4) {
+  .hub {
+    justify-content: center;
+    min-height: 100dvh;
+    background:
+      radial-gradient(120% 90% at 50% 45%, oklch(0.19 0.038 265 / 0.6), transparent 70%),
+      var(--ink);
+  }
+
+  /* Aspect-locked so hotspot percentages stay welded to the billboards. */
+  .hub-stage {
+    position: relative;
+    width: 100%;
+    max-width: calc(100dvh * 16 / 9);
+    aspect-ratio: 16 / 9;
+    margin-inline: auto;
+    overflow: hidden;
+    container-type: inline-size;
+  }
+
+    .hub-scrim {
+    background: linear-gradient(
+      180deg,
+      oklch(0.12 0.026 265 / 0.22) 0%,
+      transparent 30%,
+      transparent 70%,
+      oklch(0.12 0.026 265 / 0.35) 100%
+    );
+    z-index: 1;
+  }
+
+  .hub-signs {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: block;
+    padding: 0;
+  }
+
+  .hub-signs > li {
+    position: absolute;
+    left: calc(var(--sign-left) * 1%);
+    top: calc(var(--sign-top) * 1%);
+    width: calc(var(--sign-width) * 1%);
+    height: calc(var(--sign-height) * 1%);
+  }
+
+  .sign {
+    position: absolute;
+    inset: 0;
+    transform: skewY(var(--sign-skew, 0deg));
+    will-change: transform, filter;
+  }
+
+  /* Expanded pointer target. The Meet the Team banner is only ~31px tall on
+     a 1200px stage, so the panel alone would be a mean target even though it
+     clears the 24px WCAG 2.5.8 minimum. */
+  .sign::before {
+    content: "";
+    position: absolute;
+    inset: -14px -10px;
+    min-height: 44px;
+    border-radius: 6px;
+  }
+
+  .sign-face {
+    align-items: center;
+    justify-content: center;
+    gap: 0.15em;
+    min-height: 0;
+    padding: 4% 6%;
+    text-align: center;
+    border-radius: 1px;
+    background: color-mix(in oklab, var(--accent-hue) 30%, oklch(0.16 0.03 265 / 0.5));
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 65%, transparent),
+      0 0 22px color-mix(in oklab, var(--accent-hue) 40%, transparent),
+      0 0 64px color-mix(in oklab, var(--accent-hue) 22%, transparent);
+    /* Idle breath, so the signs read as interactive before the pointer
+       arrives. Container units keep type sized to the stage, not the window. */
+    animation: sign-breathe 5.5s var(--ease-out) infinite;
+  }
+
+  .sign-label {
+    font-size: clamp(0.6rem, 2.1cqi, 1.7rem);
+  }
+
+  .sign-blurb {
+    font-size: clamp(0.44rem, 1.05cqi, 0.82rem);
+  }
+
+  /* The banner over the storefronts is barely 4.5% of the frame tall, so its
+     label has to stay on one line and the blurb has to go. */
+  .sign[data-compact="true"] .sign-face {
+    padding: 2% 5%;
+  }
+
+  .sign[data-compact="true"] .sign-label {
+    font-size: clamp(0.5rem, 1.35cqi, 1.05rem);
+    white-space: nowrap;
+  }
+
+  .sign[data-compact="true"] .sign-blurb {
+    display: none;
+  }
+
+  /* The tall blade sign runs its label vertically and drops the blurb. */
+  .sign[data-vertical="true"] .sign-face {
+    flex-direction: row;
+    padding: 8% 4%;
+  }
+
+  .sign[data-vertical="true"] .sign-label {
+    writing-mode: vertical-rl;
+    font-size: clamp(0.6rem, 1.7cqi, 1.3rem);
+    letter-spacing: 0.08em;
+  }
+
+  .sign[data-vertical="true"] .sign-blurb {
+    display: none;
+  }
+
+  .sign:hover,
+  .sign:focus-visible {
+    transform: skewY(var(--sign-skew, 0deg)) scale(1.055);
+    filter: brightness(1.3) saturate(1.1);
+  }
+
+  .sign:hover .sign-face,
+  .sign:focus-visible .sign-face {
+    animation: none;
+  }
+
+  .sign:active {
+    transform: skewY(var(--sign-skew, 0deg)) scale(0.985);
+  }
+}
+
+@keyframes sign-breathe {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.09);
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Ambient loops — diegetic atmosphere, never interactive.
+ *
+ * These are CSS rather than looping video: they are interface effects
+ * dressed as scene content, so a clip would cost bandwidth and sync
+ * trouble for something a keyframe does deterministically and for free.
+ * Only shown in stage layout, where the plate is actually visible.
+ * ------------------------------------------------------------------ */
+
+.ambient {
+  display: none;
+}
+
+@media (min-width: 48rem) and (min-aspect-ratio: 5 / 4) {
+  .ambient {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    overflow: hidden;
+  }
+}
+
+/* A sign across the junction with a failing ballast. */
+.ambient-flicker {
+  position: absolute;
+  background: color-mix(in oklab, var(--neon-magenta) 60%, transparent);
+  mix-blend-mode: screen;
+  filter: blur(1.5px);
+  animation: flicker 7s steps(1, end) infinite;
+}
+
+@keyframes flicker {
+  0%,
+  40%,
+  44%,
+  100% {
+    opacity: 0.45;
+  }
+  41%,
+  43% {
+    opacity: 0.05;
+  }
+  42% {
+    opacity: 0.7;
+  }
+  70%,
+  72% {
+    opacity: 0.1;
+  }
+  71% {
+    opacity: 0.55;
+  }
+}
+
+/* Headlights crossing the junction, well behind the signage. */
+.ambient-pass {
+  position: absolute;
+  left: -14%;
+  height: 1.5%;
+  width: 11%;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    oklch(0.97 0.06 95 / 0.72),
+    oklch(0.97 0.06 95 / 0.18),
+    transparent
+  );
+  filter: blur(2px);
+  mix-blend-mode: screen;
+  animation: pass-by 13s linear infinite;
+}
+
+@keyframes pass-by {
+  0%,
+  62% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  64% {
+    opacity: 0.85;
+  }
+  96% {
+    transform: translate3d(880%, 0, 0);
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate3d(940%, 0, 0);
+    opacity: 0;
+  }
+}
+
+/* A drone running the canyon, high and slow. */
+.ambient-drone {
+  position: absolute;
+  height: 0.55%;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: oklch(0.95 0.16 25);
+  box-shadow: 0 0 10px 2px oklch(0.85 0.2 25 / 0.7);
+  animation: drone-track 19s linear infinite;
+}
+
+@keyframes drone-track {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  8%,
+  88% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translate3d(-2200%, -240%, 0);
+    opacity: 0;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Phase-through transition
+ *
+ * The outgoing plate flies toward the sign that was clicked and blurs out,
+ * so the cut reads as passing through the signboard rather than a page swap.
+ * ------------------------------------------------------------------ */
+
+.phase-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--ink);
+  animation: phase-veil-out var(--dur-scene) var(--ease-in) forwards;
+}
+
+.phase-veil img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: var(--phase-x, 50%) var(--phase-y, 50%);
+  animation: phase-plate-out var(--dur-scene) var(--ease-in) forwards;
+}
+
+@keyframes phase-plate-out {
+  from {
+    transform: scale(1);
+    filter: blur(0) brightness(1);
+  }
+  to {
+    transform: scale(2.7);
+    filter: blur(16px) brightness(1.45);
+  }
+}
+
+@keyframes phase-veil-out {
+  0%,
+  62% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.phase-enter {
+  animation: phase-enter var(--dur-scene) var(--ease-out) both;
+}
+
+@keyframes phase-enter {
+  from {
+    opacity: 0;
+    transform: scale(1.03);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Interiors — shared room chrome.
+ *
+ * Every interior is the same room seen from the same seat: a window onto the
+ * city, a lit console surface, a neon rim along the ceiling line. Only the
+ * console content changes. Building all four from one shell is what keeps
+ * them a single system, and means a layout or contrast fix lands in every
+ * room at once.
+ * ------------------------------------------------------------------ */
+
+.room {
+  position: relative;
+  min-height: 100dvh;
+  overflow: hidden;
+  background:
+    radial-gradient(90% 55% at 50% 0%, color-mix(in oklab, var(--accent-hue) 14%, transparent), transparent 70%),
+    var(--ink);
+  isolation: isolate;
+}
+
+/* The window. Its view is a real frame of the descent, so the interior sits
+   in the same city the visitor just fell through. */
+.room-window {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 44vh;
+  min-height: 220px;
+  z-index: -2;
+  overflow: hidden;
+  mask-image: linear-gradient(180deg, oklch(0 0 0) 50%, transparent);
+}
+
+.room-window img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Low enough that the headline sitting over it clears AA contrast without
+     a second scrim. The view is atmosphere, not an image to read. */
+  opacity: 0.28;
+  filter: saturate(0.8) blur(1px);
+}
+
+/* Glazing. Mullions are drawn only across the lower band of the window, so
+   they never cut through the headline sitting over the top of it. */
+.room-window::after {
+  content: "";
+  position: absolute;
+  inset: 55% 0 0;
+  background:
+    linear-gradient(90deg, transparent 33.3%, oklch(0.1 0.02 265 / 0.5) 33.3% 33.9%, transparent 33.9%),
+    linear-gradient(90deg, transparent 66.3%, oklch(0.1 0.02 265 / 0.5) 66.3% 66.9%, transparent 66.9%);
+}
+
+/* Accent wash along the window sill. A hairline rule was tried here first and
+   cut straight through the first row of content in three of the four rooms;
+   a soft gradient carries the same accent without drawing a line anywhere. */
+.room-rim {
+  position: absolute;
+  inset-inline: 0;
+  top: 30vh;
+  height: 28vh;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    60% 100% at 50% 100%,
+    color-mix(in oklab, var(--accent-hue) 20%, transparent),
+    transparent 70%
+  );
+}
+
+.room-body {
+  position: relative;
+  margin-inline: auto;
+  max-width: 76rem;
+  padding: 5.5rem 1.25rem 6rem;
+}
+
+.room-header {
+  margin-bottom: 2.5rem;
+}
+
+.room-title {
+  margin: 0.5rem 0 0;
+  font-size: clamp(2.25rem, 7vw, 4rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.room-lead {
+  margin: 1rem 0 0;
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: var(--muted-foreground);
+  text-wrap: pretty;
+}
+
+.room-subhead {
+  margin: 0 0 1.25rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.room-notes {
+  margin-top: 3.5rem;
+}
+
+.room-notice {
+  margin: 0 0 1.5rem;
+}
+
+/* ---- Console screens --------------------------------------------- */
+
+.screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  overflow: hidden;
+  width: 100%;
+  text-align: left;
+  padding: 1.15rem 1.25rem 1.25rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  color: inherit;
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--accent-hue) 16%, transparent), transparent 58%),
+    oklch(0.185 0.032 267 / 0.92);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 42%, transparent),
+    0 18px 40px -26px oklch(0 0 0 / 0.9);
+  transition:
+    transform var(--dur-ui) var(--ease-out),
+    box-shadow var(--dur-ui) var(--ease-out);
+}
+
+button.screen,
+a.screen {
+  cursor: pointer;
+}
+
+.screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, oklch(1 0 0 / 0.04) 0 1px, transparent 1px 3px);
+}
+
+a.screen:hover,
+button.screen:hover,
+a.screen:focus-visible,
+button.screen:focus-visible {
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 80%, transparent),
+    0 0 30px color-mix(in oklab, var(--accent-hue) 30%, transparent),
+    0 22px 46px -26px oklch(0 0 0 / 0.9);
+}
+
+a.screen:active,
+button.screen:active {
+  transform: translateY(-1px);
+}
+
+.screen-index {
+  font-family: var(--font-display);
+  font-size: 0.66rem;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: color-mix(in oklab, var(--holo-color) 85%, white);
+  color: color-mix(in oklab, var(--accent-hue) 78%, white);
+}
+
+.screen-title {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.screen-tagline {
+  font-size: 0.94rem;
+  color: color-mix(in oklab, var(--accent-hue) 55%, var(--foreground));
+}
+
+.screen-team {
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.screen-more {
+  margin-top: 0.35rem;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: color-mix(in oklab, var(--accent-hue) 70%, white);
+}
+
+.screen-grid {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
+  align-items: start;
+}
+
+.screen-panel {
+  padding: 1.1rem 1.25rem 1.25rem;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: oklch(0.155 0.03 265 / 0.9);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.screen-body {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+  text-wrap: pretty;
+}
+
+.screen-format-title {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--accent-hue) 78%, white);
+}
+
+.screen-format {
+  margin: 0 0 1.15rem;
+  padding-left: 1.05rem;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--muted-foreground);
+}
+
+.screen-format li + li {
+  margin-top: 0.3rem;
+}
+
+/* ---- The registration terminal ------------------------------------ */
+
+.console {
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: oklch(0.185 0.032 267 / 0.92);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 45%, transparent),
+    0 30px 70px -40px oklch(0 0 0 / 0.95);
+}
+
+.console-readout {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1rem;
+  font-family: var(--font-display);
+  font-size: 0.68rem;
+  letter-spacing: 0.26em;
+  color: color-mix(in oklab, var(--accent-hue) 80%, white);
+  background: oklch(0.13 0.026 265 / 0.85);
+  box-shadow: inset 0 -1px 0 var(--border);
+}
+
+.console-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--accent-hue);
+  box-shadow: 0 0 10px 2px color-mix(in oklab, var(--accent-hue) 70%, transparent);
+  animation: console-pulse 2.4s var(--ease-out) infinite;
+}
+
+@keyframes console-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.console-face {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: clamp(1.75rem, 4vw, 2.75rem) clamp(1.25rem, 5vw, 2.5rem);
+  background:
+    radial-gradient(90% 130% at 50% 0%, color-mix(in oklab, var(--accent-hue) 22%, transparent), transparent 65%);
+  transition: background var(--dur-ui) var(--ease-out);
+}
+
+.console-face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, oklch(1 0 0 / 0.05) 0 1px, transparent 1px 3px);
+}
+
+.console-face:hover,
+.console-face:focus-visible {
+  background:
+    radial-gradient(90% 130% at 50% 0%, color-mix(in oklab, var(--accent-hue) 34%, transparent), transparent 65%);
+}
+
+.console-kicker {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--accent-hue) 78%, white);
+}
+
+.console-title {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 6vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  text-shadow: 0 0 40px color-mix(in oklab, var(--accent-hue) 55%, transparent);
+}
+
+.console-sub {
+  font-size: 0.92rem;
+  color: var(--muted-foreground);
+}
+
+.notes-grid {
+  display: grid;
+  gap: 1.5rem 2rem;
+  margin: 0;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+}
+
+.notes-grid dt {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--accent-hue) 75%, white);
+}
+
+.notes-grid dd {
+  margin: 0.5rem 0 0;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+  text-wrap: pretty;
+}
+
+/* ---- The crew wall ------------------------------------------------- */
+
+.frame-wall {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+}
+
+.frame {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0.85rem;
+  border-radius: var(--radius-md);
+  background: oklch(0.185 0.032 267 / 0.85);
+  box-shadow:
+    inset 0 0 0 1px var(--border),
+    0 16px 34px -26px oklch(0 0 0 / 0.9);
+}
+
+.frame {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.frame-plate {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(150deg, color-mix(in oklab, var(--accent-hue) 30%, transparent), transparent 65%),
+    oklch(0.145 0.028 265);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 30%, transparent);
+}
+
+.frame-initial {
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--accent-hue) 45%, transparent);
+  box-shadow: 0 0.7rem 0 -0.15rem color-mix(in oklab, var(--accent-hue) 45%, transparent);
+  opacity: 0.5;
+}
+
+.frame figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.frame-role {
+  order: -1;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.frame-name {
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+}
+
+/* ---- The archive wall ---------------------------------------------- */
+
+.archive-wall {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+}
+
+.archive-link {
+  gap: 0.6rem;
+  min-height: 11rem;
+  justify-content: flex-start;
+}
+
+.archive-go {
+  margin-top: auto;
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: color-mix(in oklab, var(--accent-hue) 72%, white);
+}
+
+/* Exit affordance, fixed so it is reachable from anywhere in a long room. */
+.exit {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.95rem;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--foreground);
+  background: oklch(0.14 0.028 265 / 0.84);
+  box-shadow: inset 0 0 0 1px var(--border);
+  backdrop-filter: blur(8px);
+  transition: background var(--dur-ui) var(--ease-out);
+}
+
+.exit:hover,
+.exit:focus-visible {
+  background: oklch(0.24 0.036 267 / 0.92);
+}
+
+/* ------------------------------------------------------------------ *
+ * Buttons
+ * ------------------------------------------------------------------ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.65rem 1.25rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition:
+    background var(--dur-ui) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.btn:active {
+  transform: scale(0.985);
+}
+
+.btn-accent {
+  color: oklch(0.13 0.026 265);
+  background: var(--accent-hue, var(--neon-cyan));
+  box-shadow: 0 0 26px color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 40%, transparent);
+}
+
+.btn-accent:hover,
+.btn-accent:focus-visible {
+  background: color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 82%, white);
+}
+
+.btn-ghost {
+  color: var(--foreground);
+  background: oklch(0.22 0.035 267 / 0.7);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.btn-ghost:hover,
+.btn-ghost:focus-visible {
+  background: oklch(0.28 0.04 267 / 0.85);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* ------------------------------------------------------------------ *
+ * Conventional pages — the calm register.
+ *
+ * Deliberately the opposite of the scenes: one column, a real reading
+ * measure, no plate behind the text. Someone checking what to bring at 11pm
+ * the night before the fest needs the answer, not atmosphere.
+ * ------------------------------------------------------------------ */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.page {
+  position: relative;
+  min-height: 70dvh;
+  padding: 6.5rem 1.25rem 5rem;
+  background:
+    radial-gradient(80% 40% at 50% 0%, oklch(0.22 0.04 265 / 0.5), transparent 70%),
+    var(--background);
+}
+
+.page-inner {
+  margin-inline: auto;
+  max-width: 52rem;
+}
+
+.page-header {
+  margin-bottom: 2.75rem;
+}
+
+.page-title {
+  margin: 0.5rem 0 0;
+  font-size: clamp(2.25rem, 7vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.page-lede {
+  margin: 1rem 0 0;
+  max-width: var(--measure);
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: var(--muted-foreground);
+  text-wrap: pretty;
+}
+
+.page-subhead {
+  margin: 0 0 1.25rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.prose-quantum p {
+  margin: 0;
+  line-height: 1.75;
+  color: var(--muted-foreground);
+  text-wrap: pretty;
+}
+
+.prose-quantum p + p {
+  margin-top: 1.2rem;
+}
+
+.notice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin: 0 0 2rem;
+  padding: 1rem 1.15rem;
+  border-radius: var(--radius-md);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+  background: oklch(0.2 0.035 267 / 0.8);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+/* Inside a frame the pending name is stated quietly: the summary count above
+   the wall already makes the gap unmissable, and eight red boxes bury the
+   roles, which are the real content until the roster lands. */
+.frame .todo {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted-foreground);
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 0.78rem;
+}
+
+.frame .todo > [aria-hidden] {
+  color: color-mix(in oklab, var(--destructive) 35%, var(--foreground));
+}
+
+/* Marks a value the organisers have not supplied yet. Visible on purpose:
+   a missing phone number should look missing, not look like a phone number. */
+.todo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-sm);
+  border: 1px dashed color-mix(in oklab, var(--destructive) 65%, transparent);
+  background: color-mix(in oklab, var(--destructive) 14%, transparent);
+  color: color-mix(in oklab, var(--destructive) 22%, var(--foreground));
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+/* ---- About --------------------------------------------------------- */
+
+.about-events {
+  margin-top: 3.5rem;
+}
+
+.about-list {
+  margin: 0 0 1.75rem;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+}
+
+.about-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  background: oklch(0.2 0.035 267 / 0.7);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.about-list-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.about-list-note {
+  font-size: 0.86rem;
+  color: var(--muted-foreground);
+}
+
+/* ---- FAQ ------------------------------------------------------------ */
+
+.faq {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--border);
+}
+
+.faq-item {
+  border-bottom: 1px solid var(--border);
+}
+
+.faq h2 {
+  margin: 0;
+}
+
+.faq-trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  min-height: 3.5rem;
+  padding: 1.1rem 0.25rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-wrap: balance;
+  transition: color var(--dur-ui) var(--ease-out);
+}
+
+.faq-trigger:hover,
+.faq-trigger:focus-visible {
+  color: var(--neon-cyan);
+}
+
+.faq-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  font-size: 1.1rem;
+  color: var(--neon-cyan);
+  background: oklch(0.24 0.04 267 / 0.8);
+}
+
+.faq-panel {
+  padding: 0 0.25rem 1.35rem;
+}
+
+.faq-panel p {
+  margin: 0;
+  max-width: var(--measure);
+  line-height: 1.7;
+  color: var(--muted-foreground);
+  text-wrap: pretty;
+}
+
+/* ---- Contact -------------------------------------------------------- */
+
+.contact-list {
+  display: grid;
+  gap: 1.5rem;
+  margin: 0;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+}
+
+.contact-list dt {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.contact-list dd {
+  margin: 0.5rem 0 0;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.contact-list a {
+  color: var(--neon-cyan);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ---- Form ----------------------------------------------------------- */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  max-width: 34rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.field label {
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.field-required {
+  color: var(--destructive);
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.85rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-size: 1rem; /* 16px stops iOS Safari zooming on focus. */
+  color: var(--foreground);
+  background: oklch(0.2 0.035 267 / 0.9);
+  box-shadow: inset 0 0 0 1px var(--input);
+  transition: box-shadow var(--dur-ui) var(--ease-out);
+}
+
+.field textarea {
+  min-height: 6rem;
+  resize: vertical;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: oklch(0.62 0.025 265);
+}
+
+.field input:hover,
+.field select:hover,
+.field textarea:hover {
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.3);
+}
+
+.field [aria-invalid="true"] {
+  box-shadow: inset 0 0 0 2px var(--destructive);
+}
+
+.field-hint {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--muted-foreground);
+}
+
+.field-error {
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: color-mix(in oklab, var(--destructive) 30%, var(--foreground));
+}
+
+.form-summary {
+  padding: 1rem 1.15rem;
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--destructive) 14%, oklch(0.2 0.035 267));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--destructive) 55%, transparent);
+}
+
+.form-summary-title {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.form-summary ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.form-summary a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  box-shadow: none;
+}
+
+/* ---- Footer --------------------------------------------------------- */
+
+.site-footer {
+  padding: 3rem 1.25rem 3.5rem;
+  border-top: 1px solid var(--border);
+  background: var(--ink);
+}
+
+.footer-grid {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+}
+
+.footer-mark {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.footer-school {
+  margin: 0.25rem 0 0;
+  font-size: 0.86rem;
+  color: var(--muted-foreground);
+}
+
+.footer-heading {
+  margin: 0 0 0.6rem;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.footer-line {
+  margin: 0 0 0.5rem;
+  font-size: 0.88rem;
+}
+
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+}
+
+.footer-links a {
+  color: var(--muted-foreground);
+  transition: color var(--dur-ui) var(--ease-out);
+}
+
+.footer-links a:hover,
+.footer-links a:focus-visible {
+  color: var(--foreground);
+}
+
+/* ------------------------------------------------------------------ *
+ * The descent.
+ *
+ * Section height and pinning live here rather than in JS so the page does
+ * not reflow on hydration: the server renders the same markup for every
+ * viewport and CSS decides whether it is a 6-screen pinned scrub or an
+ * ordinary hero.
+ * ------------------------------------------------------------------ */
+
+.descent {
+  position: relative;
+  height: auto;
+}
+
+.descent-pin {
+  position: relative;
+}
+
+.descent-film {
+  z-index: -3;
+  background: var(--ink);
+}
+
+/* Sits with the film, under the scrim, so the signs and title stay on top
+   in both layouts. */
+.descent-plate {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+}
+
+.descent-title {
+  position: absolute;
+  z-index: 2;
+  inset-inline: 0;
+  top: 11%;
+  padding-inline: 1.25rem;
+  text-align: center;
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+.descent-title h1 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  font-weight: 700;
+  /* 0.92 rather than a tighter figure: QUANTUM has no descenders but V2.0's
+     numerals sit on a different optical line, and anything under 0.9 makes
+     the two words collide. */
+  line-height: 0.92;
+  font-size: clamp(2.5rem, 16vw, 5.5rem);
+  text-transform: uppercase;
+}
+
+.descent-title-word {
+  display: block;
+  letter-spacing: -0.02em;
+  filter: drop-shadow(0 0 34px oklch(0.84 0.13 215 / 0.45));
+}
+
+/* The edition line is the shorter of the two, so it carries the tracking
+   that stops the lockup reading as an accident of word length. */
+.descent-title-word + .descent-title-word {
+  letter-spacing: 0.1em;
+  text-indent: 0.1em;
+}
+
+.descent-title-school {
+  margin-top: 1.15rem;
+  font-family: var(--font-display);
+  font-size: clamp(0.65rem, 2.4vw, 0.95rem);
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: oklch(0.99 0 0 / 0.85);
+  text-wrap: balance;
+}
+
+.descent-controls {
+  position: absolute;
+  z-index: 4;
+  inset-inline: 0;
+  bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  padding-inline: 1.25rem;
+}
+
+.descent-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.95rem;
+  border-radius: 999px;
+  background: oklch(0.12 0.026 265 / 0.72);
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.14);
+  backdrop-filter: blur(10px);
+}
+
+.descent-skip {
+  min-height: 2.75rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--foreground);
+  background: oklch(0.14 0.028 265 / 0.78);
+  box-shadow: inset 0 0 0 1px var(--border);
+  backdrop-filter: blur(8px);
+  transition: background var(--dur-ui) var(--ease-out);
+}
+
+.descent-skip:hover,
+.descent-skip:focus-visible {
+  background: oklch(0.24 0.036 267 / 0.9);
+}
+
+.descent-hint {
+  margin: 0;
+  line-height: 1;
+}
+
+/* Loading status gets the same ground as the hint, for the same reason. */
+.descent-loading {
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  background: oklch(0.12 0.026 265 / 0.6);
+  backdrop-filter: blur(8px);
+}
+
+.descent-hint .eyebrow {
+  color: oklch(0.96 0.008 265 / 0.9);
+}
+
+.descent-hint .scroll-hint {
+  display: block;
+  font-size: 0.95rem;
+  line-height: 1;
+  color: var(--neon-cyan);
+}
+
+.descent-loading {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: oklch(0.96 0.008 265 / 0.75);
 }
 
 @keyframes scan-hint {
   0%,
   100% {
     transform: translateY(0);
-    opacity: 0.8;
+    opacity: 0.85;
   }
   50% {
     transform: translateY(7px);
-    opacity: 0.35;
+    opacity: 0.3;
   }
 }
 
@@ -222,9 +1802,156 @@
   animation: scan-hint 1.9s ease-in-out infinite;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .scroll-hint {
-    animation: none;
+/* Pinned scrub, wide viewports only. */
+@media (min-width: 48rem) and (min-aspect-ratio: 5 / 4) {
+  .descent {
+    height: 620vh;
+  }
+
+  .descent-pin {
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .descent-pin .hub {
+    min-height: 100dvh;
+    height: 100dvh;
+  }
+
+  /* Clear of the moon, over the sky-to-skyline transition, with the beam
+     running behind it. */
+  .descent-title {
+    top: 40%;
+  }
+
+  .descent-title h1 {
+    font-size: clamp(3rem, 13cqi, 10rem);
+  }
+
+  .descent-title-school {
+    font-size: clamp(0.7rem, 1.5cqi, 1rem);
+  }
+
+  /* Lit by the scrub loop as the camera settles. Defaults to 1 so the hub is
+     usable if JS never runs. */
+  .descent-pin .hub-signs {
+    opacity: var(--reveal, 1);
+    transition: opacity var(--dur-ui) linear;
+  }
+
+  /* The ambient fixtures are positioned against the crossroads frame, so
+     during the aerial and canyon beats they would be floating in open sky.
+     They arrive with the plate they belong to. */
+  .descent-pin .ambient {
+    opacity: var(--reveal, 1);
   }
 }
 
+/* Reduced motion drops the pin entirely: the film is replaced by its poster
+   and the hub sits directly beneath, as an ordinary page. A film that failed
+   to decode takes exactly the same path — six screens of scroll against a
+   frozen poster is the one outcome worse than no descent at all. */
+@media (prefers-reduced-motion: reduce) {
+  .descent {
+    height: auto;
+  }
+
+  .descent-pin {
+    position: relative;
+    height: auto;
+  }
+
+  .descent-pin .hub {
+    height: auto;
+  }
+
+  .descent-pin .hub-signs {
+    opacity: 1;
+  }
+}
+
+.descent[data-film="failed"] {
+  height: auto;
+}
+
+.descent[data-film="failed"] .descent-pin {
+  position: relative;
+  height: auto;
+}
+
+.descent[data-film="failed"] .descent-pin .hub {
+  height: auto;
+}
+
+.descent[data-film="failed"] .descent-pin .hub-signs,
+.descent[data-film="failed"] .descent-pin .ambient {
+  opacity: 1;
+}
+
+.descent[data-film="failed"] .descent-film {
+  display: none;
+}
+
+/* ------------------------------------------------------------------ *
+ * Reduced motion.
+ *
+ * Ambient loops stop entirely, the phase-through becomes a plain fade, and
+ * the scroll-scrubbed descent is replaced upstream by a still. Nothing here
+ * removes a state the visitor needs — only the movement between states.
+ * ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .ambient {
+    display: none;
+  }
+
+  .sign-face,
+  .scroll-hint {
+    animation: none !important;
+  }
+
+  .sign:hover,
+  .sign:focus-visible {
+    transform: skewY(var(--sign-skew, 0deg));
+  }
+
+  .phase-veil img {
+    animation: none;
+  }
+
+  .phase-veil {
+    animation: phase-veil-out 180ms linear forwards;
+  }
+
+  .phase-enter {
+    animation: phase-fade-in 180ms linear both;
+  }
+
+  @keyframes phase-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  a.screen:hover,
+  button.screen:hover,
+  a.screen:focus-visible,
+  button.screen:focus-visible {
+    transform: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+}

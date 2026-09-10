@@ -11,6 +11,9 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { PhaseProvider } from "@/components/scene/PhaseTransition";
+import { SkipLink } from "@/components/site/Bits";
+import { fest, school } from "@/data/quantum";
 
 function NotFoundComponent() {
   return (
@@ -77,8 +80,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Quantum V2.0" },
-      { name: "description", content: "Inter-school tech & culture fest at A.F.S. Bal Bharati School." },
+      { title: `${fest.fullName} — ${fest.kind}` },
+      {
+        name: "description",
+        content: `${fest.kind} at ${school.name}, ${school.city}.`,
+      },
+      { name: "theme-color", content: "#12131f" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -122,8 +129,11 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <PhaseProvider>
+        <SkipLink />
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+      </PhaseProvider>
     </QueryClientProvider>
   );
 }

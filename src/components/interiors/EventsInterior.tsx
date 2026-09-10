@@ -2,6 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Route } from "@/routes/events";
 import { InteriorShell } from "@/components/interiors/InteriorShell";
+import { Reveal } from "@/components/scene/Reveal";
 import { events, getScene } from "@/data/quantum";
 
 /**
@@ -57,7 +58,7 @@ export function EventsInterior() {
         {events.map((event, i) => {
           const isOpen = open === event.id;
           return (
-            <li key={event.id} data-accent={event.accent}>
+            <Reveal as="li" key={event.id} delay={i} data-accent={event.accent}>
               <div className="screen-shell">
                 <button
                   type="button"
@@ -95,12 +96,12 @@ export function EventsInterior() {
                   </Link>
                 </div>
               </div>
-            </li>
+            </Reveal>
           );
         })}
       </ul>
 
-      <section className="room-cta" aria-labelledby="events-cta">
+      <Reveal as="section" className="room-cta" aria-labelledby="events-cta">
         <h2 id="events-cta" className="room-subhead">
           Picked your events?
         </h2>
@@ -116,7 +117,7 @@ export function EventsInterior() {
             Read the FAQ first
           </Link>
         </div>
-      </section>
+      </Reveal>
     </InteriorShell>
   );
 }

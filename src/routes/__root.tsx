@@ -149,6 +149,14 @@ function RootShell({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
+        {/* Entrance animations start hidden and are revealed by an observer.
+            Without JS that would leave the page blank, so the hidden state is
+            gated on this flag, set before first paint to avoid a flash. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: 'document.documentElement.dataset.js="on"',
+          }}
+        />
         {children}
         <Scripts />
       </body>

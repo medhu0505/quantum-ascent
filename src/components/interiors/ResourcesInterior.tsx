@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { InteriorShell } from "@/components/interiors/InteriorShell";
+import { Reveal } from "@/components/scene/Reveal";
 import { faqs, getScene } from "@/data/quantum";
 
 /**
@@ -37,7 +38,7 @@ export function ResourcesInterior() {
     >
       <ul className="archive-wall">
         {links.map((link, i) => (
-          <li key={link.to}>
+          <Reveal as="li" key={link.to} delay={i}>
             <Link to={link.to} className="screen archive-link">
               <span className="archive-index">File {String(i + 1).padStart(2, "0")}</span>
               <span className="screen-title">{link.label}</span>
@@ -46,7 +47,7 @@ export function ResourcesInterior() {
                 Open →
               </span>
             </Link>
-          </li>
+          </Reveal>
         ))}
       </ul>
     </InteriorShell>

@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { InteriorShell } from "@/components/interiors/InteriorShell";
+import { Reveal } from "@/components/scene/Reveal";
 import { events, getScene } from "@/data/quantum";
 
 /**
@@ -19,7 +20,7 @@ export function RegisterInterior() {
       scene={scene}
       lead="One form covers every event. Pick your school, name your team, choose what you are entering, and you are on the list."
     >
-      <div className="console">
+      <Reveal className="console">
         <div className="console-readout" aria-hidden="true">
           <span className="console-dot" />
           <span>TERMINAL 01 — INTAKE</span>
@@ -31,9 +32,9 @@ export function RegisterInterior() {
             {events.length} events open · classes 9 to 12 · one form
           </span>
         </Link>
-      </div>
+      </Reveal>
 
-      <section className="room-notes" aria-labelledby="before-you-register">
+      <Reveal as="section" className="room-notes" aria-labelledby="before-you-register" delay={1}>
         <h2 id="before-you-register" className="room-subhead">
           Before you register
         </h2>
@@ -67,7 +68,7 @@ export function RegisterInterior() {
             </dd>
           </div>
         </dl>
-      </section>
+      </Reveal>
     </InteriorShell>
   );
 }

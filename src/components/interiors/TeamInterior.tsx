@@ -1,4 +1,5 @@
 import { InteriorShell } from "@/components/interiors/InteriorShell";
+import { Reveal } from "@/components/scene/Reveal";
 import { Value } from "@/components/site/Bits";
 import { getScene, isTodo, team } from "@/data/quantum";
 
@@ -30,8 +31,8 @@ export function TeamInterior() {
       ) : null}
 
       <ul className="frame-wall">
-        {team.map((member) => (
-          <li key={member.role}>
+        {team.map((member, i) => (
+          <Reveal as="li" key={member.role} delay={i}>
             <figure className="frame">
               <div className="frame-plate" aria-hidden="true">
                 <span className="frame-initial" />
@@ -43,7 +44,7 @@ export function TeamInterior() {
                 <span className="frame-role">{member.role}</span>
               </figcaption>
             </figure>
-          </li>
+          </Reveal>
         ))}
       </ul>
     </InteriorShell>

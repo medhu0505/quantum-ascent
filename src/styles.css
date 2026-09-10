@@ -120,16 +120,96 @@
 
   --grad-neon: linear-gradient(100deg, var(--neon-cyan), var(--neon-violet), var(--neon-magenta));
 
-  /* Motion tokens. Scenes move on the slow pair; UI moves on the fast pair. */
-  --dur-fast: 140ms;
-  --dur-ui: 220ms;
-  --dur-scene: 620ms;
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  /* ---- Type scale -------------------------------------------------- *
+   * A real ratio, not twenty eyeballed values. Small sizes step on 1.15
+   * so meta text stays distinguishable without shouting; display sizes
+   * jump harder because this is a title sequence and the headline has to
+   * carry the drama on its own.
+   */
+  --text-micro: 0.6875rem;
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-base: 1.0625rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: clamp(1.75rem, 1.2rem + 1.8vw, 2.375rem);
+  --text-3xl: clamp(2.25rem, 1.4rem + 3.6vw, 3.75rem);
+  --text-4xl: clamp(2.75rem, 1.5rem + 6vw, 6rem);
+  --text-hero: clamp(3rem, min(23dvh, 13vw), 12rem);
+
+  --leading-tight: 1.05;
+  --leading-snug: 1.25;
+  --leading-normal: 1.6;
+  --leading-loose: 1.75;
+
+  /* Optical tracking. Display type needs negative tracking to hold
+     together; small caps-and-spaced type needs a lot of positive. */
+  --track-display: -0.025em;
+  --track-tight: -0.01em;
+  --track-wide: 0.08em;
+  --track-caps: 0.22em;
+
+  /* ---- Space scale ------------------------------------------------- *
+   * One 4px-rooted rhythm. Every margin and padding in the sheet comes
+   * from here, so vertical rhythm survives contact with new components.
+   */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 3rem;
+  --s-8: 4rem;
+  --s-9: 6rem;
+  --s-10: 8rem;
+
+  /* Fluid page gutter and section rhythm. */
+  --gutter: clamp(1.25rem, 5vw, 3rem);
+  --section: clamp(3rem, 8vw, 6rem);
+
+  /* ---- Elevation --------------------------------------------------- *
+   * Layered and tinted rather than one flat black blur. The light in this
+   * world comes from the signage, so shadows carry a little of the ground's
+   * blue rather than reading as grey.
+   */
+  --elev-1:
+    0 1px 2px oklch(0.05 0.02 265 / 0.5),
+    0 2px 10px -6px oklch(0.05 0.02 265 / 0.6);
+  --elev-2:
+    0 2px 4px oklch(0.05 0.02 265 / 0.45),
+    0 14px 32px -16px oklch(0.04 0.02 265 / 0.8);
+  --elev-3:
+    0 4px 10px oklch(0.05 0.02 265 / 0.5),
+    0 32px 64px -28px oklch(0.03 0.02 265 / 0.9);
+
+  /* Hairlines. Two weights: a structural rule and a lit edge. */
+  --rule: oklch(1 0 0 / 0.1);
+  --rule-strong: oklch(1 0 0 / 0.18);
+
+  /* ---- Motion ------------------------------------------------------ *
+   * One expressive curve used everywhere so the whole site moves with the
+   * same hand. Expo-out: fast commit, long settle — the way the camera in
+   * the film decelerates into the crossroads.
+   */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  --dur-1: 120ms;
+  --dur-2: 240ms;
+  --dur-3: 420ms;
+  --dur-4: 640ms;
+  --dur-5: 900ms;
+
+  /* Kept for existing rules; both resolve into the scale above. */
+  --dur-fast: var(--dur-1);
+  --dur-ui: var(--dur-2);
+  --dur-scene: var(--dur-4);
+  --ease-out: var(--ease);
 
   /* Stage: every scene is authored against the film's 1280x720 frame. */
   --stage-aspect: 16 / 9;
-  --measure: 68ch;
+  --measure: 66ch;
 }
 
 @layer base {
@@ -154,7 +234,19 @@
   h3,
   .font-display {
     font-family: var(--font-display);
-    letter-spacing: -0.01em;
+    letter-spacing: var(--track-tight);
+  }
+
+  /* Display sizes need tighter tracking than headings to hold together. */
+  h1 {
+    letter-spacing: var(--track-display);
+  }
+
+  /* Numerals should not jitter between states. */
+  .facts-value,
+  .screen-index,
+  .archive-index {
+    font-variant-numeric: tabular-nums;
   }
 
   ::selection {
@@ -179,11 +271,13 @@
 }
 
 @utility eyebrow {
+  display: block;
   font-family: var(--font-display);
-  font-size: 0.72rem;
-  letter-spacing: 0.32em;
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-caps);
   text-transform: uppercase;
-  color: var(--muted-foreground);
+  color: color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 55%, var(--muted-foreground));
 }
 
 @utility measure {
@@ -202,6 +296,86 @@
 }
 
 /* ------------------------------------------------------------------ *
+ * Entrance choreography.
+ *
+ * One curve, one distance, one cadence, applied everywhere. The stagger is
+ * carried on --reveal-delay by the component so a group reads in order.
+ * ------------------------------------------------------------------ */
+
+/* Hidden only when scripting is available to reveal it again. */
+:root[data-js="on"] .reveal {
+  opacity: 0;
+  transform: translate3d(0, 14px, 0);
+}
+
+.reveal {
+  transition:
+    opacity var(--dur-4) var(--ease) var(--reveal-delay, 0ms),
+    transform var(--dur-4) var(--ease) var(--reveal-delay, 0ms);
+}
+
+:root[data-js="on"] .reveal[data-shown] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Never leave content stranded if the observer never fires. */
+@media (prefers-reduced-motion: reduce) {
+  :root[data-js="on"] .reveal,
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * The beam — the film's column of light, kept as the site's one mark.
+ * Doubles as reading progress.
+ * ------------------------------------------------------------------ */
+
+.beam {
+  position: fixed;
+  top: 0;
+  left: max(calc(var(--gutter) / 2 - 1px), 10px);
+  bottom: 0;
+  z-index: 30;
+  width: 2px;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, var(--rule) 12%, var(--rule) 88%, transparent);
+}
+
+.beam-fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: top;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in oklab, var(--neon-cyan) 90%, transparent) 14%,
+    color-mix(in oklab, var(--neon-violet) 80%, transparent) 70%,
+    transparent
+  );
+  box-shadow: 0 0 14px 1px color-mix(in oklab, var(--neon-cyan) 45%, transparent);
+  will-change: transform;
+}
+
+/* The beam is a companion to reading, not scenery: it only appears where
+   there is something to read. */
+@media (max-width: 40rem) {
+  .beam {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .beam-fill {
+    transform: scaleY(1) !important;
+    opacity: 0.35;
+  }
+}
+
+/* ------------------------------------------------------------------ *
  * Skip link
  * ------------------------------------------------------------------ */
 
@@ -211,7 +385,7 @@
   left: 0.5rem;
   z-index: 100;
   transform: translateY(-160%);
-  padding: 0.6rem 1rem;
+  padding: var(--s-2) var(--s-4);
   background: var(--foreground);
   color: var(--ink);
   font-family: var(--font-display);
@@ -277,8 +451,8 @@
   z-index: 5;
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
-  padding: 1.25rem 1.25rem 2rem;
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-4) var(--s-6);
   margin: 0;
   list-style: none;
 }
@@ -305,10 +479,10 @@
   width: 100%;
   flex-direction: column;
   justify-content: center;
-  gap: 0.2rem;
+  gap: var(--s-1);
   overflow: hidden;
   min-height: 4.25rem;
-  padding: 0.9rem 1.05rem;
+  padding: var(--s-4) var(--s-4);
   border-radius: var(--radius-md);
   background: color-mix(in oklab, var(--accent-hue) 24%, oklch(0.16 0.03 265 / 0.82));
   box-shadow:
@@ -330,7 +504,7 @@
 .sign-label {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.15rem;
+  font-size: var(--text-lg);
   line-height: 1.05;
   letter-spacing: 0.01em;
   text-transform: uppercase;
@@ -340,7 +514,7 @@
 }
 
 .sign-blurb {
-  font-size: 0.82rem;
+  font-size: var(--text-xs);
   line-height: 1.3;
   color: oklch(0.99 0 0 / 0.84);
   text-wrap: balance;
@@ -714,7 +888,7 @@
 
 .room {
   position: relative;
-  min-height: 100dvh;
+  min-height: auto;
   overflow: hidden;
   background:
     radial-gradient(90% 55% at 50% 0%, color-mix(in oklab, var(--accent-hue) 14%, transparent), transparent 70%),
@@ -732,7 +906,13 @@
   min-height: 220px;
   z-index: 0;
   overflow: hidden;
-  mask-image: linear-gradient(180deg, oklch(0 0 0) 50%, transparent);
+  mask-image: linear-gradient(
+    180deg,
+    oklch(0 0 0) 0%,
+    oklch(0 0 0 / 0.85) 42%,
+    oklch(0 0 0 / 0.4) 72%,
+    transparent 100%
+  );
 }
 
 .room-window img {
@@ -778,48 +958,52 @@
   z-index: 2;
   margin-inline: auto;
   max-width: 76rem;
-  padding: 5.5rem 1.25rem 6rem;
+  padding: calc(var(--s-9) + var(--s-4)) var(--gutter) var(--s-9);
 }
 
+/* Deliberately narrower than the content beneath it: a header spanning the
+   same width as the grid makes every screen the same rectangle. */
 .room-header {
-  margin-bottom: 2.5rem;
+  max-width: 44rem;
+  margin-bottom: var(--section);
 }
 
 .room-title {
-  margin: 0.5rem 0 0;
-  font-size: clamp(2.25rem, 7vw, 4rem);
+  margin: var(--s-3) 0 0;
+  font-size: var(--text-4xl);
   font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
+  letter-spacing: var(--track-display);
   text-wrap: balance;
 }
 
 .room-lead {
-  margin: 1rem 0 0;
-  font-size: 1.02rem;
-  line-height: 1.65;
+  margin: var(--s-5) 0 0;
+  max-width: 42rem;
+  font-size: var(--text-lg);
+  line-height: var(--leading-normal);
   color: var(--muted-foreground);
   text-wrap: pretty;
 }
 
 .room-subhead {
-  margin: 0 0 1.25rem;
-  font-size: 1.35rem;
+  margin: 0 0 var(--s-4);
+  font-size: var(--text-xl);
   font-weight: 700;
 }
 
 .room-notes {
-  margin-top: 3.5rem;
+  margin-top: var(--section);
 }
 
 .room-notice {
-  margin: 0 0 1.5rem;
+  margin: 0 0 var(--s-6);
 }
 
 /* Closing call to action inside a scene. Registration is the point of the
    site, so the room that people browse longest should end by offering it. */
 .room-cta {
-  margin-top: 3.5rem;
+  margin-top: calc(var(--section) * 1.5);
   padding: clamp(1.5rem, 4vw, 2.25rem);
   border-radius: var(--radius-lg);
   background:
@@ -829,9 +1013,9 @@
 }
 
 .room-cta-note {
-  margin: 0 0 1.5rem;
+  margin: 0 0 var(--s-5);
   max-width: var(--measure);
-  font-size: 0.95rem;
+  font-size: var(--text-sm);
   line-height: 1.6;
   color: var(--muted-foreground);
   text-wrap: pretty;
@@ -843,23 +1027,24 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--s-2);
   overflow: hidden;
   width: 100%;
   text-align: left;
-  padding: 1.15rem 1.25rem 1.25rem;
+  padding: var(--s-4) var(--s-4) var(--s-4);
   border: 0;
   border-radius: var(--radius-md);
   color: inherit;
   background:
-    linear-gradient(180deg, color-mix(in oklab, var(--accent-hue) 16%, transparent), transparent 58%),
-    oklch(0.185 0.032 267 / 0.92);
+    linear-gradient(180deg, color-mix(in oklab, var(--accent-hue) 13%, transparent), transparent 55%),
+    oklch(0.185 0.032 267 / 0.9);
   box-shadow:
-    inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 42%, transparent),
-    0 18px 40px -26px oklch(0 0 0 / 0.9);
+    inset 0 1px 0 oklch(1 0 0 / 0.07),
+    inset 0 0 0 1px var(--rule),
+    var(--elev-2);
   transition:
-    transform var(--dur-ui) var(--ease-out),
-    box-shadow var(--dur-ui) var(--ease-out);
+    transform var(--dur-2) var(--ease),
+    box-shadow var(--dur-2) var(--ease);
 }
 
 button.screen,
@@ -913,11 +1098,12 @@ a.screen:hover,
 button.screen:hover,
 a.screen:focus-visible,
 button.screen:focus-visible {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
   box-shadow:
-    inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 80%, transparent),
-    0 0 30px color-mix(in oklab, var(--accent-hue) 30%, transparent),
-    0 22px 46px -26px oklch(0 0 0 / 0.9);
+    inset 0 1px 0 oklch(1 0 0 / 0.12),
+    inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 70%, transparent),
+    0 0 40px -6px color-mix(in oklab, var(--accent-hue) 34%, transparent),
+    var(--elev-3);
 }
 
 a.screen:active,
@@ -928,9 +1114,9 @@ button.screen:active {
 .screen-index {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--s-2);
   font-family: var(--font-display);
-  font-size: 0.66rem;
+  font-size: var(--text-micro);
   letter-spacing: 0.28em;
   text-transform: uppercase;
   color: color-mix(in oklab, var(--accent-hue) 78%, white);
@@ -948,35 +1134,35 @@ button.screen:active {
 
 .screen-title {
   font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-size: var(--text-xl);
   font-weight: 700;
   line-height: 1.1;
   text-wrap: balance;
 }
 
 .screen-tagline {
-  font-size: 0.94rem;
+  font-size: var(--text-sm);
   color: color-mix(in oklab, var(--accent-hue) 55%, var(--foreground));
 }
 
 .screen-team {
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--muted-foreground);
 }
 
 .screen-more {
-  margin-top: 0.35rem;
+  margin-top: var(--s-2);
   font-family: var(--font-display);
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   color: color-mix(in oklab, var(--accent-hue) 70%, white);
 }
 
 .screen-grid {
   display: grid;
-  gap: 1rem;
+  gap: var(--s-4);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -985,7 +1171,7 @@ button.screen:active {
 }
 
 .screen-panel {
-  padding: 1.1rem 1.25rem 1.25rem;
+  padding: var(--s-4) var(--s-4) var(--s-4);
   border-radius: 0 0 var(--radius-md) var(--radius-md);
   background: oklch(0.155 0.03 265 / 0.9);
   box-shadow: inset 0 0 0 1px var(--border);
@@ -993,30 +1179,30 @@ button.screen:active {
 
 .screen-body {
   margin: 0;
-  font-size: 0.92rem;
+  font-size: var(--text-sm);
   line-height: 1.6;
   color: var(--muted-foreground);
   text-wrap: pretty;
 }
 
 .screen-format-title {
-  margin: 1rem 0 0.5rem;
-  font-size: 0.72rem;
+  margin: var(--s-4) 0 var(--s-2);
+  font-size: var(--text-micro);
   letter-spacing: 0.24em;
   text-transform: uppercase;
   color: color-mix(in oklab, var(--accent-hue) 78%, white);
 }
 
 .screen-format {
-  margin: 0 0 1.15rem;
+  margin: 0 0 var(--s-4);
   padding-left: 1.05rem;
-  font-size: 0.88rem;
+  font-size: var(--text-sm);
   line-height: 1.55;
   color: var(--muted-foreground);
 }
 
 .screen-format li + li {
-  margin-top: 0.3rem;
+  margin-top: var(--s-1);
 }
 
 /* ---- The registration terminal ------------------------------------ */
@@ -1024,19 +1210,20 @@ button.screen:active {
 .console {
   overflow: hidden;
   border-radius: var(--radius-lg);
-  background: oklch(0.185 0.032 267 / 0.92);
+  background: oklch(0.185 0.032 267 / 0.9);
   box-shadow:
-    inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 45%, transparent),
-    0 30px 70px -40px oklch(0 0 0 / 0.95);
+    inset 0 1px 0 oklch(1 0 0 / 0.08),
+    inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 38%, transparent),
+    var(--elev-3);
 }
 
 .console-readout {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.6rem 1rem;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-4);
   font-family: var(--font-display);
-  font-size: 0.68rem;
+  font-size: var(--text-micro);
   letter-spacing: 0.26em;
   color: color-mix(in oklab, var(--accent-hue) 80%, white);
   background: oklch(0.13 0.026 265 / 0.85);
@@ -1066,7 +1253,7 @@ button.screen:active {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: var(--s-2);
   padding: clamp(1.75rem, 4vw, 2.75rem) clamp(1.25rem, 5vw, 2.5rem);
   background:
     radial-gradient(90% 130% at 50% 0%, color-mix(in oklab, var(--accent-hue) 22%, transparent), transparent 65%);
@@ -1095,7 +1282,7 @@ button.screen:active {
 
 .console-kicker {
   font-family: var(--font-display);
-  font-size: 0.72rem;
+  font-size: var(--text-micro);
   letter-spacing: 0.28em;
   text-transform: uppercase;
   color: color-mix(in oklab, var(--accent-hue) 78%, white);
@@ -1103,7 +1290,7 @@ button.screen:active {
 
 .console-title {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 6vw, 3.25rem);
+  font-size: var(--text-2xl);
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.02em;
@@ -1111,28 +1298,28 @@ button.screen:active {
 }
 
 .console-sub {
-  font-size: 0.92rem;
+  font-size: var(--text-sm);
   color: var(--muted-foreground);
 }
 
 .notes-grid {
   display: grid;
-  gap: 1.5rem 2rem;
+  gap: var(--s-5) var(--s-6);
   margin: 0;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
 }
 
 .notes-grid dt {
   font-family: var(--font-display);
-  font-size: 0.72rem;
+  font-size: var(--text-micro);
   letter-spacing: 0.24em;
   text-transform: uppercase;
   color: color-mix(in oklab, var(--accent-hue) 75%, white);
 }
 
 .notes-grid dd {
-  margin: 0.5rem 0 0;
-  font-size: 0.92rem;
+  margin: var(--s-2) 0 0;
+  font-size: var(--text-sm);
   line-height: 1.6;
   color: var(--muted-foreground);
   text-wrap: pretty;
@@ -1142,7 +1329,7 @@ button.screen:active {
 
 .frame-wall {
   display: grid;
-  gap: 1rem;
+  gap: var(--s-4);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1151,35 +1338,23 @@ button.screen:active {
 
 .frame {
   display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  margin: 0;
-  padding: 0.85rem;
-  border-radius: var(--radius-md);
-  background: oklch(0.185 0.032 267 / 0.85);
-  box-shadow:
-    inset 0 1px 0 oklch(1 0 0 / 0.06),
-    inset 0 0 0 1px var(--border),
-    0 16px 34px -26px oklch(0 0 0 / 0.9);
-}
-
-.frame {
-  flex-direction: row;
   align-items: center;
-  gap: 0.9rem;
+  gap: var(--s-4);
+  margin: 0;
+  padding: var(--s-4) var(--s-2) var(--s-4) 0;
+  border-top: 1px solid var(--rule);
+  background: none;
 }
 
 .frame-plate {
   flex: none;
   display: grid;
   place-items: center;
-  width: 3.25rem;
+  width: 2.75rem;
   aspect-ratio: 1;
-  border-radius: var(--radius-sm);
-  background:
-    linear-gradient(150deg, color-mix(in oklab, var(--accent-hue) 30%, transparent), transparent 65%),
-    oklch(0.145 0.028 265);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 30%, transparent);
+  border-radius: 999px;
+  background: oklch(0.2 0.03 265);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 28%, transparent);
 }
 
 .frame-initial {
@@ -1194,20 +1369,20 @@ button.screen:active {
 .frame figcaption {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: var(--s-1);
 }
 
 .frame-role {
   order: -1;
   font-family: var(--font-display);
-  font-size: 0.95rem;
+  font-size: var(--text-sm);
   font-weight: 700;
   line-height: 1.15;
   text-wrap: balance;
 }
 
 .frame-name {
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   color: var(--muted-foreground);
 }
 
@@ -1215,7 +1390,7 @@ button.screen:active {
 
 .archive-wall {
   display: grid;
-  gap: 1rem;
+  gap: var(--s-4);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1223,14 +1398,14 @@ button.screen:active {
 }
 
 .archive-link {
-  gap: 0.6rem;
+  gap: var(--s-2);
   min-height: 11rem;
   justify-content: flex-start;
 }
 
 .archive-index {
   font-family: var(--font-display);
-  font-size: 0.66rem;
+  font-size: var(--text-micro);
   letter-spacing: 0.28em;
   text-transform: uppercase;
   color: color-mix(in oklab, var(--accent-hue) 78%, white);
@@ -1239,7 +1414,7 @@ button.screen:active {
 .archive-go {
   margin-top: auto;
   font-family: var(--font-display);
-  font-size: 0.82rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   color: color-mix(in oklab, var(--accent-hue) 72%, white);
 }
@@ -1253,12 +1428,12 @@ button.screen:active {
   z-index: 50;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--s-2);
   min-height: 2.75rem;
-  padding: 0.5rem 0.95rem;
+  padding: var(--s-2) var(--s-4);
   border-radius: 999px;
   font-family: var(--font-display);
-  font-size: 0.82rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   color: var(--foreground);
   background: oklch(0.14 0.028 265 / 0.84);
@@ -1300,8 +1475,8 @@ button.screen:active {
 /* Two fixed chips plus a long label do not fit side by side on a phone. */
 @media (max-width: 30rem) {
   .chip {
-    font-size: 0.76rem;
-    padding: 0.45rem 0.7rem;
+    font-size: var(--text-xs);
+    padding: var(--s-2) var(--s-3);
   }
 
   .chip-left {
@@ -1326,7 +1501,7 @@ button.screen:active {
   z-index: 40;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--s-4);
   flex-wrap: wrap;
   padding: 0.85rem clamp(1rem, 4vw, 2.5rem);
   background: oklch(0.13 0.027 265 / 0.82);
@@ -1336,7 +1511,7 @@ button.screen:active {
 
 .site-mark {
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: var(--text-base);
   font-weight: 700;
   letter-spacing: -0.01em;
   white-space: nowrap;
@@ -1347,12 +1522,12 @@ button.screen:active {
   align-items: center;
   gap: clamp(0.75rem, 2vw, 1.5rem);
   margin-inline-start: auto;
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
 }
 
 .site-nav a {
   position: relative;
-  padding-block: 0.5rem;
+  padding-block: var(--s-2);
   color: var(--muted-foreground);
   transition: color var(--dur-ui) var(--ease-out);
 }
@@ -1391,7 +1566,7 @@ button.screen:active {
     width: 100%;
     margin-inline-start: 0;
     justify-content: space-between;
-    font-size: 0.84rem;
+    font-size: var(--text-xs);
   }
 }
 
@@ -1403,13 +1578,13 @@ button.screen:active {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: var(--s-2);
   min-height: 2.75rem;
-  padding: 0.65rem 1.25rem;
+  padding: var(--s-3) var(--s-4);
   border: 0;
   border-radius: var(--radius-md);
   font-family: var(--font-display);
-  font-size: 0.92rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   cursor: pointer;
   text-align: center;
@@ -1425,7 +1600,16 @@ button.screen:active {
 .btn-accent {
   color: oklch(0.13 0.026 265);
   background: var(--accent-hue, var(--neon-cyan));
-  box-shadow: 0 0 26px color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 40%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 60%, transparent),
+    0 6px 26px -6px color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 55%, transparent);
+}
+
+.btn-accent:hover,
+.btn-accent:focus-visible {
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 75%, transparent),
+    0 8px 34px -6px color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 70%, transparent);
 }
 
 .btn-accent:hover,
@@ -1450,8 +1634,8 @@ button.screen:active {
 
 .btn-sm {
   min-height: 2.25rem;
-  padding: 0.4rem 0.9rem;
-  font-size: 0.84rem;
+  padding: var(--s-2) var(--s-4);
+  font-size: var(--text-xs);
   white-space: nowrap;
 }
 
@@ -1503,8 +1687,8 @@ button.screen:active {
 }
 
 .lost-title {
-  margin: 0.5rem 0 0;
-  font-size: clamp(2.25rem, 7vw, 3.75rem);
+  margin: var(--s-2) 0 0;
+  font-size: var(--text-3xl);
   font-weight: 700;
   line-height: 1.02;
   letter-spacing: -0.02em;
@@ -1512,9 +1696,9 @@ button.screen:active {
 }
 
 .lost-lede {
-  margin: 1rem 0 2.25rem;
+  margin: var(--s-4) 0 var(--s-6);
   max-width: var(--measure);
-  font-size: 1.02rem;
+  font-size: var(--text-base);
   line-height: 1.65;
   color: var(--muted-foreground);
   text-wrap: pretty;
@@ -1522,8 +1706,8 @@ button.screen:active {
 
 .lost-links {
   display: grid;
-  gap: 0.75rem;
-  margin: 0 0 2.25rem;
+  gap: var(--s-3);
+  margin: 0 0 var(--s-6);
   padding: 0;
   list-style: none;
   /* Two by two: four destinations in a row reads as a toolbar, and the
@@ -1535,10 +1719,10 @@ button.screen:active {
 .lost-link {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: var(--s-1);
   min-height: 4.25rem;
   justify-content: center;
-  padding: 0.85rem 1rem;
+  padding: var(--s-3) var(--s-4);
   border-radius: var(--radius-md);
   background: color-mix(in oklab, var(--accent-hue) 18%, oklch(0.17 0.03 265 / 0.85));
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 50%, transparent);
@@ -1561,7 +1745,7 @@ button.screen:active {
 }
 
 .lost-link-blurb {
-  font-size: 0.82rem;
+  font-size: var(--text-xs);
   color: oklch(0.99 0 0 / 0.8);
 }
 
@@ -1588,7 +1772,7 @@ button.screen:active {
 .page {
   position: relative;
   min-height: 70dvh;
-  padding: 6.5rem 1.25rem 5rem;
+  padding: calc(var(--s-8) + var(--s-4)) var(--gutter) var(--s-9);
   background:
     radial-gradient(80% 40% at 50% 0%, oklch(0.22 0.04 265 / 0.5), transparent 70%),
     var(--background);
@@ -1600,30 +1784,31 @@ button.screen:active {
 }
 
 .page-header {
-  margin-bottom: 2.75rem;
+  max-width: 44rem;
+  margin-bottom: var(--section);
 }
 
 .page-title {
-  margin: 0.5rem 0 0;
-  font-size: clamp(2.25rem, 7vw, 3.5rem);
+  margin: var(--s-3) 0 0;
+  font-size: var(--text-3xl);
   font-weight: 700;
-  line-height: 1.02;
-  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
+  letter-spacing: var(--track-display);
   text-wrap: balance;
 }
 
 .page-lede {
-  margin: 1.15rem 0 0;
+  margin: var(--s-4) 0 0;
   max-width: 46rem;
-  font-size: clamp(1.1rem, 2.1vw, 1.35rem);
+  font-size: var(--text-lg);
   line-height: 1.55;
   color: var(--foreground);
   text-wrap: pretty;
 }
 
 .page-subhead {
-  margin: 0 0 1.25rem;
-  font-size: 1.35rem;
+  margin: 0 0 var(--s-4);
+  font-size: var(--text-xl);
   font-weight: 700;
 }
 
@@ -1642,11 +1827,11 @@ button.screen:active {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.6rem;
-  margin: 0 0 2rem;
-  padding: 1rem 1.15rem;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-6);
+  padding: var(--s-4) var(--s-4);
   border-radius: var(--radius-md);
-  font-size: 0.92rem;
+  font-size: var(--text-sm);
   line-height: 1.6;
   color: var(--muted-foreground);
   background: oklch(0.2 0.035 267 / 0.8);
@@ -1656,7 +1841,7 @@ button.screen:active {
 .notice-ok {
   background: color-mix(in oklab, var(--neon-cyan) 12%, oklch(0.2 0.035 267 / 0.8));
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--neon-cyan) 45%, transparent);
-  margin-block: 0.5rem 0;
+  margin-block: var(--s-2) 0;
 }
 
 .notice-ok strong {
@@ -1673,7 +1858,7 @@ button.screen:active {
   color: var(--muted-foreground);
   font-family: var(--font-sans);
   font-weight: 400;
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
 }
 
 .frame .todo > [aria-hidden] {
@@ -1685,14 +1870,14 @@ button.screen:active {
 .todo {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.15rem 0.55rem;
+  gap: var(--s-2);
+  padding: var(--s-1) var(--s-2);
   border-radius: var(--radius-sm);
   border: 1px dashed color-mix(in oklab, var(--destructive) 65%, transparent);
   background: color-mix(in oklab, var(--destructive) 14%, transparent);
   color: color-mix(in oklab, var(--destructive) 22%, var(--foreground));
   font-family: var(--font-display);
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.03em;
 }
@@ -1704,7 +1889,7 @@ button.screen:active {
 .facts {
   display: grid;
   gap: 1px;
-  margin: 2.75rem 0 3rem;
+  margin: var(--s-7) 0 var(--section);
   padding: 0;
   grid-template-columns: repeat(auto-fit, minmax(min(50%, 9rem), 1fr));
   background: var(--border);
@@ -1714,27 +1899,32 @@ button.screen:active {
 }
 
 .facts > div {
-  background: oklch(0.185 0.032 267);
+  background: oklch(0.175 0.03 267);
+  transition: background var(--dur-2) var(--ease);
+}
+
+.facts > div:hover {
+  background: oklch(0.21 0.035 267);
 }
 
 .facts dd {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: var(--s-1);
   margin: 0;
-  padding: 1.1rem 1.15rem;
+  padding: var(--s-4) var(--s-4);
 }
 
 .facts-value {
   font-family: var(--font-display);
-  font-size: clamp(1.6rem, 4vw, 2.15rem);
+  font-size: var(--text-2xl);
   font-weight: 700;
   line-height: 1;
   color: var(--neon-cyan);
 }
 
 .facts-label {
-  font-size: 0.76rem;
+  font-size: var(--text-xs);
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--muted-foreground);
@@ -1743,11 +1933,11 @@ button.screen:active {
 /* The closing line of the argument, set apart so it lands. */
 .pull-quote {
   position: relative;
-  margin: 2.75rem 0 0;
+  margin: var(--section) 0 0;
   max-width: 44rem;
   padding-left: 1.5rem;
   font-family: var(--font-display);
-  font-size: clamp(1.15rem, 2.4vw, 1.5rem);
+  font-size: var(--text-xl);
   font-weight: 600;
   line-height: 1.4;
   color: var(--foreground);
@@ -1768,20 +1958,20 @@ button.screen:active {
 .page-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 1.75rem;
+  gap: var(--s-3);
+  margin-top: var(--s-5);
 }
 
 .about-events {
-  margin-top: 3.5rem;
+  margin-top: calc(var(--section) * 1.25);
 }
 
 .about-list {
-  margin: 0 0 2rem;
+  margin: 0 0 var(--s-6);
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 0.75rem;
+  gap: var(--s-3);
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
 }
 
@@ -1789,21 +1979,20 @@ button.screen:active {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  padding: 0.85rem 1rem 0.85rem 1.15rem;
-  border-radius: var(--radius-md);
-  background: oklch(0.2 0.035 267 / 0.7);
-  box-shadow: inset 0 0 0 1px var(--border);
-  overflow: hidden;
+  gap: var(--s-1);
+  padding: var(--s-2) 0 var(--s-3) var(--s-4);
+  border-top: 1px solid var(--rule);
 }
 
-/* Each event carries its own accent through from the crossroads. */
+/* Each event carries its accent through from the crossroads — as a tick on
+   the rule, not a filled bar, so six of them do not read as a barcode. */
 .about-list li::before {
   content: "";
   position: absolute;
-  inset-block: 0;
+  top: -1px;
   left: 0;
-  width: 3px;
+  width: var(--s-4);
+  height: 2px;
   background: var(--accent-hue, var(--neon-cyan));
 }
 
@@ -1813,7 +2002,7 @@ button.screen:active {
 }
 
 .about-list-note {
-  font-size: 0.86rem;
+  font-size: var(--text-sm);
   color: var(--muted-foreground);
 }
 
@@ -1839,16 +2028,16 @@ button.screen:active {
   width: 100%;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: var(--s-5);
   min-height: 3.5rem;
-  padding: 1.1rem 0.25rem;
+  padding: var(--s-4) var(--s-1);
   border: 0;
   background: transparent;
   color: inherit;
   cursor: pointer;
   text-align: left;
   font-family: var(--font-display);
-  font-size: 1.02rem;
+  font-size: var(--text-base);
   font-weight: 600;
   line-height: 1.35;
   text-wrap: balance;
@@ -1867,13 +2056,13 @@ button.screen:active {
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 999px;
-  font-size: 1.1rem;
+  font-size: var(--text-lg);
   color: var(--neon-cyan);
   background: oklch(0.24 0.04 267 / 0.8);
 }
 
 .faq-panel {
-  padding: 0 0.25rem 1.35rem;
+  padding: 0 var(--s-1) 1.35rem;
 }
 
 .faq-panel p {
@@ -1888,32 +2077,30 @@ button.screen:active {
 
 .channels {
   display: grid;
-  gap: 1rem;
-  margin: 0 0 3.5rem;
+  gap: var(--s-4);
+  margin: 0 0 var(--s-7);
   padding: 0;
   list-style: none;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
 }
 
 .channels li {
-  padding: 1.15rem 1.25rem 1.25rem;
-  border-radius: var(--radius-md);
-  background: oklch(0.2 0.035 267 / 0.7);
-  box-shadow: inset 0 0 0 1px var(--border);
+  padding: var(--s-4) 0 var(--s-5);
+  border-top: 1px solid var(--rule);
 }
 
 .channel-label {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 0.72rem;
+  font-size: var(--text-micro);
   letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--muted-foreground);
 }
 
 .channel-value {
-  margin: 0.5rem 0 0.7rem;
-  font-size: 1.02rem;
+  margin: var(--s-2) 0 var(--s-3);
+  font-size: var(--text-base);
   line-height: 1.4;
   word-break: break-word;
 }
@@ -1926,20 +2113,20 @@ button.screen:active {
 
 .channel-note {
   margin: 0;
-  font-size: 0.88rem;
+  font-size: var(--text-sm);
   line-height: 1.6;
   color: var(--muted-foreground);
   text-wrap: pretty;
 }
 
 .venue + .venue {
-  margin-top: 3rem;
+  margin-top: var(--s-7);
 }
 
 .venue-address {
-  margin: 0 0 0.9rem;
+  margin: 0 0 var(--s-4);
   font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-size: var(--text-lg);
   font-style: normal;
   font-weight: 600;
   line-height: 1.45;
@@ -1950,19 +2137,19 @@ button.screen:active {
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1.4rem;
+  gap: var(--s-5);
   max-width: 34rem;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--s-2);
 }
 
 .field label {
   font-family: var(--font-display);
-  font-size: 0.88rem;
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 
@@ -1975,11 +2162,11 @@ button.screen:active {
 .field textarea {
   width: 100%;
   min-height: 2.75rem;
-  padding: 0.65rem 0.85rem;
+  padding: var(--s-3) var(--s-3);
   border: 0;
   border-radius: var(--radius-md);
   font: inherit;
-  font-size: 1rem; /* 16px stops iOS Safari zooming on focus. */
+  font-size: var(--text-base); /* 16px stops iOS Safari zooming on focus. */
   color: var(--foreground);
   background: oklch(0.2 0.035 267 / 0.9);
   box-shadow: inset 0 0 0 1px var(--input);
@@ -2008,27 +2195,27 @@ button.screen:active {
 
 .field-hint {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: var(--text-xs);
   line-height: 1.45;
   color: var(--muted-foreground);
 }
 
 .field-error {
   margin: 0;
-  font-size: 0.84rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   color: color-mix(in oklab, var(--destructive) 30%, var(--foreground));
 }
 
 .form-summary {
-  padding: 1rem 1.15rem;
+  padding: var(--s-4) var(--s-4);
   border-radius: var(--radius-md);
   background: color-mix(in oklab, var(--destructive) 14%, oklch(0.2 0.035 267));
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--destructive) 55%, transparent);
 }
 
 .form-summary-title {
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--s-2);
   font-family: var(--font-display);
   font-weight: 700;
 }
@@ -2036,7 +2223,7 @@ button.screen:active {
 .form-summary ul {
   margin: 0;
   padding-left: 1.1rem;
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
   line-height: 1.6;
 }
 
@@ -2049,8 +2236,8 @@ button.screen:active {
 .form-actions {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
+  gap: var(--s-3);
+  margin-top: var(--s-2);
 }
 
 .btn:disabled {
@@ -2062,52 +2249,52 @@ button.screen:active {
 /* ---- Footer --------------------------------------------------------- */
 
 .site-footer {
-  padding: 3rem 1.25rem 3.5rem;
+  padding: var(--s-7) var(--s-4) var(--s-7);
   border-top: 1px solid var(--border);
   background: var(--ink);
 }
 
 .footer-grid {
   display: grid;
-  gap: 2rem;
+  gap: var(--s-6);
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
 }
 
 .footer-mark {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-size: var(--text-xl);
   font-weight: 700;
 }
 
 .footer-school {
-  margin: 0.25rem 0 0;
-  font-size: 0.86rem;
+  margin: var(--s-1) 0 0;
+  font-size: var(--text-sm);
   color: var(--muted-foreground);
 }
 
 .footer-heading {
-  margin: 0 0 0.6rem;
+  margin: 0 0 var(--s-2);
   font-family: var(--font-display);
-  font-size: 0.72rem;
+  font-size: var(--text-micro);
   letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--muted-foreground);
 }
 
 .footer-line {
-  margin: 0 0 0.5rem;
-  font-size: 0.88rem;
+  margin: 0 0 var(--s-2);
+  font-size: var(--text-sm);
 }
 
 .footer-links {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: var(--s-2);
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
 }
 
 .footer-links a {
@@ -2179,7 +2366,7 @@ button.screen:active {
   z-index: 4;
   inset-inline: 0;
   top: 11%;
-  padding-inline: 1.25rem;
+  padding-inline: var(--s-4);
   text-align: center;
   pointer-events: none;
   will-change: opacity, transform;
@@ -2195,7 +2382,7 @@ button.screen:active {
      numerals sit on a different optical line, and anything under 0.9 makes
      the two words collide. */
   line-height: 0.92;
-  font-size: clamp(2.5rem, 16vw, 5.5rem);
+  font-size: var(--text-4xl);
   text-transform: uppercase;
 }
 
@@ -2213,7 +2400,7 @@ button.screen:active {
 }
 
 .descent-title-school {
-  margin-top: 1.15rem;
+  margin-top: var(--s-4);
   font-family: var(--font-display);
   font-size: clamp(0.65rem, 2.4vw, 0.95rem);
   font-weight: 500;
@@ -2231,15 +2418,15 @@ button.screen:active {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.9rem;
-  padding-inline: 1.25rem;
+  gap: var(--s-4);
+  padding-inline: var(--s-4);
 }
 
 .descent-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.5rem 0.95rem;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-4);
   border-radius: 999px;
   background: oklch(0.12 0.026 265 / 0.72);
   box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.14);
@@ -2248,10 +2435,10 @@ button.screen:active {
 
 .descent-skip {
   min-height: 2.75rem;
-  padding: 0.55rem 1.1rem;
+  padding: var(--s-2) var(--s-4);
   border-radius: 999px;
   font-family: var(--font-display);
-  font-size: 0.82rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   color: var(--foreground);
   background: oklch(0.14 0.028 265 / 0.78);
@@ -2272,7 +2459,7 @@ button.screen:active {
 
 /* Loading status gets the same ground as the hint, for the same reason. */
 .descent-loading {
-  padding: 0.35rem 0.8rem;
+  padding: var(--s-2) 0.8rem;
   border-radius: 999px;
   background: oklch(0.12 0.026 265 / 0.6);
   backdrop-filter: blur(8px);
@@ -2284,14 +2471,14 @@ button.screen:active {
 
 .descent-hint .scroll-hint {
   display: block;
-  font-size: 0.95rem;
+  font-size: var(--text-sm);
   line-height: 1;
   color: var(--neon-cyan);
 }
 
 .descent-loading {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: var(--text-micro);
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: oklch(0.96 0.008 265 / 0.75);
@@ -2364,7 +2551,7 @@ button.screen:active {
   .descent[data-film="failed"] .descent-title,
   .descent[data-collapsed="true"] .descent-title {
     position: static;
-    padding-block: 3.5rem 2rem;
+    padding-block: var(--s-7) var(--s-6);
   }
 
   .descent[data-film="failed"] .hub,
@@ -2377,7 +2564,7 @@ button.screen:active {
 @media (prefers-reduced-motion: reduce) and (min-width: 48rem) and (min-aspect-ratio: 5 / 4) {
   .descent-title {
     position: static;
-    padding-block: 3.5rem 2rem;
+    padding-block: var(--s-7) var(--s-6);
   }
 
   .descent-pin .hub {

@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { contact, fest, school } from "@/data/quantum";
 import { SiteHeader, Value } from "@/components/site/Bits";
+import { Beam, Reveal } from "@/components/scene/Reveal";
 
 /**
  * Layout for the conventional pages.
@@ -23,13 +24,15 @@ export function PageShell({
     <>
       <SiteHeader />
 
+      <Beam />
+
       <main id="main" className="page">
         <div className="page-inner">
-          <header className="page-header">
+          <Reveal as="header" className="page-header">
             <p className="eyebrow">{fest.fullName}</p>
             <h1 className="page-title">{title}</h1>
             {lede ? <p className="page-lede">{lede}</p> : null}
-          </header>
+          </Reveal>
           {children}
         </div>
       </main>

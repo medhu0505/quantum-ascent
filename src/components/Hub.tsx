@@ -42,6 +42,8 @@ function Sign({ scene }: { scene: Scene }) {
         data-compact={scene.sign.compact ? "true" : undefined}
         preload="intent"
         onClick={onPhase}
+        data-magnetic
+        data-cursor-label="Enter"
       >
         <span className="sign-face">
           <span className="sign-label">{scene.label}</span>

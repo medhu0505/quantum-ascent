@@ -81,10 +81,10 @@ function Contact() {
           more than one event, fees, and what to bring.
         </p>
         <div className="page-actions">
-          <Link to="/faq" className="btn btn-ghost">
+          <Link to="/faq" className="btn btn-ghost" data-magnetic>
             Read the FAQ
           </Link>
-          <Link to="/register/form" className="btn btn-accent">
+          <Link to="/register/form" className="btn btn-accent" data-magnetic>
             Register your school
           </Link>
         </div>

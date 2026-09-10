@@ -49,10 +49,10 @@ function About() {
           ))}
         </ul>
         <div className="page-actions">
-          <Link to="/register/form" className="btn btn-accent">
+          <Link to="/register/form" className="btn btn-accent" data-magnetic>
             Register your school
           </Link>
-          <Link to="/events" className="btn btn-ghost">
+          <Link to="/events" className="btn btn-ghost" data-magnetic>
             Read the full event details
           </Link>
         </div>

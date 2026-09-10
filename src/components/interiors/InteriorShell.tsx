@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ExitToCrossroads, RegisterChip } from "@/components/site/Bits";
 import { Beam, Reveal } from "@/components/scene/Reveal";
+import { RevealText } from "@/components/scene/RevealText";
 import type { Scene } from "@/data/quantum";
 
 /**
@@ -39,8 +40,8 @@ export function InteriorShell({
         <div className="room-body">
           <Reveal as="header" className="room-header">
             <p className="eyebrow">Quantum V2.0</p>
-            <h1 className="room-title">{scene.label}</h1>
-            <p className="room-lead">{lead}</p>
+            <RevealText as="h1" className="room-title" text={scene.label} />
+            <RevealText as="p" className="room-lead" text={lead} delay={0.12} />
           </Reveal>
           {children}
         </div>

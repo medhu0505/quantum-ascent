@@ -295,7 +295,7 @@ function RegisterForm() {
           >
             {registrationOpen ? "Submit registration" : "Check my details"}
           </button>
-          <Link to="/events" className="btn btn-ghost btn-block">
+          <Link to="/events" className="btn btn-ghost btn-block" data-magnetic>
             Read the event details first
           </Link>
         </div>

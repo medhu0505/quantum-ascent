@@ -91,7 +91,12 @@ export function EventsInterior() {
                       <li key={line}>{line}</li>
                     ))}
                   </ul>
-                  <Link to="/register/form" search={{ event: event.id }} className="btn btn-accent">
+                  <Link
+                    to="/register/form"
+                    search={{ event: event.id }}
+                    className="btn btn-accent"
+                    data-magnetic
+                  >
                     Register for {event.name}
                   </Link>
                 </div>
@@ -110,10 +115,10 @@ export function EventsInterior() {
           rounds do not clash before you commit.
         </p>
         <div className="page-actions">
-          <Link to="/register/form" className="btn btn-accent">
+          <Link to="/register/form" className="btn btn-accent" data-magnetic>
             Register your school
           </Link>
-          <Link to="/faq" className="btn btn-ghost">
+          <Link to="/faq" className="btn btn-ghost" data-magnetic>
             Read the FAQ first
           </Link>
         </div>

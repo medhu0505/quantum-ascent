@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { contact, fest, school } from "@/data/quantum";
 import { SiteHeader, Value } from "@/components/site/Bits";
 import { Beam, Reveal } from "@/components/scene/Reveal";
+import { RevealText } from "@/components/scene/RevealText";
 
 /**
  * Layout for the conventional pages.
@@ -30,8 +31,8 @@ export function PageShell({
         <div className="page-inner">
           <Reveal as="header" className="page-header">
             <p className="eyebrow">{fest.fullName}</p>
-            <h1 className="page-title">{title}</h1>
-            {lede ? <p className="page-lede">{lede}</p> : null}
+            <RevealText as="h1" className="page-title" text={title} />
+            {lede ? <RevealText as="p" className="page-lede" text={lede} delay={0.12} /> : null}
           </Reveal>
           {children}
         </div>

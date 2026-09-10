@@ -4,6 +4,7 @@ import { Crowd } from "@/components/scene/Crowd";
 import { HubPlate, HubSigns } from "@/components/Hub";
 import { fest, school, descentFilm, timeline } from "@/data/quantum";
 import { clamp, lerp, progress, usePrefersReducedMotion, useStageLayout } from "@/lib/motion";
+import { useLenis } from "@/components/scene/SmoothScroll";
 
 /**
  * The intro descent.
@@ -67,6 +68,7 @@ export function Descent() {
 
   const reducedMotion = usePrefersReducedMotion();
   const isStage = useStageLayout();
+  const lenis = useLenis();
 
   const [revealed, setRevealed] = useState(false);
   const [buffered, setBuffered] = useState(false);
@@ -124,7 +126,8 @@ export function Descent() {
       if (target <= 0) return;
 
       if (Math.abs(window.scrollY - target) > 2) {
-        window.scrollTo({ top: target, behavior: "auto" });
+        if (lenis) lenis.scrollTo(target, { immediate: true, force: true });
+        else window.scrollTo({ top: target, behavior: "auto" });
       }
 
       // Landed, or out of patience (~30 frames is half a second).
@@ -134,7 +137,7 @@ export function Descent() {
 
     jump();
     return () => cancelAnimationFrame(frame);
-  }, [scrubbing]);
+  }, [scrubbing, lenis]);
 
   /* ---- Scroll scrub ------------------------------------------------ */
   useEffect(() => {
@@ -389,7 +392,13 @@ export function Descent() {
     if (!section) return;
     markArrived();
     const top = section.offsetTop + section.offsetHeight - window.innerHeight;
-    window.scrollTo({ top, behavior: reducedMotion ? "auto" : "smooth" });
+    if (lenis) {
+      // Ride the descent down rather than teleporting: the film scrubs the
+      // whole way, which is the point of offering the skip at all.
+      lenis.scrollTo(top, { duration: reducedMotion ? 0 : 2.2 });
+    } else {
+      window.scrollTo({ top, behavior: reducedMotion ? "auto" : "smooth" });
+    }
   };
 
   return (

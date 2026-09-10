@@ -31,7 +31,7 @@ export function SkipLink() {
 export function ExitToCrossroads() {
   const onPhase = usePhaseLink("/");
   return (
-    <Link to="/" className="chip chip-left" onClick={onPhase}>
+    <Link to="/" className="chip chip-left" onClick={onPhase} data-magnetic>
       <span aria-hidden="true">←</span>
       Back to the crossroads
     </Link>
@@ -46,7 +46,7 @@ export function ExitToCrossroads() {
 export function RegisterChip({ hidden = false }: { hidden?: boolean }) {
   if (hidden) return null;
   return (
-    <Link to="/register/form" className="chip chip-right chip-accent">
+    <Link to="/register/form" className="chip chip-right chip-accent" data-magnetic>
       Register
       <span aria-hidden="true">→</span>
     </Link>
@@ -69,7 +69,7 @@ export function SiteHeader() {
         <Link to="/contact">Contact</Link>
       </nav>
 
-      <Link to="/register/form" className="btn btn-accent btn-sm">
+      <Link to="/register/form" className="btn btn-accent btn-sm" data-magnetic>
         Register
       </Link>
     </header>

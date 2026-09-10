@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Descent } from "@/components/Descent";
+import { Preloader } from "@/components/scene/Preloader";
 import { SiteFooter } from "@/components/site/PageShell";
 import { descentFilm, crossroadsPlate, fest, school } from "@/data/quantum";
 import { seo } from "@/lib/seo";
@@ -28,6 +29,9 @@ export const Route = createFileRoute("/")({
 function Index() {
   return (
     <>
+      {/* Only the home route holds a curtain: it is the one that has to wait
+          on a film before it can do anything. */}
+      <Preloader />
       <div id="main">
         <Descent />
       </div>

@@ -94,7 +94,18 @@ export function Crowd() {
               "--delay": `${lane.delay}s`,
             } as React.CSSProperties
           }
-        />
+        >
+          {/* Real limbs rather than a clip-path. Rotating a few elements is
+              GPU-accelerated, antialiased and interpolates continuously; the
+              clip-path version snapped between two hard-edged polygons on a
+              steps() timing function, which is what looked blocky. */}
+          <span className="walker-arm" data-side="back" />
+          <span className="walker-leg" data-side="back" />
+          <span className="walker-body" />
+          <span className="walker-head" />
+          <span className="walker-leg" data-side="front" />
+          <span className="walker-arm" data-side="front" />
+        </span>
       ))}
     </div>
   );

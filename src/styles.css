@@ -221,6 +221,25 @@
     scroll-behavior: smooth;
   }
 
+  /* Lenis drives scroll itself; native smooth behaviour fights it, and the
+     stops it manages need the document to be free to grow. */
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+
+  html.lenis {
+    scroll-behavior: auto !important;
+  }
+
+  .lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+  }
+
+  .lenis.lenis-stopped {
+    overflow: hidden;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -325,6 +344,249 @@
   .reveal {
     opacity: 1;
     transform: none;
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Preloader.
+ *
+ * A held title card that lifts as a curtain once the film can be scrubbed.
+ * It sits above everything and takes itself out of the layer stack entirely
+ * when it is done, so it can never intercept a click.
+ * ------------------------------------------------------------------ */
+
+.preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--ink);
+  transition:
+    clip-path var(--dur-5) var(--ease),
+    opacity var(--dur-3) linear var(--dur-4);
+  /* Lifts from the bottom edge, the way the descent moves. */
+  clip-path: inset(0 0 0 0);
+}
+
+.preloader[data-done] {
+  clip-path: inset(0 0 100% 0);
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+/* The film's first frame, sunk right back so the curtain is not flat black
+   and the cut into the hero is a change of exposure rather than a hard swap. */
+.preloader-poster {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.16;
+  filter: blur(6px) saturate(0.8);
+}
+
+.preloader-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--gutter);
+  text-align: center;
+}
+
+.preloader-mark {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: var(--track-display);
+  text-transform: uppercase;
+}
+
+.preloader-school {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.preloader-count {
+  margin: var(--s-5) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--neon-cyan);
+}
+
+.preloader-track {
+  display: block;
+  width: min(48vw, 18rem);
+  height: 1px;
+  background: var(--rule);
+}
+
+.preloader-bar {
+  display: block;
+  height: 100%;
+  transform-origin: left;
+  background: var(--grad-neon);
+  will-change: transform;
+}
+
+/* ------------------------------------------------------------------ *
+ * Pointer.
+ *
+ * A dot on the pointer and a ring chasing it. Only rendered for fine
+ * pointers with motion allowed; the real cursor is left alone otherwise.
+ * ------------------------------------------------------------------ */
+
+.cursor {
+  display: none;
+}
+
+:root[data-cursor="on"] .cursor {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+}
+
+/* Hide the system cursor only once ours is definitely running. */
+:root[data-cursor="on"],
+:root[data-cursor="on"] a,
+:root[data-cursor="on"] button,
+:root[data-cursor="on"] [role="button"] {
+  cursor: none;
+}
+
+/* Text entry keeps its caret: replacing an I-beam with a ring loses real
+   information about what the field does. */
+:root[data-cursor="on"] input,
+:root[data-cursor="on"] textarea,
+:root[data-cursor="on"] select {
+  cursor: auto;
+}
+
+.cursor-dot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: oklch(0.99 0 0);
+  /* Difference keeps it visible over both the dark ground and a lit sign. */
+  mix-blend-mode: difference;
+}
+
+.cursor-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid var(--cursor-accent, oklch(0.99 0 0 / 0.55));
+  transition:
+    width var(--dur-2) var(--ease),
+    height var(--dur-2) var(--ease),
+    background var(--dur-2) var(--ease),
+    border-color var(--dur-2) var(--ease);
+}
+
+.cursor-ring[data-state="active"] {
+  width: 52px;
+  height: 52px;
+  background: color-mix(in oklab, var(--cursor-accent, oklch(0.99 0 0)) 14%, transparent);
+  border-color: var(--cursor-accent, oklch(0.99 0 0 / 0.9));
+}
+
+.cursor-ring[data-labelled="true"] {
+  width: 74px;
+  height: 74px;
+  background: color-mix(in oklab, var(--cursor-accent, oklch(0.99 0 0)) 20%, transparent);
+}
+
+.cursor-ring[data-press="true"] {
+  width: 28px;
+  height: 28px;
+}
+
+.cursor-label {
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: oklch(0.99 0 0);
+  white-space: nowrap;
+}
+
+/* Magnetism. The pull is applied as a translate the element composes with
+   whatever transform it already has, so signs keep their skew and yaw. */
+[data-magnetic] {
+  transition: translate var(--dur-3) var(--ease);
+  translate: var(--magnet-x, 0) var(--magnet-y, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-magnetic] {
+    translate: none;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Masked line reveal.
+ *
+ * Each line sits in its own clipped band and rises into it. The clip is what
+ * separates this from a fade: the text is uncovered by the layout rather than
+ * appearing on top of it.
+ * ------------------------------------------------------------------ */
+
+.reveal-text {
+  display: block;
+}
+
+.reveal-line {
+  display: block;
+  overflow: hidden;
+  /* Descenders would otherwise be shaved off by the clip. */
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+}
+
+.reveal-line-inner {
+  display: block;
+  transform: translate3d(0, 105%, 0);
+  opacity: 0;
+  transition:
+    transform var(--dur-5) var(--ease),
+    opacity var(--dur-3) linear;
+  will-change: transform;
+}
+
+.reveal-text[data-shown] .reveal-line-inner {
+  transform: none;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-line-inner {
+    transform: none;
+    opacity: 1;
     transition: none;
   }
 }
@@ -809,50 +1071,99 @@
   filter: blur(calc((1 - var(--depth)) * 0.7px));
   opacity: calc(0.55 + 0.4 * var(--depth));
   transform-origin: bottom center;
+  /* One gait for the whole figure, so limbs cannot drift out of step. */
+  --gait: calc(0.68s + (1 - var(--depth)) * 0.42s);
   animation:
     walk-path var(--dur) linear var(--delay) infinite,
-    walk-bob calc(0.72s + (1 - var(--depth)) * 0.5s) ease-in-out var(--delay) infinite;
+    walk-bob var(--gait) ease-in-out var(--delay) infinite;
   will-change: transform;
 }
 
-/* Head. Separated from the body because a single blob reads as a bollard,
-   and the head-to-shoulder ratio is what makes a 20px mark read as a person. */
-.walker::before {
-  content: "";
-  position: absolute;
-  inset: 0 33% 79% 33%;
-  border-radius: 50%;
-  background: var(--figure);
-  box-shadow: calc(var(--rim-x) * 0.5px) 0 0 0 var(--rim-color);
-}
-
-/* Torso and legs. The clip-path splits the lower half into two limbs and
-   swaps the stride, which is the whole of the walk cycle at this scale. */
-.walker::after {
-  content: "";
-  position: absolute;
-  /* Overlaps the head slightly: a visible seam between the two reads as a
-     floating dot above a block rather than as a person. */
-  inset: 15% 8% 0 8%;
-  background: var(--figure);
-  box-shadow: calc(var(--rim-x) * 0.5px) 0 0 0 var(--rim-color);
-  animation: walk-stride calc(0.66s + (1 - var(--depth)) * 0.45s) steps(2, end)
-    var(--delay) infinite;
-}
-
+/* A figure is five small elements — head, torso, two legs, two arms — and the
+   walk is those rotating about their joints. Everything is a transform, so it
+   is subpixel-smooth and antialiased at any size. */
 .walker {
   --figure: oklch(0.13 0.025 265 / 0.95);
 }
 
-/* Which bank of signage is lighting them. */
-.walker[data-rim="cyan"] {
-  --rim-color: color-mix(in oklab, var(--neon-cyan) 70%, transparent);
-  --rim-x: 1;
+.walker-head,
+.walker-body,
+.walker-leg,
+.walker-arm {
+  position: absolute;
+  background: var(--figure);
+  /* A hairline of neon from whichever bank of signage is lighting them. */
+  box-shadow: calc(var(--rim-x) * 0.5px) 0 0 0 var(--rim-color);
 }
 
-.walker[data-rim="magenta"] {
-  --rim-color: color-mix(in oklab, var(--neon-magenta) 70%, transparent);
-  --rim-x: -1;
+.walker-head {
+  left: 34%;
+  top: 0;
+  width: 31%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+
+/* Torso, tapered so the silhouette reads as shouldered rather than as a post. */
+.walker-body {
+  left: 22%;
+  top: 14%;
+  width: 56%;
+  height: 41%;
+  border-radius: 42% 42% 26% 26% / 30% 30% 14% 14%;
+}
+
+.walker-leg {
+  left: 38%;
+  top: 52%;
+  width: 24%;
+  height: 48%;
+  border-radius: 40% 40% 30% 30%;
+  transform-origin: top center;
+  animation: walk-leg var(--gait) ease-in-out var(--delay) infinite;
+}
+
+.walker-arm {
+  left: 62%;
+  top: 20%;
+  width: 15%;
+  height: 33%;
+  border-radius: 40%;
+  transform-origin: top center;
+  animation: walk-arm var(--gait) ease-in-out var(--delay) infinite;
+}
+
+/* The two sides run the same cycle half a period apart, which is the whole
+   trick: one gait duration, one pair of keyframes, a negative delay. */
+.walker-leg[data-side="back"],
+.walker-arm[data-side="front"] {
+  animation-delay: calc(var(--delay) - var(--gait) / 2);
+  opacity: 0.82;
+}
+
+/* The far arm sits behind the torso; only the near one needs to show. */
+.walker-arm[data-side="back"] {
+  left: 23%;
+}
+
+@keyframes walk-leg {
+  0%,
+  100% {
+    transform: rotate(20deg);
+  }
+  50% {
+    transform: rotate(-20deg);
+  }
+}
+
+@keyframes walk-arm {
+  0%,
+  100% {
+    transform: rotate(-16deg);
+  }
+  50% {
+    transform: rotate(16deg);
+  }
 }
 
 @keyframes walk-path {
@@ -881,41 +1192,6 @@
   }
 }
 
-/* A tapered torso with arms, and two legs that swap lead on each step. The
-   taper matters more than the detail: a straight rectangle reads as a post
-   at any size, a shouldered silhouette reads as a person even at 20px. */
-@keyframes walk-stride {
-  0% {
-    clip-path: polygon(
-      26% 4%,
-      74% 4%,
-      88% 20%,
-      78% 46%,
-      86% 100%,
-      62% 100%,
-      50% 66%,
-      38% 100%,
-      14% 100%,
-      22% 46%,
-      12% 20%
-    );
-  }
-  50% {
-    clip-path: polygon(
-      26% 4%,
-      74% 4%,
-      88% 20%,
-      78% 46%,
-      62% 100%,
-      38% 100%,
-      50% 66%,
-      38% 100%,
-      14% 100%,
-      22% 46%,
-      12% 20%
-    );
-  }
-}
 
 /* A sign across the junction with a failing ballast. */
 .ambient-flicker {
@@ -1798,6 +2074,16 @@ button.screen:active {
 
 .btn:active {
   transform: scale(0.985);
+}
+
+/* Every button is magnetic; the pull is a `translate`, which composes with
+   the `transform` the press state uses rather than overwriting it. */
+.btn {
+  transition:
+    background var(--dur-2) var(--ease),
+    transform var(--dur-1) var(--ease),
+    translate var(--dur-3) var(--ease);
+  translate: var(--magnet-x, 0) var(--magnet-y, 0);
 }
 
 .btn-accent {
@@ -2724,11 +3010,11 @@ button.screen:active {
   /* Clear of the moon, over the sky-to-skyline transition, with the beam
      running behind it. */
   .descent-title {
-    top: 40%;
+    top: 33%;
   }
 
   .descent-title h1 {
-    font-size: clamp(3rem, min(23dvh, 13vw), 12rem);
+    font-size: clamp(2.5rem, min(19dvh, 12vw), 10rem);
   }
 
   .descent-title-school {

@@ -90,12 +90,16 @@ function RegisterForm() {
   });
   const [errors, setErrors] = useState<Errors>({});
   const [submitted, setSubmitted] = useState(false);
+  /** Set once the form validates while entries are still closed. */
+  const [checked, setChecked] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
+  const checkedRef = useRef<HTMLParagraphElement | null>(null);
 
   const set =
     (key: keyof Fields) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
       setValues((v) => ({ ...v, [key]: e.target.value }));
+      setChecked(false);
       setErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
     };
 
@@ -117,7 +121,14 @@ function RegisterForm() {
       const url = new URL(REGISTRATION_FORM_URL);
       for (const [k, v] of Object.entries(values)) url.searchParams.set(k, v);
       window.location.href = url.toString();
+      return;
     }
+
+    // Entries are not open, so there is nothing to submit to — but the form
+    // still reports whether what has been typed would pass. Disabling the
+    // button instead would make the notice above a lie.
+    setChecked(true);
+    window.requestAnimationFrame(() => checkedRef.current?.focus());
   };
 
   const errorList = FIELD_ORDER.filter((k) => errors[k]);
@@ -134,8 +145,9 @@ function RegisterForm() {
             <span aria-hidden="true">⚠</span> Entries are not open yet
           </span>
           <span>
-            The entry form is still being finalised. Everything below works — fill it in to check
-            your details are ready, and come back when entries open.
+            The entry form is still being finalised. Fill this in and choose{" "}
+            <strong>Check my details</strong> to confirm you have everything ready, then come back
+            and submit once entries open.
           </span>
         </p>
       ) : null}
@@ -267,9 +279,22 @@ function RegisterForm() {
           </p>
         </div>
 
+        {checked ? (
+          <p className="notice notice-ok" role="status" tabIndex={-1} ref={checkedRef}>
+            <strong>Your details are complete.</strong>
+            <span>
+              Nothing has been submitted — entries are not open yet. Come back and submit when they
+              are, and keep this page open so you do not retype anything.
+            </span>
+          </p>
+        ) : null}
+
         <div className="form-actions">
-          <button type="submit" className="btn btn-accent btn-block" disabled={!registrationOpen}>
-            {registrationOpen ? "Submit registration" : "Entries not open yet"}
+          <button
+            type="submit"
+            className={`btn btn-block ${registrationOpen ? "btn-accent" : "btn-ghost"}`}
+          >
+            {registrationOpen ? "Submit registration" : "Check my details"}
           </button>
           <Link to="/events" className="btn btn-ghost btn-block">
             Read the event details first

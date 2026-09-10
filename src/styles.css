@@ -1292,6 +1292,16 @@ button.screen:active {
   box-shadow: inset 0 0 0 1px var(--border);
 }
 
+.notice-ok {
+  background: color-mix(in oklab, var(--neon-cyan) 12%, oklch(0.2 0.035 267 / 0.8));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--neon-cyan) 45%, transparent);
+  margin-block: 0.5rem 0;
+}
+
+.notice-ok strong {
+  color: var(--foreground);
+}
+
 /* Inside a frame the pending name is stated quietly: the summary count above
    the wall already makes the gap unmissable, and eight red boxes bury the
    roles, which are the real content until the roster lands. */

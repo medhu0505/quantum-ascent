@@ -2153,8 +2153,25 @@ button.screen:active {
   z-index: 1;
 }
 
-.descent-plate[data-scrub] {
+/* Hidden while the film is the scene — scrubbed, or playing once through.
+   The scrub loop drives the value directly; the playthrough crossfades. */
+.descent-plate[data-plate="scrub"] {
   opacity: 0;
+}
+
+.descent-plate[data-plate="play"] {
+  opacity: 0;
+}
+
+.descent-plate[data-plate="still"] {
+  opacity: 1;
+  transition: opacity 500ms var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .descent-plate[data-plate="still"] {
+    transition: none;
+  }
 }
 
 .descent-title {

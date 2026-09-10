@@ -53,6 +53,26 @@ export function Descent() {
   const [filmFailed, setFilmFailed] = useState(false);
 
   const scrubbing = isStage && !reducedMotion && !filmFailed;
+  /** True once a non-scrubbed playthrough has finished, or will never start. */
+  const [filmPlayed, setFilmPlayed] = useState(false);
+
+  /**
+   * What the crossroads plate is doing, which is entirely a function of what
+   * the film is doing:
+   *
+   *   scrub — the loop fades it in as the camera settles.
+   *   play  — the film runs once; the plate waits behind it and takes over at
+   *           the end, so the signs land on a still rather than a paused video.
+   *   still — no film, so the plate is the scene from the start.
+   *
+   * Getting this wrong is not subtle: an opaque plate over a playing film
+   * hides the film completely, which is what it did on every narrow viewport.
+   */
+  const plateMode: "scrub" | "play" | "still" = scrubbing
+    ? "scrub"
+    : reducedMotion || filmFailed || filmPlayed
+      ? "still"
+      : "play";
 
   /* ---- Scroll scrub ------------------------------------------------ */
   useEffect(() => {
@@ -228,11 +248,25 @@ export function Descent() {
     const video = videoRef.current;
     if (!video) return;
 
+    // Hand the scene to the plate when the film finishes — or if it fails, so
+    // a refused playthrough never leaves the hub without a backdrop.
+    const done = () => setFilmPlayed(true);
+    video.addEventListener("ended", done);
+    video.addEventListener("error", done);
+
     // Respect Data Saver and slow radios: the poster alone tells the story.
     const conn = (
       navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }
     ).connection;
-    if (conn?.saveData || /^(slow-)?2g$/.test(conn?.effectiveType ?? "")) return;
+    if (conn?.saveData || /^(slow-)?2g$/.test(conn?.effectiveType ?? "")) {
+      // No film on a metered or slow connection: show the crossroads instead
+      // of holding a poster the visitor is paying for twice.
+      setFilmPlayed(true);
+      return () => {
+        video.removeEventListener("ended", done);
+        video.removeEventListener("error", done);
+      };
+    }
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -248,7 +282,11 @@ export function Descent() {
       { threshold: 0.4 },
     );
     observer.observe(video);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      video.removeEventListener("ended", done);
+      video.removeEventListener("error", done);
+    };
   }, [scrubbing, reducedMotion]);
 
   const skipToHub = () => {
@@ -294,7 +332,7 @@ export function Descent() {
             />
 
             {/* The film's final frame, faded in as the camera settles. */}
-            <div ref={plateRef} className="descent-plate" data-scrub={scrubbing || undefined}>
+            <div ref={plateRef} className="descent-plate" data-plate={plateMode}>
               <HubPlate />
             </div>
 

@@ -3693,7 +3693,7 @@ button.screen:active {
 .fan-centre-card figcaption {
   padding: var(--s-3) var(--s-4);
   background: color-mix(in oklab, #000 46%, var(--card));
-  color: var(--ink);
+  color: var(--foreground);
   font-size: var(--text-xs);
   letter-spacing: 0.08em;
   text-align: center;
@@ -3711,10 +3711,10 @@ button.screen:active {
   place-items: center;
   width: 2.25rem;
   height: 2.25rem;
-  border: 1px solid color-mix(in oklab, var(--ink) 22%, transparent);
+  border: 1px solid color-mix(in oklab, var(--foreground) 22%, transparent);
   border-radius: 50%;
   background: color-mix(in oklab, var(--card) 70%, transparent);
-  color: var(--ink);
+  color: var(--foreground);
   cursor: pointer;
   backdrop-filter: blur(12px) saturate(150%);
   transition:
@@ -3759,7 +3759,7 @@ button.screen:active {
       transparent 70%
     ),
     color-mix(in oklab, #fff 9%, var(--card));
-  color: var(--ink);
+  color: var(--foreground);
   font-size: var(--text-sm);
   font-weight: 700;
   letter-spacing: 0.06em;

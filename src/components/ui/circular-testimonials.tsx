@@ -133,11 +133,11 @@ export function CircularTestimonials({
   if (!active) return null;
 
   const style = {
-    "--tc-name": colors.name ?? "var(--ink)",
+    "--tc-name": colors.name ?? "var(--foreground)",
     "--tc-designation": colors.designation ?? "var(--muted-foreground)",
-    "--tc-quote": colors.testimony ?? "color-mix(in oklab, var(--ink) 86%, transparent)",
+    "--tc-quote": colors.testimony ?? "color-mix(in oklab, var(--foreground) 86%, transparent)",
     "--tc-arrow-bg": colors.arrowBackground ?? "var(--card)",
-    "--tc-arrow-fg": colors.arrowForeground ?? "var(--ink)",
+    "--tc-arrow-fg": colors.arrowForeground ?? "var(--foreground)",
     "--tc-arrow-hover": colors.arrowHoverBackground ?? "var(--neon-cyan)",
     "--tc-size-name": fontSizes.name ?? "var(--text-2xl)",
     "--tc-size-designation": fontSizes.designation ?? "var(--text-sm)",

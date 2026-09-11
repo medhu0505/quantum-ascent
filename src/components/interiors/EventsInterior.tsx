@@ -4,6 +4,7 @@ import { Route } from "@/routes/events";
 import { InteriorShell } from "@/components/interiors/InteriorShell";
 import { Reveal } from "@/components/scene/Reveal";
 import { events, getScene } from "@/data/quantum";
+import { SqueezeCarousel, type SqueezeSlide } from "@/components/ui/carousel-squeeze";
 
 /**
  * Events: one screen per event, each its own hotspot.
@@ -21,6 +22,33 @@ import { events, getScene } from "@/data/quantum";
  * linked to and shared. History is replaced rather than pushed: opening and
  * closing screens should not fill up the back button.
  */
+/**
+ * Panel art for the rail. There are no event photographs and there will not be
+ * any before the fest runs, so each panel is lit from its event's own accent
+ * instead — which is the same channel the screen below it is keyed to, so the
+ * rail and the grid read as one thing rather than two.
+ */
+const PANEL_CYAN =
+  "radial-gradient(120% 140% at 22% 12%, color-mix(in oklab, var(--neon-cyan) 52%, transparent), transparent 68%), linear-gradient(155deg, oklch(0.28 0.06 215), oklch(0.16 0.03 250))";
+
+const PANEL: Record<string, string> = {
+  cyan: "radial-gradient(120% 140% at 22% 12%, color-mix(in oklab, var(--neon-cyan) 52%, transparent), transparent 68%), linear-gradient(155deg, oklch(0.28 0.06 215), oklch(0.16 0.03 250))",
+  magenta:
+    "radial-gradient(120% 140% at 22% 12%, color-mix(in oklab, var(--neon-magenta) 52%, transparent), transparent 68%), linear-gradient(155deg, oklch(0.28 0.08 325), oklch(0.16 0.03 290))",
+  violet:
+    "radial-gradient(120% 140% at 22% 12%, color-mix(in oklab, var(--neon-violet) 52%, transparent), transparent 68%), linear-gradient(155deg, oklch(0.28 0.07 280), oklch(0.16 0.03 265))",
+};
+
+const rail: SqueezeSlide[] = events.map((event) => ({
+  id: event.id,
+  title: `${event.name}. ${event.tagline}`,
+  description: event.description,
+  background: PANEL[event.accent] ?? PANEL_CYAN,
+  overlay: <span className="rail-mark">{event.name}</span>,
+  action: `Register for ${event.name}`,
+  href: `/register/form?event=${event.id}`,
+}));
+
 export function EventsInterior() {
   const scene = getScene("events")!;
   const { event: fromUrl } = Route.useSearch();
@@ -54,6 +82,21 @@ export function EventsInterior() {
       scene={scene}
       lead="Six events run across the day. Every one is scored the same way and carries the same weight, so cumulative points across all six decide the overall school champion."
     >
+      <section className="rail" aria-labelledby="rail-head">
+        <h2 id="rail-head" className="page-subhead">
+          The six, at a glance
+        </h2>
+        <SqueezeCarousel
+          slides={rail}
+          label="The six events"
+          height="clamp(180px, 30cqi, 320px)"
+          accent="var(--neon-cyan)"
+          accentForeground="#05070d"
+        />
+      </section>
+
+      <h2 className="page-subhead">Every event in full</h2>
+
       <ul className="screen-grid">
         {events.map((event, i) => {
           const isOpen = open === event.id;

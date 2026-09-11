@@ -293,6 +293,16 @@ export function Descent() {
     const fail = () => setFilmFailed(true);
     const recovered = () => setFilmFailed(false);
 
+    // The element can fail before this effect ever runs — a browser with no
+    // decoder for the file rejects it the moment the source is set, which on a
+    // fast connection is well before hydration. That `error` event is gone by
+    // the time the listener below is attached, leaving only the grace timer to
+    // notice, six seconds later, with the loading message on screen the whole
+    // time. `error` is safe to read synchronously in a way `networkState` is
+    // not: it is terminal, and it is only ever set by a real media failure,
+    // never by a remount that has yet to commit `src`.
+    if (video.error) fail();
+
     video.addEventListener("error", fail);
     video.addEventListener("loadeddata", recovered);
 

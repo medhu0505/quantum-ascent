@@ -2,6 +2,7 @@ import { InteriorShell } from "@/components/interiors/InteriorShell";
 import { Reveal } from "@/components/scene/Reveal";
 import { Value } from "@/components/site/Bits";
 import { getScene, isTodo, team } from "@/data/quantum";
+import { Carousel360, type FanImage } from "@/components/ui/image-fan-carousel";
 
 /**
  * Meet the Team: the crew wall.
@@ -12,9 +13,30 @@ import { getScene, isTodo, team } from "@/data/quantum";
  * says the name is still to come. Once the roster lands, each frame becomes
  * a hotspot onto a profile.
  */
+/** Initials for an empty frame — of the name once there is one, of the role until then. */
+function initials(text: string): string {
+  return text
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word[0] ?? "")
+    .join("")
+    .toUpperCase();
+}
+
 export function TeamInterior() {
   const scene = getScene("team")!;
   const pending = team.filter((m) => isTodo(m.name)).length;
+
+  // Captioned by role while the names are unconfirmed. Reading out
+  // "TODO — name" eight times would be worse than simply naming the job.
+  const roster: FanImage[] = team.map((member) => {
+    const named = !isTodo(member.name);
+    return {
+      ...(member.photo ? { src: member.photo } : {}),
+      alt: named ? `${member.name}, ${member.role}` : member.role,
+      stand: initials(named ? member.name : member.role),
+    };
+  });
 
   return (
     <InteriorShell
@@ -29,6 +51,10 @@ export function TeamInterior() {
           </span>
         </p>
       ) : null}
+
+      <Carousel360 images={roster} />
+
+      <h2 className="page-subhead">The full crew</h2>
 
       <ul className="frame-wall">
         {team.map((member, i) => (

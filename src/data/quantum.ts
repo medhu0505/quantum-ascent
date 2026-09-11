@@ -324,7 +324,12 @@ export const descentFilm = {
  * Team roster — TODO, not yet finalised.
  * ------------------------------------------------------------------ */
 
-export type TeamMember = { name: string; role: string };
+/**
+ * `photo` is unset for everyone until the organisers supply portraits. The
+ * roster carousel draws an empty frame for anyone without one rather than a
+ * broken image, so filling these in is the only step needed to light it up.
+ */
+export type TeamMember = { name: string; role: string; photo?: string };
 
 export const team: TeamMember[] = [
   { name: `${TODO} — name`, role: "Fest Head" },

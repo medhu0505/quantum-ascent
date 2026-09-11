@@ -38,7 +38,6 @@
   src: url("/fonts/Manrope-var.woff2") format("woff2-variations");
 }
 
-
 /*
  * Quantum V2.0 design system.
  *
@@ -173,15 +172,9 @@
    * world comes from the signage, so shadows carry a little of the ground's
    * blue rather than reading as grey.
    */
-  --elev-1:
-    0 1px 2px oklch(0.05 0.02 265 / 0.5),
-    0 2px 10px -6px oklch(0.05 0.02 265 / 0.6);
-  --elev-2:
-    0 2px 4px oklch(0.05 0.02 265 / 0.45),
-    0 14px 32px -16px oklch(0.04 0.02 265 / 0.8);
-  --elev-3:
-    0 4px 10px oklch(0.05 0.02 265 / 0.5),
-    0 32px 64px -28px oklch(0.03 0.02 265 / 0.9);
+  --elev-1: 0 1px 2px oklch(0.05 0.02 265 / 0.5), 0 2px 10px -6px oklch(0.05 0.02 265 / 0.6);
+  --elev-2: 0 2px 4px oklch(0.05 0.02 265 / 0.45), 0 14px 32px -16px oklch(0.04 0.02 265 / 0.8);
+  --elev-3: 0 4px 10px oklch(0.05 0.02 265 / 0.5), 0 32px 64px -28px oklch(0.03 0.02 265 / 0.9);
 
   /* Hairlines. Two weights: a structural rule and a lit edge. */
   --rule: oklch(1 0 0 / 0.1);
@@ -963,8 +956,7 @@
     background:
       radial-gradient(120% 95% at 50% 42%, oklch(0.24 0.05 265 / 0.7), transparent 62%),
       radial-gradient(55% 60% at 8% 52%, oklch(0.5 0.11 215 / 0.14), transparent 72%),
-      radial-gradient(55% 60% at 92% 48%, oklch(0.5 0.14 325 / 0.14), transparent 72%),
-      var(--ink);
+      radial-gradient(55% 60% at 92% 48%, oklch(0.5 0.14 325 / 0.14), transparent 72%), var(--ink);
   }
 
   /* Aspect-locked so hotspot percentages stay welded to the billboards. */
@@ -978,7 +970,7 @@
     container-type: inline-size;
   }
 
-    .hub-scrim {
+  .hub-scrim {
     background: linear-gradient(
       180deg,
       oklch(0.12 0.026 265 / 0.22) 0%,
@@ -1345,7 +1337,6 @@
   }
 }
 
-
 /* A sign across the junction with a failing ballast. */
 .ambient-flicker {
   position: absolute;
@@ -1523,7 +1514,11 @@
   min-height: auto;
   overflow: hidden;
   background:
-    radial-gradient(90% 55% at 50% 0%, color-mix(in oklab, var(--accent-hue) 14%, transparent), transparent 70%),
+    radial-gradient(
+      90% 55% at 50% 0%,
+      color-mix(in oklab, var(--accent-hue) 14%, transparent),
+      transparent 70%
+    ),
     var(--ink);
   isolation: isolate;
 }
@@ -1564,8 +1559,18 @@
   position: absolute;
   inset: 55% 0 0;
   background:
-    linear-gradient(90deg, transparent 33.3%, oklch(0.1 0.02 265 / 0.5) 33.3% 33.9%, transparent 33.9%),
-    linear-gradient(90deg, transparent 66.3%, oklch(0.1 0.02 265 / 0.5) 66.3% 66.9%, transparent 66.9%);
+    linear-gradient(
+      90deg,
+      transparent 33.3%,
+      oklch(0.1 0.02 265 / 0.5) 33.3% 33.9%,
+      transparent 33.9%
+    ),
+    linear-gradient(
+      90deg,
+      transparent 66.3%,
+      oklch(0.1 0.02 265 / 0.5) 66.3% 66.9%,
+      transparent 66.9%
+    );
 }
 
 /* Accent wash along the window sill. A hairline rule was tried here first and
@@ -1639,7 +1644,11 @@
   padding: clamp(1.5rem, 4vw, 2.25rem);
   border-radius: var(--radius-lg);
   background:
-    linear-gradient(180deg, color-mix(in oklab, var(--accent-hue) 12%, transparent), transparent 70%),
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--accent-hue) 12%, transparent),
+      transparent 70%
+    ),
     oklch(0.185 0.032 267 / 0.8);
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 32%, transparent);
 }
@@ -1668,7 +1677,11 @@
   border-radius: var(--radius-md);
   color: inherit;
   background:
-    linear-gradient(180deg, color-mix(in oklab, var(--accent-hue) 13%, transparent), transparent 55%),
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--accent-hue) 13%, transparent),
+      transparent 55%
+    ),
     oklch(0.185 0.032 267 / 0.9);
   box-shadow:
     inset 0 1px 0 oklch(1 0 0 / 0.07),
@@ -1887,8 +1900,11 @@ button.screen:active {
   flex-direction: column;
   gap: var(--s-2);
   padding: clamp(1.75rem, 4vw, 2.75rem) clamp(1.25rem, 5vw, 2.5rem);
-  background:
-    radial-gradient(90% 130% at 50% 0%, color-mix(in oklab, var(--accent-hue) 22%, transparent), transparent 65%);
+  background: radial-gradient(
+    90% 130% at 50% 0%,
+    color-mix(in oklab, var(--accent-hue) 22%, transparent),
+    transparent 65%
+  );
   transition: background var(--dur-ui) var(--ease-out);
 }
 
@@ -1908,8 +1924,11 @@ button.screen:active {
 
 .console-face:hover,
 .console-face:focus-visible {
-  background:
-    radial-gradient(90% 130% at 50% 0%, color-mix(in oklab, var(--accent-hue) 34%, transparent), transparent 65%);
+  background: radial-gradient(
+    90% 130% at 50% 0%,
+    color-mix(in oklab, var(--accent-hue) 34%, transparent),
+    transparent 65%
+  );
 }
 
 .console-kicker {
@@ -3425,4 +3444,344 @@ button.screen:active {
     border-top: 1px solid #bbb;
     background: #fff;
   }
+}
+
+/* ------------------------------------------------------------------ *
+ * Carousels
+ * ------------------------------------------------------------------ */
+
+.testimonial-container {
+  width: 100%;
+  max-width: 56rem;
+  border-radius: var(--radius-2xl);
+}
+
+.testimonial-container:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: var(--s-2);
+}
+
+.testimonial-grid {
+  display: grid;
+  gap: var(--s-7);
+}
+
+.image-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  max-height: 24rem;
+  perspective: 1000px;
+}
+
+.testimonial-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--elev-3);
+  transition:
+    transform var(--dur-4) cubic-bezier(0.34, 1.28, 0.36, 1),
+    opacity var(--dur-4) var(--ease);
+}
+
+.testimonial-image.is-active {
+  z-index: 3;
+  opacity: 1;
+}
+
+.testimonial-image.is-left,
+.testimonial-image.is-right {
+  z-index: 2;
+  opacity: 1;
+}
+
+/* Held out of the stack entirely rather than merely made transparent — an
+   invisible image that still answers hit tests steals clicks from the one
+   on top. */
+.testimonial-image.is-hidden {
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.testimonial-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--s-6);
+}
+
+.testimonial-name {
+  margin: 0 0 var(--s-1);
+  color: var(--tc-name);
+  font-size: var(--tc-size-name);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.testimonial-designation {
+  margin: 0 0 var(--s-5);
+  color: var(--tc-designation);
+  font-size: var(--tc-size-designation);
+}
+
+.testimonial-quote {
+  margin: 0;
+  color: var(--tc-quote);
+  font-size: var(--tc-size-quote);
+  line-height: 1.75;
+  text-wrap: pretty;
+}
+
+.testimonial-quote span {
+  display: inline-block;
+}
+
+:root[data-js="on"] .testimonial-card {
+  animation: tc-card-in var(--dur-3) var(--ease) both;
+}
+
+/* Words resolve out of a blur in sequence. Capped at 24 steps so a long
+   quote does not end with words still arriving seconds later. */
+:root[data-js="on"] .testimonial-quote span {
+  animation: tc-word-in 0.22s var(--ease) both;
+  animation-delay: calc(min(var(--i), 24) * 25ms);
+}
+
+@keyframes tc-card-in {
+  from {
+    opacity: 0;
+    translate: 0 1.25rem;
+  }
+}
+
+@keyframes tc-word-in {
+  from {
+    opacity: 0;
+    translate: 0 0.3rem;
+    filter: blur(10px);
+  }
+}
+
+.arrow-buttons {
+  display: flex;
+  gap: var(--s-4);
+}
+
+.arrow-button {
+  display: grid;
+  place-items: center;
+  width: 2.7rem;
+  height: 2.7rem;
+  border: 0;
+  border-radius: 50%;
+  background: var(--tc-arrow-bg);
+  color: var(--tc-arrow-fg);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-2) var(--ease),
+    color var(--dur-2) var(--ease),
+    scale var(--dur-2) var(--ease);
+}
+
+.arrow-button:hover {
+  background: var(--tc-arrow-hover);
+  color: #05070d;
+}
+
+.arrow-button:active {
+  scale: 0.92;
+}
+
+@media (min-width: 48rem) {
+  .testimonial-grid {
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+  }
+}
+
+/* ---- 3D ring ---- */
+
+.fan {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding-block: var(--s-6);
+  user-select: none;
+}
+
+.fan:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: var(--s-2);
+  border-radius: var(--radius-2xl);
+}
+
+.fan-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(92%, 37.5rem);
+  aspect-ratio: 5 / 3;
+}
+
+.fan-ring,
+.fan-orbit {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transform-style: preserve-3d;
+}
+
+.fan-orbit,
+.fan-thumb {
+  transition: transform 0.9s cubic-bezier(0.34, 1.26, 0.38, 1);
+}
+
+.fan-thumb {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.32);
+  transform-style: preserve-3d;
+}
+
+.fan-thumb img {
+  display: block;
+  width: clamp(3rem, 9cqi, 6rem);
+  height: clamp(3rem, 9cqi, 6rem);
+  object-fit: cover;
+}
+
+.fan-centre {
+  position: relative;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.fan-centre-card {
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--elev-3);
+}
+
+:root[data-js="on"] .fan-centre-card {
+  animation: fan-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes fan-in {
+  from {
+    opacity: 0;
+    scale: 0.95;
+  }
+}
+
+.fan-centre-card img {
+  display: block;
+  width: clamp(11rem, 34cqi, 20rem);
+  height: clamp(11rem, 34cqi, 20rem);
+  object-fit: cover;
+}
+
+.fan-centre-card figcaption {
+  padding: var(--s-3) var(--s-4);
+  background: color-mix(in oklab, #000 46%, var(--card));
+  color: var(--ink);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.fan-controls {
+  display: flex;
+  gap: var(--s-3);
+  margin-top: var(--s-6);
+}
+
+.fan-button {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid color-mix(in oklab, var(--ink) 22%, transparent);
+  border-radius: 50%;
+  background: color-mix(in oklab, var(--card) 70%, transparent);
+  color: var(--ink);
+  cursor: pointer;
+  backdrop-filter: blur(12px) saturate(150%);
+  transition:
+    background-color var(--dur-2) var(--ease),
+    scale var(--dur-2) var(--ease);
+}
+
+.fan-button:hover {
+  background: color-mix(in oklab, var(--neon-cyan) 26%, var(--card));
+}
+
+.fan-button:active {
+  scale: 0.9;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fan-orbit,
+  .fan-thumb,
+  .testimonial-image {
+    transition: none;
+  }
+
+  :root[data-js="on"] .fan-centre-card,
+  :root[data-js="on"] .testimonial-card,
+  :root[data-js="on"] .testimonial-quote span {
+    animation: none;
+  }
+}
+
+/* A frame whose picture has not been supplied yet. Deliberately reads as an
+   empty frame rather than a failed one: the roster is real, the portraits are
+   simply not in yet. */
+.fan-blank {
+  display: grid;
+  place-items: center;
+  width: clamp(3rem, 9cqi, 6rem);
+  height: clamp(3rem, 9cqi, 6rem);
+  background:
+    radial-gradient(
+      120% 120% at 30% 15%,
+      color-mix(in oklab, var(--neon-violet) 42%, transparent),
+      transparent 70%
+    ),
+    color-mix(in oklab, #fff 9%, var(--card));
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.fan-blank.is-centre {
+  width: clamp(11rem, 34cqi, 20rem);
+  height: clamp(11rem, 34cqi, 20rem);
+  font-size: var(--text-3xl);
+}
+
+/* The featured rail above the event screens. */
+.rail {
+  container-type: inline-size;
+  margin-block-end: var(--s-9);
+}
+
+.rail-mark {
+  font-family: var(--font-display, inherit);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #fff;
+  text-shadow: 0 1px 12px rgb(0 0 0 / 0.6);
 }

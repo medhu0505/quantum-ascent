@@ -29,7 +29,7 @@ export function InteriorShell({
     <>
       <ExitToCrossroads />
       <RegisterChip hidden={scene.id === "register"} />
-      <main id="main" className="room phase-enter" data-accent={scene.accent}>
+      <main id="main" className="room phase-enter" data-accent={scene.accent} data-room={scene.id}>
         <div className="room-window" aria-hidden="true">
           <img src={scene.view} alt="" width={760} height={540} decoding="async" />
         </div>

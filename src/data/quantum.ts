@@ -28,23 +28,6 @@ export const BROCHURE_URL = `${TODO} — brochure PDF URL`;
 /** TODO: fest dates are not public yet. */
 export const FEST_DATES = `${TODO} — fest dates`;
 
-/**
- * Optional Spline scene for the crossroads centrepiece.
- *
- * Empty by default, and deliberately so. The centrepiece is drawn natively in
- * `CrossroadsGL`, inside the same camera, depth buffer and bloom pass as the
- * street — which is why it occludes against the road and picks up the same
- * light. A Spline scene cannot do either: it spins up a second WebGL context
- * and composites on top, so it would slide across the plate rather than stand
- * in it, and it fetches the scene from prod.spline.design at load, making the
- * hero a live third-party dependency on fest day.
- *
- * Set this to a scene URL of your own and that path takes over; leaving it
- * empty keeps the native core. Note that the scene file is fetched at runtime,
- * so this has not been exercised against a real scene.
- */
-export const CROSSROADS_SPLINE_SCENE = "";
-
 export const school = {
   name: "A.F.S. Bal Bharati School",
   city: "Lodhi Road, New Delhi",

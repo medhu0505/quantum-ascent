@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { CROSSROADS_SPLINE_SCENE, crossroadsPlate } from "@/data/quantum";
+import { crossroadsPlate } from "@/data/quantum";
 
 /**
  * The crossroads as real geometry.
@@ -168,11 +168,7 @@ export function CrossroadsGL({ stageRef }: { stageRef: RefObject<HTMLElement | n
       // the street exactly as it does the road, and the bloom pass that
       // lights the neon lights this too. An overlaid <canvas> could do
       // neither — it would slide across the plate instead of standing in it.
-      // Stood down when a Spline scene is configured, so the two never draw
-      // a centrepiece each.
-      const wantCore = !CROSSROADS_SPLINE_SCENE;
       const core = new THREE.Group();
-      core.visible = wantCore;
       core.position.set(CORE.x, CORE.y, CORE.z);
       scene.add(core);
 
@@ -367,11 +363,6 @@ export function CrossroadsGL({ stageRef }: { stageRef: RefObject<HTMLElement | n
 
         // The core turns on its own and leans toward the pointer, so it reads
         // as something suspended and aware rather than a spinning prop.
-        if (!wantCore) {
-          composer.render();
-          return;
-        }
-
         const t = performance.now() * 0.001;
         shellMesh.rotation.y = t * (0.22 + hover * 0.5);
         shellMesh.rotation.x = Math.sin(t * 0.31) * 0.3;

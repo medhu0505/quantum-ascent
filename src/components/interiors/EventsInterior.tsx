@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback } from "react";
 import { Route } from "@/routes/events";
 import { InteriorShell } from "@/components/interiors/InteriorShell";
 import { Reveal } from "@/components/scene/Reveal";
@@ -7,32 +7,31 @@ import { events, getScene } from "@/data/quantum";
 import { SqueezeCarousel, type SqueezeSlide } from "@/components/ui/carousel-squeeze";
 
 /**
- * Events: one screen per event, each its own hotspot.
+ * Events: one rail carrying all six.
  *
- * The screens are the hotspots — the element and the target are the same
- * object, so focus order, hit area and accessible name need no separate
- * bookkeeping. Each screen is a disclosure rather than a route: six events is
- * not enough content to justify six pages, and collapsing the detail keeps
- * the wall of screens scannable instead of six columns of body copy.
+ * This was a rail of summaries above a wall of expandable screens, which meant
+ * every event was written twice and the same six names had to be read twice
+ * before anything could be compared. The rail now carries the whole entry —
+ * tagline, description, team size, the round-by-round format and the
+ * registration link — so there is one place per event rather than two, and
+ * opening one closes the last without anything collapsing under the scroll
+ * position.
  *
- * Each opened screen carries its own registration link with the event
- * preselected, so browsing and signing up are one move rather than two.
- *
- * The open screen is mirrored into `?event=<id>` so a single event can be
- * linked to and shared. History is replaced rather than pushed: opening and
- * closing screens should not fill up the back button.
+ * The open event is mirrored into `?event=<id>` so a single event can be
+ * linked to and shared. History is replaced rather than pushed: stepping along
+ * a carousel should not fill up the back button.
  */
+
 /**
  * Panel art for the rail. There are no event photographs and there will not be
  * any before the fest runs, so each panel is lit from its event's own accent
- * instead — which is the same channel the screen below it is keyed to, so the
- * rail and the grid read as one thing rather than two.
+ * instead, which is the channel the rest of the site keys that event to.
  */
 const PANEL_CYAN =
   "radial-gradient(120% 140% at 22% 12%, color-mix(in oklab, var(--neon-cyan) 52%, transparent), transparent 68%), linear-gradient(155deg, oklch(0.28 0.06 215), oklch(0.16 0.03 250))";
 
 const PANEL: Record<string, string> = {
-  cyan: "radial-gradient(120% 140% at 22% 12%, color-mix(in oklab, var(--neon-cyan) 52%, transparent), transparent 68%), linear-gradient(155deg, oklch(0.28 0.06 215), oklch(0.16 0.03 250))",
+  cyan: PANEL_CYAN,
   magenta:
     "radial-gradient(120% 140% at 22% 12%, color-mix(in oklab, var(--neon-magenta) 52%, transparent), transparent 68%), linear-gradient(155deg, oklch(0.28 0.08 325), oklch(0.16 0.03 290))",
   violet:
@@ -45,6 +44,20 @@ const rail: SqueezeSlide[] = events.map((event) => ({
   description: event.description,
   background: PANEL[event.accent] ?? PANEL_CYAN,
   overlay: <span className="rail-mark">{event.name}</span>,
+  details: (
+    <div className="rail-detail" data-accent={event.accent}>
+      <p className="rail-team">
+        <span className="rail-team-label">Entry</span>
+        {event.team}
+      </p>
+      <h3 className="rail-format-title">How it runs</h3>
+      <ol className="rail-format">
+        {event.format.map((line) => (
+          <li key={line}>{line}</li>
+        ))}
+      </ol>
+    </div>
+  ),
   action: `Register for ${event.name}`,
   href: `/register/form?event=${event.id}`,
 }));
@@ -53,29 +66,26 @@ export function EventsInterior() {
   const scene = getScene("events")!;
   const { event: fromUrl } = Route.useSearch();
   const navigate = useNavigate();
-  const [open, setOpen] = useState<string | null>(fromUrl ?? null);
-  const panelRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // Arriving on a shared link should land on the screen that was shared.
-  useEffect(() => {
-    if (!fromUrl) return;
-    setOpen(fromUrl);
-    const el = panelRefs.current[fromUrl];
-    if (!el) return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    el.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
-  }, [fromUrl]);
+  // Read once, at mount. The carousel owns its position from then on, and the
+  // URL is rewritten in place rather than pushed, so there are no history
+  // entries for a later read to disagree with.
+  const landed = events.findIndex((e) => e.id === fromUrl);
+  const start = landed < 0 ? 0 : landed;
 
-  const toggle = (id: string) => {
-    const next = open === id ? null : id;
-    setOpen(next);
-    void navigate({
-      to: "/events",
-      search: next ? { event: next } : {},
-      replace: true,
-      resetScroll: false,
-    });
-  };
+  const onIndexChange = useCallback(
+    (index: number) => {
+      const event = events[index];
+      if (!event) return;
+      void navigate({
+        to: "/events",
+        search: { event: event.id },
+        replace: true,
+        resetScroll: false,
+      });
+    },
+    [navigate],
+  );
 
   return (
     <InteriorShell
@@ -84,70 +94,18 @@ export function EventsInterior() {
     >
       <section className="rail" aria-labelledby="rail-head">
         <h2 id="rail-head" className="page-subhead">
-          The six, at a glance
+          The six events
         </h2>
         <SqueezeCarousel
           slides={rail}
+          defaultIndex={start}
+          onIndexChange={onIndexChange}
           label="The six events"
           height="clamp(180px, 30cqi, 320px)"
           accent="var(--neon-cyan)"
           accentForeground="#05070d"
         />
       </section>
-
-      <h2 className="page-subhead">Every event in full</h2>
-
-      <ul className="screen-grid">
-        {events.map((event, i) => {
-          const isOpen = open === event.id;
-          return (
-            <Reveal as="li" key={event.id} delay={i} data-accent={event.accent}>
-              <div className="screen-shell">
-                <button
-                  type="button"
-                  className="screen"
-                  aria-expanded={isOpen}
-                  aria-controls={`event-panel-${event.id}`}
-                  onClick={() => toggle(event.id)}
-                >
-                  <span className="screen-index">Screen {String(i + 1).padStart(2, "0")}</span>
-                  <span className="screen-title">{event.name}</span>
-                  <span className="screen-tagline">{event.tagline}</span>
-                  <span className="screen-team">{event.team}</span>
-                  <span className="screen-more" aria-hidden="true">
-                    {isOpen ? "Hide details" : "Show details"}
-                  </span>
-                </button>
-
-                <div
-                  id={`event-panel-${event.id}`}
-                  className="screen-panel"
-                  ref={(el) => {
-                    panelRefs.current[event.id] = el;
-                  }}
-                  hidden={!isOpen}
-                >
-                  <p className="screen-body">{event.description}</p>
-                  <h3 className="screen-format-title">How it runs</h3>
-                  <ul className="screen-format">
-                    {event.format.map((line) => (
-                      <li key={line}>{line}</li>
-                    ))}
-                  </ul>
-                  <Link
-                    to="/register/form"
-                    search={{ event: event.id }}
-                    className="btn btn-accent"
-                    data-magnetic
-                  >
-                    Register for {event.name}
-                  </Link>
-                </div>
-              </div>
-            </Reveal>
-          );
-        })}
-      </ul>
 
       <Reveal as="section" className="room-cta" aria-labelledby="events-cta">
         <h2 id="events-cta" className="room-subhead">

@@ -42,6 +42,8 @@ export type SqueezeSlide = {
   background?: string;
   /** Sits in the corner of the open panel: a wordmark, a logo, a caption. */
   overlay?: ReactNode;
+  /** Anything that belongs under the description — a list, a spec, a note. */
+  details?: ReactNode;
   /** Text on the button. No text, no button. */
   action?: string;
   /** Where the button goes. */
@@ -413,12 +415,15 @@ export function SqueezeCarousel({
                 transition: `opacity var(--sq-ms) var(--sq-ease), visibility var(--sq-ms)`,
               }}
             >
-              <p className="max-w-[46rem] text-[15px] leading-[1.6] text-balance @lg:text-[17px]">
-                <span className="text-foreground">{slide.title}</span>{" "}
-                {slide.description && (
-                  <span className="text-muted-foreground">{slide.description}</span>
-                )}
-              </p>
+              <div className="flex max-w-[46rem] flex-col gap-4">
+                <p className="text-[15px] leading-[1.6] text-balance @lg:text-[17px]">
+                  <span className="text-foreground">{slide.title}</span>{" "}
+                  {slide.description && (
+                    <span className="text-muted-foreground">{slide.description}</span>
+                  )}
+                </p>
+                {slide.details}
+              </div>
 
               {slide.action && <Action slide={slide} shown={shown} />}
             </div>

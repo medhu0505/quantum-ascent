@@ -28,6 +28,19 @@ export const BROCHURE_URL = `${TODO} — brochure PDF URL`;
 /** TODO: fest dates are not public yet. */
 export const FEST_DATES = `${TODO} — fest dates`;
 
+/**
+ * The Spline scene standing in the crossroads.
+ *
+ * Fetched from prod.spline.design at load, which makes the centrepiece depend
+ * on a third party being up. The native core in `CrossroadsGL` stays mounted
+ * underneath and only stands down once this scene reports itself loaded, so a
+ * blocked or slow CDN costs nothing more than the robot.
+ *
+ * Set to an empty string to drop Spline entirely and keep the native core.
+ */
+export const CROSSROADS_SPLINE_SCENE =
+  "https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode";
+
 export const school = {
   name: "A.F.S. Bal Bharati School",
   city: "Lodhi Road, New Delhi",

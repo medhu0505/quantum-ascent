@@ -52,9 +52,23 @@ function webglAvailable(): boolean {
   }
 }
 
-export function CrossroadsGL({ stageRef }: { stageRef: RefObject<HTMLElement | null> }) {
+export function CrossroadsGL({
+  stageRef,
+  showCore = true,
+}: {
+  stageRef: RefObject<HTMLElement | null>;
+  /** Held true until something else has actually taken the intersection. */
+  showCore?: boolean;
+}) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const [live, setLive] = useState(false);
+
+  // Read from the render loop rather than closed over, so the core can be
+  // stood down without tearing the scene down and rebuilding it.
+  const showCoreRef = useRef(showCore);
+  useEffect(() => {
+    showCoreRef.current = showCore;
+  }, [showCore]);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -360,6 +374,12 @@ export function CrossroadsGL({ stageRef }: { stageRef: RefObject<HTMLElement | n
         fade = Math.min(1, fade + 0.03);
         material.uniforms["uFade"]!.value = fade;
         if (fade > 0.9 && !disposed) setLive(true);
+
+        core.visible = showCoreRef.current;
+        if (!core.visible) {
+          composer.render();
+          return;
+        }
 
         // The core turns on its own and leans toward the pointer, so it reads
         // as something suspended and aware rather than a spinning prop.

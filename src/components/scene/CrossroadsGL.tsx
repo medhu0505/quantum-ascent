@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { crossroadsPlate } from "@/data/quantum";
+import { crossroadsPlate, scenes } from "@/data/quantum";
+import { ENTER_EVENT, type EnterDetail } from "@/components/scene/enterSignal";
 
 /**
  * The crossroads as real geometry.
@@ -42,6 +43,44 @@ const CORE = { x: 0, y: -0.26, z: -0.3, r: 0.085, shaft: 0.21 } as const;
 
 /** Pointer distance, in plane units, at which the core starts reacting. */
 const CORE_REACH = 0.55;
+
+/**
+ * How long the camera takes to reach the billboard, and how far in it gets.
+ * The veil that covers the cut runs 620ms, so the move has to be over before
+ * the next route is uncovered or the visitor sees it snap back.
+ */
+const ENTER_MS = 430;
+/** Stops short of the board: all the way through it would clip the geometry. */
+const ENTER_REACH = 0.82;
+
+/** The plate's size in plane units. The signs are projected against this. */
+const PLANE_W = 3.56;
+const PLANE_H = 2;
+
+/**
+ * Reads the depth map back on the CPU, so a sign can be told how far away the
+ * billboard it is painted on actually is.
+ */
+function depthReader(image: CanvasImageSource, w: number, h: number) {
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return null;
+  ctx.drawImage(image, 0, 0, w, h);
+  let data: Uint8ClampedArray;
+  try {
+    data = ctx.getImageData(0, 0, w, h).data;
+  } catch {
+    return null; // Tainted canvas; the signs simply fall back to holding still.
+  }
+  return (u: number, v: number) => {
+    const x = Math.min(w - 1, Math.max(0, Math.round(u * (w - 1))));
+    // The map is stored top-down and uv is bottom-up.
+    const y = Math.min(h - 1, Math.max(0, Math.round((1 - v) * (h - 1))));
+    return (data[(y * w + x) * 4] ?? 0) / 255;
+  };
+}
 
 function webglAvailable(): boolean {
   try {
@@ -130,7 +169,7 @@ export function CrossroadsGL({
 
       // Enough subdivision that the depth gradient reads as a surface rather
       // than as facets, without pushing vertex count anywhere near a cost.
-      const geometry = new THREE.PlaneGeometry(3.56, 2.0, 200, 112);
+      const geometry = new THREE.PlaneGeometry(PLANE_W, PLANE_H, 200, 112);
 
       const material = new THREE.ShaderMaterial({
         uniforms: {
@@ -309,6 +348,34 @@ export function CrossroadsGL({
       core.add(shaft);
       coreGeos.push(shaftGeo);
 
+      /* ---- Welding the signs to their billboards -------------------- *
+       * The signs are DOM, the street is geometry, and until now they moved
+       * on different rules: the sign layer slid by a flat percentage of the
+       * stage while the camera moved each part of the street by an amount
+       * that depends on how far away it is. So the signs drifted off the
+       * billboards they are painted on — worst on the near ones, which move
+       * most.
+       *
+       * Each sign is now projected through the same camera as the plate, at
+       * the depth the map gives for its own position, and the difference
+       * against a camera that has not moved is published as the offset that
+       * sign should take. Near signs sweep, far signs barely shift, and every
+       * one of them stays stuck to its board.
+       */
+      const sample = depthReader(depth.image as CanvasImageSource, 256, 144);
+      const restCamera = camera.clone();
+      const signPoints = scenes.map((scene) => {
+        const u = (scene.sign.left + scene.sign.width / 2) / 100;
+        const v = 1 - (scene.sign.top + scene.sign.height / 2) / 100;
+        const d = sample ? sample(u, v) : 0.5;
+        return {
+          id: scene.id,
+          point: new THREE.Vector3((u - 0.5) * PLANE_W, (v - 0.5) * PLANE_H, -d * 0.62),
+          live: new THREE.Vector3(),
+          rest: new THREE.Vector3(),
+        };
+      });
+
       const composer = new EffectComposer(renderer);
       composer.addPass(new RenderPass(scene, camera));
       // Threshold high enough that only the signage and the moon qualify —
@@ -326,9 +393,14 @@ export function CrossroadsGL({
         camera.aspect = r.width / r.height;
         // Frame the plane to the stage however the stage is proportioned, so
         // the WebGL frame always matches the DOM plate exactly.
-        const planeAspect = 3.56 / 2.0;
+        const planeAspect = PLANE_W / PLANE_H;
         camera.position.z = camera.aspect > planeAspect ? 3.2 * (planeAspect / camera.aspect) : 3.2;
         camera.updateProjectionMatrix();
+
+        restCamera.aspect = camera.aspect;
+        restCamera.position.set(0, 0, camera.position.z);
+        restCamera.lookAt(0, 0, -0.3);
+        restCamera.updateProjectionMatrix();
       };
       resize();
       const ro = new ResizeObserver(resize);
@@ -359,15 +431,46 @@ export function CrossroadsGL({
       let raf = 0;
       let fade = 0;
       let hover = 0;
+
+      /* ---- Going in ------------------------------------------------- *
+       * Clicking a sign runs the camera at the billboard it sits on. The
+       * street opens out around it and the board fills the frame, so the cut
+       * to the next route reads as walking in rather than as a page changing
+       * behind a wipe. The point flown at is the same one the sign is welded
+       * to, so the board the visitor aimed at is the one that arrives.
+       */
+      let enterFrom: InstanceType<typeof THREE.Vector3> | null = null;
+      let enterTo: InstanceType<typeof THREE.Vector3> | null = null;
+      let enterStart = 0;
+
+      const onEnter = (event: Event) => {
+        const id = (event as CustomEvent<EnterDetail>).detail?.id;
+        const target = signPoints.find((sp) => sp.id === id);
+        if (!target) return;
+        enterFrom = camera.position.clone();
+        enterTo = target.point.clone().lerp(camera.position, 1 - ENTER_REACH);
+        enterStart = performance.now();
+      };
+      window.addEventListener(ENTER_EVENT, onEnter);
       const tick = () => {
         raf = requestAnimationFrame(tick);
         if (!visible) return;
 
         cx += (px - cx) * 0.045;
         cy += (py - cy) * 0.045;
-        camera.position.x = cx * SWAY_X;
-        camera.position.y = -cy * SWAY_Y;
-        camera.lookAt(0, 0, -0.3);
+
+        if (enterFrom && enterTo) {
+          // Eased in, but only gently. A cubic would spend the window the
+          // visitor can actually see barely moving, and the whole point is
+          // that the street is seen to open out before the veil arrives.
+          const t = Math.min(1, (performance.now() - enterStart) / ENTER_MS);
+          camera.position.lerpVectors(enterFrom, enterTo, Math.pow(t, 1.8));
+          camera.lookAt(enterTo);
+        } else {
+          camera.position.x = cx * SWAY_X;
+          camera.position.y = -cy * SWAY_Y;
+          camera.lookAt(0, 0, -0.3);
+        }
 
         // Cross-fade in once the first frame is ready, so the DOM plate is
         // never swapped for an empty canvas.
@@ -411,15 +514,37 @@ export function CrossroadsGL({
         haloMat.uniforms["uFade"]!.value = fade * pulse;
         shaftMat.uniforms["uFade"]!.value = fade;
 
+        // Published on the stage so the signs can read their own offset. Done
+        // after the camera has moved and before the frame is drawn, so the DOM
+        // and the geometry are never a frame apart.
+        if (signPoints.length) {
+          const r = stage.getBoundingClientRect();
+          const halfW = r.width / 2;
+          const halfH = r.height / 2;
+          for (const sign of signPoints) {
+            sign.live.copy(sign.point).project(camera);
+            sign.rest.copy(sign.point).project(restCamera);
+            const dx = (sign.live.x - sign.rest.x) * halfW;
+            const dy = -(sign.live.y - sign.rest.y) * halfH;
+            stage.style.setProperty(`--gl-sign-${sign.id}-x`, `${dx.toFixed(2)}px`);
+            stage.style.setProperty(`--gl-sign-${sign.id}-y`, `${dy.toFixed(2)}px`);
+          }
+        }
+
         composer.render();
       };
       raf = requestAnimationFrame(tick);
 
       cleanup = () => {
         cancelAnimationFrame(raf);
+        for (const sign of signPoints) {
+          stage.style.removeProperty(`--gl-sign-${sign.id}-x`);
+          stage.style.removeProperty(`--gl-sign-${sign.id}-y`);
+        }
         ro.disconnect();
         io.disconnect();
         window.removeEventListener("pointermove", onMove);
+        window.removeEventListener(ENTER_EVENT, onEnter);
         document.removeEventListener("visibilitychange", onHidden);
         composer.dispose();
         geometry.dispose();

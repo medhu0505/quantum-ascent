@@ -933,6 +933,19 @@
     translate: calc(var(--px, 0) * -2%) calc(var(--py, 0) * -1.2%);
   }
 
+  /* Once the geometry is carrying the scene, that flat percentage is wrong:
+     it slides every sign by the same amount while the street behind them
+     moves by an amount that depends on depth, so the signs walk off their
+     billboards. The layer stops moving as a block and each sign takes the
+     offset CrossroadsGL projected for its own position instead. */
+  .hub-stage:has(.gl-layer[data-live]) .hub-signs {
+    translate: none;
+  }
+
+  .hub-stage:has(.gl-layer[data-live]) .hub-signs > li {
+    translate: var(--sign-dx, 0px) var(--sign-dy, 0px);
+  }
+
   /* The title sits in front of everything and gets the most of all, which is
      what separates it from the picture behind it. */
   .descent-title {

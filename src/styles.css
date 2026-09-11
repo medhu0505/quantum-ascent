@@ -799,6 +799,103 @@
 }
 
 /* ------------------------------------------------------------------ *
+ * WebGL layer.
+ *
+ * Sits directly over the DOM plate and fades in only once it has a frame to
+ * show, so a slow load or a failed context leaves the photograph visible
+ * rather than a hole. Everything above it — scrim, crowd, signage — keeps
+ * its own z-index and is unaffected.
+ * ------------------------------------------------------------------ */
+
+.gl-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-5) var(--ease);
+}
+
+.gl-layer[data-live] {
+  opacity: 1;
+}
+
+.gl-layer canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* The Spline slot. Only ever occupied when CROSSROADS_SPLINE_SCENE is set;
+   sized and placed in percentages of the stage so it stays over the
+   intersection at every width the plate is framed at. */
+.hub-spline {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  z-index: 2;
+  width: min(34cqi, 460px);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  pointer-events: none;
+}
+
+.hub-spline-scene {
+  width: 100%;
+  height: 100%;
+}
+
+/* A raked, heavily blurred ellipse standing in for a light source. It sweeps
+   in once rather than looping: a light that keeps re-arriving reads as a
+   glitch, not as lighting. */
+.spotlight {
+  position: absolute;
+  z-index: 1;
+  width: 138%;
+  height: 169%;
+  pointer-events: none;
+  opacity: 0;
+}
+
+:root[data-js="on"] .spotlight {
+  animation: spotlight-in 2.4s var(--ease) 0.2s forwards;
+}
+
+@keyframes spotlight-in {
+  from {
+    opacity: 0;
+    translate: -72% -28%;
+    scale: 0.62;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-js="on"] .spotlight {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+@media (min-width: 64rem) {
+  .spotlight {
+    width: 84%;
+  }
+}
+
+/* Once the geometry is carrying the parallax, the flat plate underneath must
+   stop sliding or the two disagree and the frame appears to shear. */
+.hub-stage:has(.gl-layer[data-live]) .hub-plate,
+.hub-stage:has(.gl-layer[data-live]) .descent-plate {
+  translate: none;
+  scale: 1;
+}
+
+/* ------------------------------------------------------------------ *
  * Parallax depth.
  *
  * --px/--py are the pointer's offset from the centre of the stage, -1 to 1,
@@ -3089,6 +3186,12 @@ button.screen:active {
      They arrive with the plate they belong to. */
   .descent-pin .ambient,
   .descent-pin .crowd {
+    opacity: var(--reveal, 1);
+  }
+
+  /* The geometry belongs to the crossroads, not to the film, so it arrives
+     with the plate. Without this it would fade up over the playing video. */
+  .descent-pin .gl-layer[data-live] {
     opacity: var(--reveal, 1);
   }
 }

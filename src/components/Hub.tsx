@@ -3,6 +3,8 @@ import { useRef } from "react";
 import { Ambient } from "@/components/scene/Ambient";
 import { Crowd } from "@/components/scene/Crowd";
 import { useStageParallax } from "@/components/scene/useStageParallax";
+import { CrossroadsGL } from "@/components/scene/CrossroadsGL";
+import { CrossroadsSpline } from "@/components/scene/CrossroadsSpline";
 import { usePhaseLink } from "@/components/scene/PhaseTransition";
 import { crossroadsPlate, scenes, type Scene } from "@/data/quantum";
 
@@ -95,6 +97,8 @@ export function Hub() {
     <div className="hub">
       <div className="hub-stage" ref={stageRef}>
         <HubPlate eager />
+        <CrossroadsGL stageRef={stageRef} />
+        <CrossroadsSpline />
         <div className="hub-scrim" />
         <Ambient />
         <Crowd />

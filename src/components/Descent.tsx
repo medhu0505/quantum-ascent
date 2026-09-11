@@ -6,6 +6,7 @@ import { fest, school, descentFilm, timeline } from "@/data/quantum";
 import { clamp, lerp, progress, usePrefersReducedMotion, useStageLayout } from "@/lib/motion";
 import { useLenis } from "@/components/scene/SmoothScroll";
 import { useStageParallax } from "@/components/scene/useStageParallax";
+import { CrossroadsGL } from "@/components/scene/CrossroadsGL";
 
 /**
  * The intro descent.
@@ -444,6 +445,10 @@ export function Descent() {
             <div ref={plateRef} className="descent-plate" data-plate={plateMode}>
               <HubPlate />
             </div>
+
+            {/* Only meaningful once the plate has taken over from the film,
+                so it rides the same reveal as everything else in the hub. */}
+            <CrossroadsGL stageRef={stageRef} />
 
             <div className="hub-scrim" />
             <Ambient />

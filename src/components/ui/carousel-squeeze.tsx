@@ -1,3 +1,4 @@
+import type React from "react";
 import {
   type ComponentProps,
   type CSSProperties,
@@ -50,8 +51,9 @@ export type SqueezeSlide = {
   href?: string;
   /** Opens the link in a new tab. */
   target?: string;
-  /** Runs instead of following `href`. */
-  onAction?: () => void;
+  /** Runs on click. Call preventDefault() on the event to keep `href` from
+   *  being followed — which is how a router takes over an ordinary link. */
+  onAction?: (event: React.MouseEvent) => void;
 };
 
 /* ------------------------------ geometry ------------------------------ */
@@ -303,9 +305,12 @@ export function SqueezeCarousel({
     "--sq-ease": "cubic-bezier(0.16, 1, 0.3, 1)",
     "--sq-fill": accent,
     "--sq-on-fill": accentForeground,
-    // A 16:9 block sets both the open card and the size every picture is drawn
-    // at, so a picture keeps one scale however narrow its card gets.
-    "--sq-hero": "calc(var(--sq-h) * 16 / 9)",
+    // The open card is a block of a fixed aspect, which also fixes the size
+    // every picture is drawn at, so a picture keeps one scale however narrow
+    // its card gets. 16:9 is the default; a stylesheet can square it off where
+    // the viewport cannot spare the width, which is what keeps the columns
+    // from collapsing to slivers on a phone.
+    "--sq-hero": "calc(var(--sq-h) * var(--sq-aspect, 16 / 9))",
     "--sq-room": `calc(100cqi - var(--sq-hero) - ${slats} * var(--sq-slat-gap) - 3 * var(--sq-gap) - ${slats} * ${slat})`,
   } as CSSProperties;
 
@@ -364,9 +369,7 @@ export function SqueezeCarousel({
                 onMouseMove={() => hoverGrow && setHover(col)}
                 onClick={() => col > 0 && step(col)}
                 className={cn(
-                  "bg-muted relative isolate h-full shrink-0 cursor-pointer overflow-hidden p-0",
-                  "outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-                  "focus-visible:ring-[var(--sq-fill)] focus-visible:ring-offset-background",
+                  "sq-tab bg-muted relative isolate h-full shrink-0 cursor-pointer overflow-hidden p-0",
                   panelClassName,
                 )}
                 style={{
@@ -482,11 +485,9 @@ function Arrow({
       aria-label={label}
       onClick={onClick}
       className={cn(
-        "grid size-9 cursor-pointer place-items-center rounded-md",
+        "sq-arrow grid size-9 cursor-pointer place-items-center rounded-md",
         "bg-[var(--sq-fill)] text-[var(--sq-on-fill)]",
-        "transition-opacity outline-none hover:opacity-85",
-        "focus-visible:ring-2 focus-visible:ring-[var(--sq-fill)]",
-        "focus-visible:ring-offset-background focus-visible:ring-offset-2",
+        "transition-opacity hover:opacity-85",
       )}
     >
       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -527,11 +528,9 @@ function Action({ slide, shown }: { slide: SqueezeSlide; shown: boolean }) {
   );
 
   const dress = cn(
-    "group/sq-action inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-md",
+    "sq-action group/sq-action inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-md",
     "bg-[var(--sq-fill)] px-4 py-2.5 text-sm font-medium text-[var(--sq-on-fill)]",
-    "transition-opacity outline-none hover:opacity-85",
-    "focus-visible:ring-2 focus-visible:ring-[var(--sq-fill)]",
-    "focus-visible:ring-offset-background focus-visible:ring-offset-2",
+    "transition-opacity hover:opacity-85",
   );
 
   if (slide.href) {

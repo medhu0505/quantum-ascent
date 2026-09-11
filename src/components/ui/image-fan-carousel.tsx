@@ -35,6 +35,7 @@ export function Carousel360({
   autoplay?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const thumbRef = useRef<HTMLDivElement | null>(null);
   const [rotation, setRotation] = useState(0);
   const [radius, setRadius] = useState(220);
   const [paused, setPaused] = useState(false);
@@ -49,11 +50,23 @@ export function Carousel360({
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(() => {
-      setRadius(Math.max(RADIUS_MIN, Math.min(RADIUS_MAX, el.offsetWidth * RADIUS_WIDTH_RATIO)));
-    });
+
+    // A share of the width alone overflows: the thumbnails are hung at the
+    // radius, so half of one sticks out past it. On a phone that put the ring
+    // through both edges of the screen. The cap keeps the whole ring, thumbs
+    // included, inside the stage, and the thumbnail is measured rather than
+    // assumed because its size is a clamp() the stylesheet owns.
+    const measure = () => {
+      const width = el.offsetWidth;
+      if (!width) return;
+      const thumb = thumbRef.current?.offsetWidth ?? 96;
+      const room = width / 2 - thumb * 0.75;
+      setRadius(Math.max(RADIUS_MIN, Math.min(RADIUS_MAX, width * RADIUS_WIDTH_RATIO, room)));
+    };
+
+    const ro = new ResizeObserver(measure);
     ro.observe(el);
-    setRadius(Math.max(RADIUS_MIN, Math.min(RADIUS_MAX, el.offsetWidth * RADIUS_WIDTH_RATIO)));
+    measure();
     return () => ro.disconnect();
   }, []);
 
@@ -112,6 +125,7 @@ export function Carousel360({
                 style={{ transform: `rotateY(${angle}deg)` }}
               >
                 <div
+                  ref={index === 0 ? thumbRef : undefined}
                   className="fan-thumb"
                   style={{
                     transform: `translateZ(${radius}px) rotateX(${RING_TILT_DEG}deg) rotateY(${-angle}deg)`,

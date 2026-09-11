@@ -3719,6 +3719,20 @@ button.screen:active {
   font-size: var(--text-3xl);
 }
 
+/* The rail's own controls take the site's focus treatment rather than the
+   utility ring classes they shipped with, which resolve to nothing here and
+   left a keyboard user with no idea which panel they were on. */
+.sq-tab:focus-visible,
+.sq-arrow:focus-visible,
+.sq-action:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 3px;
+}
+
+.sq-tab:focus-visible {
+  outline-offset: -3px;
+}
+
 /* The featured rail above the event screens. */
 .rail {
   container-type: inline-size;
@@ -3785,7 +3799,19 @@ button.screen:active {
   left: 0;
   width: var(--s-3);
   height: 1px;
-  background: color-mix(in oklab, var(--accent) 70%, transparent);
+  /* --accent-hue is the per-event channel that [data-accent] switches; --accent
+     is the theme's own accent and is the same magenta on every event. */
+  background: color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 78%, transparent);
+}
+
+/* Below this the viewport cannot spare the width for a 16:9 open card and
+   four columns beside it — the columns collapse to slivers and the strip runs
+   off the edge of the clip. Squaring the card frees roughly a third of the
+   width back into the columns. */
+@media (max-width: 40rem) {
+  .rail {
+    --sq-aspect: 1;
+  }
 }
 
 .rail-mark {

@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { Route } from "@/routes/events";
 import { InteriorShell } from "@/components/interiors/InteriorShell";
 import { Reveal } from "@/components/scene/Reveal";
@@ -38,30 +38,6 @@ const PANEL: Record<string, string> = {
     "radial-gradient(120% 140% at 22% 12%, color-mix(in oklab, var(--neon-violet) 52%, transparent), transparent 68%), linear-gradient(155deg, oklch(0.28 0.07 280), oklch(0.16 0.03 265))",
 };
 
-const rail: SqueezeSlide[] = events.map((event) => ({
-  id: event.id,
-  title: `${event.name}. ${event.tagline}`,
-  description: event.description,
-  background: PANEL[event.accent] ?? PANEL_CYAN,
-  overlay: <span className="rail-mark">{event.name}</span>,
-  details: (
-    <div className="rail-detail" data-accent={event.accent}>
-      <p className="rail-team">
-        <span className="rail-team-label">Entry</span>
-        {event.team}
-      </p>
-      <h3 className="rail-format-title">How it runs</h3>
-      <ol className="rail-format">
-        {event.format.map((line) => (
-          <li key={line}>{line}</li>
-        ))}
-      </ol>
-    </div>
-  ),
-  action: `Register for ${event.name}`,
-  href: `/register/form?event=${event.id}`,
-}));
-
 export function EventsInterior() {
   const scene = getScene("events")!;
   const { event: fromUrl } = Route.useSearch();
@@ -72,6 +48,43 @@ export function EventsInterior() {
   // entries for a later read to disagree with.
   const landed = events.findIndex((e) => e.id === fromUrl);
   const start = landed < 0 ? 0 : landed;
+
+  // Built here rather than at module scope so the registration link can go
+  // through the router. It keeps its href, so it is still a real link to
+  // right-click, copy or open in a new tab — the click is simply intercepted
+  // so choosing an event does not reload the whole document.
+  const rail = useMemo<SqueezeSlide[]>(
+    () =>
+      events.map((event) => ({
+        id: event.id,
+        title: `${event.name}. ${event.tagline}`,
+        description: event.description,
+        background: PANEL[event.accent] ?? PANEL_CYAN,
+        overlay: <span className="rail-mark">{event.name}</span>,
+        details: (
+          <div className="rail-detail" data-accent={event.accent}>
+            <p className="rail-team">
+              <span className="rail-team-label">Entry</span>
+              {event.team}
+            </p>
+            <h3 className="rail-format-title">How it runs</h3>
+            <ol className="rail-format">
+              {event.format.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ol>
+          </div>
+        ),
+        action: `Register for ${event.name}`,
+        href: `/register/form?event=${event.id}`,
+        onAction: (e) => {
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+          e.preventDefault();
+          void navigate({ to: "/register/form", search: { event: event.id } });
+        },
+      })),
+    [navigate],
+  );
 
   const onIndexChange = useCallback(
     (index: number) => {

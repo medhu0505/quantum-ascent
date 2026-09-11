@@ -1,9 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import { useRef } from "react";
-import { Ambient } from "@/components/scene/Ambient";
-import { Crowd } from "@/components/scene/Crowd";
-import { useStageParallax } from "@/components/scene/useStageParallax";
-import { CrossroadsGL } from "@/components/scene/CrossroadsGL";
 import { usePhaseLink } from "@/components/scene/PhaseTransition";
 import { crossroadsPlate, scenes, type Scene } from "@/data/quantum";
 
@@ -84,24 +79,5 @@ export function HubPlate({ eager = false }: { eager?: boolean }) {
         fetchPriority={eager ? "high" : "auto"}
       />
     </picture>
-  );
-}
-
-/** Standalone hub, for any entry point that is not the scrubbed descent. */
-export function Hub() {
-  const stageRef = useRef<HTMLDivElement | null>(null);
-  useStageParallax(stageRef);
-
-  return (
-    <div className="hub">
-      <div className="hub-stage" ref={stageRef}>
-        <HubPlate eager />
-        <CrossroadsGL stageRef={stageRef} />
-        <div className="hub-scrim" />
-        <Ambient />
-        <Crowd />
-        <HubSigns />
-      </div>
-    </div>
   );
 }

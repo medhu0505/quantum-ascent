@@ -23,6 +23,12 @@ import { fest, school } from "@/data/quantum";
 function NotFoundComponent() {
   return (
     <>
+      {/* Hoisted into <head> by React. The route's own head() never runs for a
+          not-found, so without this a missing page carries the site's own
+          title and reads like a page that exists. */}
+      <title>{`Page not found — ${fest.fullName}`}</title>
+      <meta name="robots" content="noindex" />
+
       <div className="lost">
         <picture>
           <source srcSet={crossroadsPlate.webp} type="image/webp" />

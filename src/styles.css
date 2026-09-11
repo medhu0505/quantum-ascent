@@ -3349,11 +3349,6 @@ button.screen:active {
     display: none;
   }
 
-  /* Every event's detail is worth having on paper, open or not. */
-  .faq-panel[hidden] {
-    display: block !important;
-  }
-
   /* The rail shows one event at a time by stacking all six in a single grid
      cell and hiding the rest with inline styles. On paper that would print one
      event out of six, so the stack is unpicked into a normal flow and the
@@ -3717,6 +3712,53 @@ button.screen:active {
   width: clamp(11rem, 34cqi, 20rem);
   height: clamp(11rem, 34cqi, 20rem);
   font-size: var(--text-3xl);
+}
+
+/* With scripting off, the rail cannot be stepped, and five of its six events
+   sit in the markup behind inline styles that hide them — so the page would
+   ship one event out of six and no way to reach the rest. Unstack it into
+   ordinary flow instead, and drop the controls that cannot do anything. The
+   print sheet does the same thing further down for the same reason. */
+:root:not([data-js="on"]) [role="tabpanel"] {
+  display: block !important;
+}
+
+:root:not([data-js="on"]) [role="tabpanel"] > * {
+  visibility: visible !important;
+  opacity: 1 !important;
+  margin-block-end: var(--s-7);
+}
+
+:root:not([data-js="on"]) [role="tablist"],
+:root:not([data-js="on"]) .sq-arrow {
+  display: none !important;
+}
+
+/* The FAQ answers are in the markup too, behind [hidden] that only a click can
+   lift. With nothing to handle the click they would never be readable, so they
+   open, and the +/- drops away rather than advertising a control that cannot
+   do anything.
+   
+   These sit in @layer base deliberately. Tailwind's preflight declares
+   `[hidden] { display: none !important }` in that layer, and for important
+   declarations the cascade reverses — a layered !important beats an unlayered
+   one however specific. Unlayered, this rule loses and the answers stay shut;
+   in the same layer, later and more specific, it wins. The print sheet's copy
+   of it had been losing the same argument, silently, all along. */
+@layer base {
+  :root:not([data-js="on"]) .faq-panel[hidden] {
+    display: block !important;
+  }
+
+  @media print {
+    .faq-panel[hidden] {
+      display: block !important;
+    }
+  }
+}
+
+:root:not([data-js="on"]) .faq-mark {
+  display: none;
 }
 
 /* The rail's own controls take the site's focus treatment rather than the

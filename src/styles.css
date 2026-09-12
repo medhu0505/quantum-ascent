@@ -818,34 +818,6 @@
   height: 100% !important;
 }
 
-/* The Spline slot, standing in the intersection. Placed in percentages of the
-   stage so it tracks the plate at every width the stage is framed at, and held
-   clear of pointer events so the signboards underneath stay clickable. */
-.hub-spline {
-  position: absolute;
-  top: 44%;
-  left: 50%;
-  z-index: 2;
-  width: min(38cqi, 520px);
-  aspect-ratio: 1;
-  translate: -50% -50%;
-  pointer-events: none;
-}
-
-.hub-spline canvas,
-.hub-spline-scene {
-  width: 100% !important;
-  height: 100% !important;
-}
-
-/* Spline has no idea about the page's motion settings, so the whole slot is
-   withheld rather than left animating against an explicit preference. */
-@media (prefers-reduced-motion: reduce) {
-  .hub-spline {
-    display: none;
-  }
-}
-
 /* A raked, heavily blurred ellipse standing in for a light source. It sweeps
    in once rather than looping: a light that keeps re-arriving reads as a
    glitch, not as lighting. */
@@ -3527,161 +3499,7 @@ button.screen:active {
   cursor: not-allowed;
 }
 
-/* ------------------------------------------------------------------ *
- * Carousels
- * ------------------------------------------------------------------ */
-
-.testimonial-container {
-  width: 100%;
-  max-width: 56rem;
-  border-radius: var(--radius-2xl);
-}
-
-.testimonial-container:focus-visible {
-  outline: 2px solid var(--neon-cyan);
-  outline-offset: var(--s-2);
-}
-
-.testimonial-grid {
-  display: grid;
-  gap: var(--s-7);
-}
-
-.image-container {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1;
-  max-height: 24rem;
-  perspective: 1000px;
-}
-
-.testimonial-image {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: var(--radius-2xl);
-  box-shadow: var(--elev-3);
-  transition:
-    transform var(--dur-4) cubic-bezier(0.34, 1.28, 0.36, 1),
-    opacity var(--dur-4) var(--ease);
-}
-
-.testimonial-image.is-active {
-  z-index: 3;
-  opacity: 1;
-}
-
-.testimonial-image.is-left,
-.testimonial-image.is-right {
-  z-index: 2;
-  opacity: 1;
-}
-
-/* Held out of the stack entirely rather than merely made transparent — an
-   invisible image that still answers hit tests steals clicks from the one
-   on top. */
-.testimonial-image.is-hidden {
-  z-index: 1;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.testimonial-content {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: var(--s-6);
-}
-
-.testimonial-name {
-  margin: 0 0 var(--s-1);
-  color: var(--tc-name);
-  font-size: var(--tc-size-name);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.testimonial-designation {
-  margin: 0 0 var(--s-5);
-  color: var(--tc-designation);
-  font-size: var(--tc-size-designation);
-}
-
-.testimonial-quote {
-  margin: 0;
-  color: var(--tc-quote);
-  font-size: var(--tc-size-quote);
-  line-height: 1.75;
-  text-wrap: pretty;
-}
-
-.testimonial-quote span {
-  display: inline-block;
-}
-
-:root[data-js="on"] .testimonial-card {
-  animation: tc-card-in var(--dur-3) var(--ease) both;
-}
-
-/* Words resolve out of a blur in sequence. Capped at 24 steps so a long
-   quote does not end with words still arriving seconds later. */
-:root[data-js="on"] .testimonial-quote span {
-  animation: tc-word-in 0.22s var(--ease) both;
-  animation-delay: calc(min(var(--i), 24) * 25ms);
-}
-
-@keyframes tc-card-in {
-  from {
-    opacity: 0;
-    translate: 0 1.25rem;
-  }
-}
-
-@keyframes tc-word-in {
-  from {
-    opacity: 0;
-    translate: 0 0.3rem;
-    filter: blur(10px);
-  }
-}
-
-.arrow-buttons {
-  display: flex;
-  gap: var(--s-4);
-}
-
-.arrow-button {
-  display: grid;
-  place-items: center;
-  width: 2.7rem;
-  height: 2.7rem;
-  border: 0;
-  border-radius: 50%;
-  background: var(--tc-arrow-bg);
-  color: var(--tc-arrow-fg);
-  cursor: pointer;
-  transition:
-    background-color var(--dur-2) var(--ease),
-    color var(--dur-2) var(--ease),
-    scale var(--dur-2) var(--ease);
-}
-
-.arrow-button:hover {
-  background: var(--tc-arrow-hover);
-  color: #05070d;
-}
-
-.arrow-button:active {
-  scale: 0.92;
-}
-
 @media (min-width: 48rem) {
-  .testimonial-grid {
-    grid-template-columns: 1fr 1fr;
-    align-items: center;
-  }
 }
 
 /* ---- 3D ring ---- */
@@ -3812,17 +3630,6 @@ button.screen:active {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fan-orbit,
-  .fan-thumb,
-  .testimonial-image {
-    transition: none;
-  }
-
-  :root[data-js="on"] .fan-centre-card,
-  :root[data-js="on"] .testimonial-card,
-  :root[data-js="on"] .testimonial-quote span {
-    animation: none;
-  }
 }
 
 /* A frame whose picture has not been supplied yet. Deliberately reads as an

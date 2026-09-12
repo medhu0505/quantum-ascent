@@ -7,7 +7,6 @@ import { clamp, lerp, progress, usePrefersReducedMotion, useStageLayout } from "
 import { useLenis } from "@/components/scene/SmoothScroll";
 import { useStageParallax } from "@/components/scene/useStageParallax";
 import { CrossroadsGL } from "@/components/scene/CrossroadsGL";
-import { CrossroadsSpline } from "@/components/scene/CrossroadsSpline";
 
 /**
  * The intro descent.
@@ -89,12 +88,6 @@ export function Descent() {
   const scrubbing = isStage && !reducedMotion && !filmFailed;
   /** True once a non-scrubbed playthrough has finished, or will never start. */
   const [filmPlayed, setFilmPlayed] = useState(false);
-  /**
-   * True once the Spline scene is actually on screen. Until then the native
-   * core keeps the intersection, so the centrepiece is never a gap while a
-   * third-party scene is still on its way — or never arrives at all.
-   */
-  const [splineReady, setSplineReady] = useState(false);
 
   /**
    * What the crossroads plate is doing, which is entirely a function of what
@@ -465,8 +458,7 @@ export function Descent() {
 
             {/* Only meaningful once the plate has taken over from the film,
                 so it rides the same reveal as everything else in the hub. */}
-            <CrossroadsGL stageRef={stageRef} showCore={!splineReady} />
-            <CrossroadsSpline onReady={() => setSplineReady(true)} />
+            <CrossroadsGL stageRef={stageRef} />
 
             <div className="hub-scrim" />
             <Ambient />

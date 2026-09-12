@@ -50,8 +50,8 @@ const CORE_REACH = 0.55;
  * the next route is uncovered or the visitor sees it snap back.
  */
 const ENTER_MS = 430;
-/** Stops short of the board: all the way through it would clip the geometry. */
-const ENTER_REACH = 0.82;
+/** Stops well short of the board: all the way through it would clip geometry. */
+const ENTER_REACH = 0.6;
 
 /** The plate's size in plane units. The signs are projected against this. */
 const PLANE_W = 3.56;
@@ -91,23 +91,9 @@ function webglAvailable(): boolean {
   }
 }
 
-export function CrossroadsGL({
-  stageRef,
-  showCore = true,
-}: {
-  stageRef: RefObject<HTMLElement | null>;
-  /** Held true until something else has actually taken the intersection. */
-  showCore?: boolean;
-}) {
+export function CrossroadsGL({ stageRef }: { stageRef: RefObject<HTMLElement | null> }) {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const [live, setLive] = useState(false);
-
-  // Read from the render loop rather than closed over, so the core can be
-  // stood down without tearing the scene down and rebuilding it.
-  const showCoreRef = useRef(showCore);
-  useEffect(() => {
-    showCoreRef.current = showCore;
-  }, [showCore]);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -465,7 +451,12 @@ export function CrossroadsGL({
           // that the street is seen to open out before the veil arrives.
           const t = Math.min(1, (performance.now() - enterStart) / ENTER_MS);
           camera.position.lerpVectors(enterFrom, enterTo, Math.pow(t, 1.8));
-          camera.lookAt(enterTo);
+          // Aim is held where it was. Turning to face the board pitched the
+          // camera up and tilted the bottom edge of the plate into frame — a
+          // black band across the foot of the screen for the whole move. The
+          // board still comes to meet the middle of the frame as the camera
+          // closes on it, which is what walking at something looks like.
+          camera.lookAt(0, 0, -0.3);
         } else {
           camera.position.x = cx * SWAY_X;
           camera.position.y = -cy * SWAY_Y;
@@ -477,12 +468,6 @@ export function CrossroadsGL({
         fade = Math.min(1, fade + 0.03);
         material.uniforms["uFade"]!.value = fade;
         if (fade > 0.9 && !disposed) setLive(true);
-
-        core.visible = showCoreRef.current;
-        if (!core.visible) {
-          composer.render();
-          return;
-        }
 
         // The core turns on its own and leans toward the pointer, so it reads
         // as something suspended and aware rather than a spinning prop.

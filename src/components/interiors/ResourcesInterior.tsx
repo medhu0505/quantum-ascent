@@ -1,30 +1,51 @@
 import { Link } from "@tanstack/react-router";
-import { InteriorShell } from "@/components/interiors/InteriorShell";
-import { Reveal } from "@/components/scene/Reveal";
+import { ExitToCrossroads, RegisterChip } from "@/components/site/Bits";
 import { faqs, getScene } from "@/data/quantum";
 
 /**
- * Resources: the archive wall.
+ * Resources: the desk.
  *
- * Three destinations, each a labelled link on the wall. They are ordinary
- * routes rather than scenes — someone reading the FAQ at 11pm the night
- * before the fest wants the answer, not another room to walk through.
+ * The room is the page. There is no headline plate, no scrim and no card
+ * grid over the top of it — the three monitors on the desk are the three
+ * destinations, and clicking a screen is how you get there. Anything laid
+ * over the photograph would have been a second interface competing with the
+ * one already in the picture.
+ *
+ * The screens are placed as percentages of the room, and the room is locked
+ * to the photograph's own 16:9, so a hotspot sits on its monitor at every
+ * width without measuring anything at runtime. Get that wrong — let the
+ * image crop inside a box of a different shape — and the hit areas slide off
+ * the hardware they belong to.
  */
-const links = [
+
+/** Screen rectangles, in percent of the room. Read off the photograph. */
+const SCREENS = [
   {
     to: "/faq",
     label: "FAQ",
     blurb: `${faqs.length} answers on entry, fees, scheduling and what to bring.`,
+    left: 22.8,
+    top: 36.3,
+    width: 16.2,
+    height: 13.6,
   },
   {
     to: "/about",
     label: "About",
     blurb: "What Quantum is, how it is scored, and who runs it.",
+    left: 41.5,
+    top: 36.3,
+    width: 16.6,
+    height: 13.6,
   },
   {
     to: "/contact",
     label: "Contact",
     blurb: "Reach the organising team before or during the fest.",
+    left: 59.9,
+    top: 36.3,
+    width: 17.6,
+    height: 13.6,
   },
 ] as const;
 
@@ -32,24 +53,51 @@ export function ResourcesInterior() {
   const scene = getScene("resources")!;
 
   return (
-    <InteriorShell
-      scene={scene}
-      lead="Everything that is not an event or a form. Answers to the questions we get most, the background on the fest, and how to reach the people running it."
-    >
-      <ul className="archive-wall">
-        {links.map((link, i) => (
-          <Reveal as="li" key={link.to} delay={i}>
-            <Link to={link.to} className="screen archive-link">
-              <span className="archive-index">File {String(i + 1).padStart(2, "0")}</span>
-              <span className="screen-title">{link.label}</span>
-              <span className="screen-body">{link.blurb}</span>
-              <span className="archive-go" aria-hidden="true">
-                Open →
-              </span>
-            </Link>
-          </Reveal>
-        ))}
-      </ul>
-    </InteriorShell>
+    <>
+      <ExitToCrossroads />
+      <RegisterChip />
+
+      <main id="main" className="desk">
+        {/* The wall behind the desk already says Resources in neon. This is
+            the same word for anyone who cannot see it. */}
+        <h1 className="sr-only">{scene.label}</h1>
+
+        {/* The list is a sibling of the room, not a child of it. The room has
+            to clip its own corners, and a clipping box cannot also let the
+            narrow-screen fallback flow out underneath it. */}
+        <div className="desk-frame">
+          <div className="desk-room">
+            <img
+              className="desk-plate"
+              src={scene.view}
+              alt=""
+              width={1280}
+              height={720}
+              decoding="async"
+              fetchPriority="high"
+            />
+          </div>
+
+          <ul className="desk-screens">
+            {SCREENS.map((s) => (
+              <li
+                key={s.to}
+                style={{
+                  left: `${s.left}%`,
+                  top: `${s.top}%`,
+                  width: `${s.width}%`,
+                  height: `${s.height}%`,
+                }}
+              >
+                <Link to={s.to} className="desk-screen" data-cursor-label="Open">
+                  <span className="desk-screen-label">{s.label}</span>
+                  <span className="sr-only">. {s.blurb}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </main>
+    </>
   );
 }

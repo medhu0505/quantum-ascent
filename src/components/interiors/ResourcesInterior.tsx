@@ -18,34 +18,35 @@ import { faqs, getScene } from "@/data/quantum";
  * the hardware they belong to.
  */
 
-/** Screen rectangles, in percent of the room. Read off the photograph. */
+/** Screen rectangles, in percent of the room. Read off the photograph —
+ *  the whole pane of glass, bezel to bezel, so the button is the monitor. */
 const SCREENS = [
   {
     to: "/faq",
     label: "FAQ",
     blurb: `${faqs.length} answers on entry, fees, scheduling and what to bring.`,
-    left: 22.8,
-    top: 36.3,
-    width: 16.2,
-    height: 13.6,
+    left: 22.2,
+    top: 35.6,
+    width: 17.6,
+    height: 14.7,
   },
   {
     to: "/about",
     label: "About",
     blurb: "What Quantum is, how it is scored, and who runs it.",
-    left: 41.5,
-    top: 36.3,
-    width: 16.6,
-    height: 13.6,
+    left: 40.9,
+    top: 35.6,
+    width: 17.5,
+    height: 14.7,
   },
   {
     to: "/contact",
     label: "Contact",
     blurb: "Reach the organising team before or during the fest.",
-    left: 59.9,
-    top: 36.3,
-    width: 17.6,
-    height: 13.6,
+    left: 59.2,
+    top: 35.6,
+    width: 18.8,
+    height: 14.7,
   },
 ] as const;
 

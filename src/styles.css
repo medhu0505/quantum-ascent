@@ -781,7 +781,7 @@
 }
 
 .sign:active {
-  transform: scale(0.99);
+  filter: brightness(1.1);
 }
 
 /* ------------------------------------------------------------------ *
@@ -1066,14 +1066,19 @@
     transform: skewY(var(--sign-skew, 0deg)) rotateY(var(--sign-yaw, 0deg));
   }
 
+  /* A sign is painted onto a billboard, so it does not move: no scale on
+     hover, no magnetic pull toward the pointer, no press-in. Those all slid
+     the panel off the board it belongs to, which was the whole problem. The
+     board lights up instead — which is what a lit sign would actually do. */
   .sign:hover,
   .sign:focus-visible {
-    transform: skewY(var(--sign-skew, 0deg)) rotateY(var(--sign-yaw, 0deg)) scale(1.055);
-    filter: brightness(1.3) saturate(1.1);
+    transform: skewY(var(--sign-skew, 0deg)) rotateY(var(--sign-yaw, 0deg));
+    filter: brightness(1.34) saturate(1.12);
   }
 
   .sign:active {
-    transform: skewY(var(--sign-skew, 0deg)) rotateY(var(--sign-yaw, 0deg)) scale(0.985);
+    transform: skewY(var(--sign-skew, 0deg)) rotateY(var(--sign-yaw, 0deg));
+    filter: brightness(1.1) saturate(1.05);
   }
 
   .sign-label {
@@ -3444,10 +3449,7 @@ button.screen:active {
   text-shadow:
     0 0 10px oklch(0.84 0.13 215 / 0.9),
     0 1px 3px oklch(0.1 0.02 265 / 0.9);
-  translate: 0 0;
-  transition:
-    scale var(--dur-2) var(--ease),
-    text-shadow var(--dur-2) var(--ease);
+  transition: text-shadow var(--dur-2) var(--ease);
 }
 
 .desk-screen:hover,
@@ -3465,7 +3467,6 @@ button.screen:active {
 
 .desk-screen:hover .desk-screen-label,
 .desk-screen:focus-visible .desk-screen-label {
-  scale: 1.08;
   text-shadow:
     0 0 18px oklch(0.84 0.13 215),
     0 1px 3px oklch(0.1 0.02 265 / 0.9);

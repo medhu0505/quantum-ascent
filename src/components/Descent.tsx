@@ -5,7 +5,6 @@ import { HubPlate, HubSigns } from "@/components/Hub";
 import { fest, school, descentFilm, timeline } from "@/data/quantum";
 import { clamp, lerp, progress, usePrefersReducedMotion, useStageLayout } from "@/lib/motion";
 import { useLenis } from "@/components/scene/SmoothScroll";
-import { useStageParallax } from "@/components/scene/useStageParallax";
 import { CrossroadsGL } from "@/components/scene/CrossroadsGL";
 
 /**
@@ -71,9 +70,6 @@ export function Descent() {
   const reducedMotion = usePrefersReducedMotion();
   const isStage = useStageLayout();
   const lenis = useLenis();
-
-  // Gives the flat plate depth: layers travel by their distance in the scene.
-  useStageParallax(stageRef);
 
   const [revealed, setRevealed] = useState(false);
   const [buffered, setBuffered] = useState(false);

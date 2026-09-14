@@ -22,10 +22,6 @@ import { ENTER_EVENT, type EnterDetail } from "@/components/scene/enterSignal";
  * under reduced motion the DOM plate underneath simply stays visible.
  */
 
-/** How far the camera may travel. Small: this is parallax, not a flythrough. */
-const SWAY_X = 0.085;
-const SWAY_Y = 0.05;
-
 /**
  * Where the core hangs, in the displaced plane's own units (the plane is
  * 3.56 x 2.0 centred on the origin, so y runs -1 at the bottom of frame to
@@ -35,7 +31,7 @@ const SWAY_Y = 0.05;
  * horizon at y = -0.20 and the two crossings meet at about y = -0.43, where
  * the road surface sits at z = -0.35. The core hangs above that at z = -0.30,
  * a tenth in front of the asphalt — close enough to belong to the
- * intersection, far enough that the camera sway never drives it through the
+ * intersection, far enough that the entry dolly never drives it through the
  * surface. The shaft is cut to land exactly on the crossing, so its base is
  * swallowed by the road instead of ending in mid-air.
  */
@@ -203,8 +199,8 @@ export function CrossroadsGL({ stageRef }: { stageRef: RefObject<HTMLElement | n
 
       // ── The core ────────────────────────────────────────────────────────
       // Not an overlay. It is a real object in the same scene, parked at the
-      // intersection's own depth, so the camera sway parallaxes it against
-      // the street exactly as it does the road, and the bloom pass that
+      // intersection's own depth, so the entry dolly carries it toward the
+      // camera exactly as it does the road, and the bloom pass that
       // lights the neon lights this too. An overlaid <canvas> could do
       // neither — it would slide across the plate instead of standing in it.
       const core = new THREE.Group();
@@ -458,8 +454,16 @@ export function CrossroadsGL({ stageRef }: { stageRef: RefObject<HTMLElement | n
           // closes on it, which is what walking at something looks like.
           camera.lookAt(0, 0, -0.3);
         } else {
-          camera.position.x = cx * SWAY_X;
-          camera.position.y = -cy * SWAY_Y;
+          // Held still. The camera used to sway with the pointer, and each
+          // sign tracked it by projecting its own billboard point — welded,
+          // and still wrong: the depth map is nearly flat across the four
+          // boards (133, 139, 139 and 114 out of 255), so the differential
+          // between them came out under a pixel and all four signs travelled
+          // the same three pixels together. Uniform travel is not a depth
+          // cue, it is the whole street sliding under the cursor, and a
+          // button that slides is a button you have to chase. The depth is
+          // carried by the dolly instead, where it is unambiguous.
+          camera.position.set(0, 0, camera.position.z);
           camera.lookAt(0, 0, -0.3);
         }
 

@@ -854,78 +854,56 @@
   }
 }
 
-/* Once the geometry is carrying the parallax, the flat plate underneath must
-   stop sliding or the two disagree and the frame appears to shear. */
+/* The geometry carries the depth, so the flat plate underneath drops its
+   overscan crop and shows at its fitted size. */
 .hub-stage:has(.gl-layer[data-live]) .hub-plate,
 .hub-stage:has(.gl-layer[data-live]) .descent-plate {
-  translate: none;
   scale: 1;
 }
 
 /* ------------------------------------------------------------------ *
- * Parallax depth.
+ * Crossroads depth.
  *
- * --px/--py are the pointer's offset from the centre of the stage, -1 to 1,
- * written per frame by useStageParallax. Each layer multiplies them by its
- * own distance, which is what produces the depth cue. Travel is deliberately
- * small: this should register as the scene having volume, not as the page
- * sliding around under the cursor.
+ * The stage does not follow the pointer, and it took two goes to get here.
+ * First each layer took its own share of the pointer's offset from centre,
+ * plate through crowd through signage, so the differential would read as
+ * volume — but the signs got the largest share and the boards they label got
+ * the smallest, so they slid straight off them. Then CrossroadsGL projected
+ * each sign's own billboard point per frame, which welded them properly and
+ * was still wrong: the four boards sit at very nearly the same depth in the
+ * map, so the projection put them all within a pixel of each other and the
+ * whole street simply slid under the cursor, signs and all. A button that
+ * slides is a button you have to chase before you can press it. The depth
+ * now comes from the geometry itself and from the dolly that walks into a
+ * board when you pick one, neither of which is ambiguous about what is near
+ * and what is far.
  * ------------------------------------------------------------------ */
 
 @media (min-width: 48rem) and (min-aspect-ratio: 5 / 4) and (pointer: fine) {
-  /* Uses the individual `translate` and `scale` properties rather than
-     `transform`, so a layer's own transform — the signs' skew and yaw, the
-     scrub loop's inline transform on the title — composes with the parallax
-     instead of being overwritten by it. */
-
-  /* Furthest away, so it barely moves. Scaled so the pull can never drag an
-     edge of the photograph into frame. */
+  /* Overscanned slightly so the plate covers the stage even where the frame
+     and the photograph disagree by a hair. Uses the individual `scale`
+     property rather than `transform`, so the signs' own skew and yaw and the
+     scrub loop's inline transform on the title compose with it instead of
+     being overwritten. */
   .hub-stage .hub-plate,
   .hub-stage .descent-plate {
     scale: 1.045;
-    translate: calc(var(--px, 0) * -0.5%) calc(var(--py, 0) * -0.5%);
   }
 
-  .hub-stage .crowd {
-    translate: calc(var(--px, 0) * -0.9%) calc(var(--py, 0) * -0.55%);
-  }
-
-  .hub-stage .ambient {
-    translate: calc(var(--px, 0) * -1.3%) calc(var(--py, 0) * -0.8%);
-  }
-
-  /* Nearest the camera, so the most travel. */
-  .hub-stage .hub-signs {
-    translate: calc(var(--px, 0) * -2%) calc(var(--py, 0) * -1.2%);
-  }
-
-  /* Once the geometry is carrying the scene, that flat percentage is wrong:
-     it slides every sign by the same amount while the street behind them
-     moves by an amount that depends on depth, so the signs walk off their
-     billboards. The layer stops moving as a block and each sign takes the
-     offset CrossroadsGL projected for its own position instead. */
-  .hub-stage:has(.gl-layer[data-live]) .hub-signs {
-    translate: none;
-  }
-
+  /* The one thing that still moves, and only while the dolly is running:
+     CrossroadsGL projects each sign's own billboard point per frame, so a
+     board stays under its sign all the way in. At rest the camera is exactly
+     the rest camera, so every offset resolves to zero and the signs sit
+     still. */
   .hub-stage:has(.gl-layer[data-live]) .hub-signs > li {
     translate: var(--sign-dx, 0px) var(--sign-dy, 0px);
-  }
-
-  /* The title sits in front of everything and gets the most of all, which is
-     what separates it from the picture behind it. */
-  .descent-title {
-    translate: calc(var(--px, 0) * -2.6%) calc(var(--py, 0) * -1.5%);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .hub-stage .hub-plate,
   .hub-stage .descent-plate,
-  .hub-stage .crowd,
-  .hub-stage .ambient,
-  .hub-stage .hub-signs,
-  .descent-title {
+  .hub-stage:has(.gl-layer[data-live]) .hub-signs > li {
     translate: none;
     scale: none;
   }

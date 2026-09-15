@@ -48,17 +48,26 @@ export const fest = {
  * where the camera's rate of change actually breaks.
  * ------------------------------------------------------------------ */
 
+/**
+ * Where the beats actually fall, read off the film rather than asked for.
+ *
+ * Mean absolute frame-to-frame luma difference over all 240 frames, smoothed
+ * across five, marks each boundary: the aerial's slow drift sits under 5, the
+ * canyon runs 6 to 24, the arrival decays back through 11, and the hold is
+ * everything under 1 — the last dozen frames measure 0.1, which is to say the
+ * camera has stopped and the frame is the crossroads plate.
+ */
 export const timeline = {
   /** Container duration in seconds. */
-  duration: 10.006,
+  duration: 10.005,
   /** Wide aerial: moon centred, light beam, skyline below. Slow drift. */
-  aerial: [0, 2.4],
+  aerial: [0, 2.209],
   /** Descent through the skyscraper canyon of billboard panels. Fast. */
-  canyon: [2.4, 7.0],
+  canyon: [2.209, 7.087],
   /** Deceleration into the crossroads. */
-  arrival: [7.0, 9.5],
+  arrival: [7.087, 9.463],
   /** Camera holds. The final frame is the crossroads plate. */
-  hold: [9.5, 10.006],
+  hold: [9.463, 10.005],
 } as const;
 
 /* ------------------------------------------------------------------ *
@@ -235,12 +244,12 @@ export const scenes: Scene[] = [
     to: "/events",
     accent: "cyan",
     sign: {
-      left: 18.38,
-      top: 25.98,
-      width: 11.78,
-      height: 11.35,
-      skew: 1.36,
-      lean: -3.81,
+      left: 18.34,
+      top: 26.07,
+      width: 11.76,
+      height: 11.39,
+      skew: 1.33,
+      lean: -3.95,
       yaw: 8,
       haze: 0.45,
     },
@@ -254,12 +263,12 @@ export const scenes: Scene[] = [
     to: "/register",
     accent: "magenta",
     sign: {
-      left: 67.83,
-      top: 27.81,
-      width: 12.02,
-      height: 11.37,
-      skew: -8.26,
-      lean: 3.5,
+      left: 67.77,
+      top: 27.91,
+      width: 11.98,
+      height: 11.33,
+      skew: -8.25,
+      lean: 3.6,
       yaw: -10,
       haze: 0.45,
     },
@@ -273,11 +282,11 @@ export const scenes: Scene[] = [
     to: "/team",
     accent: "cyan",
     sign: {
-      left: 20.53,
-      top: 50.86,
-      width: 15.62,
-      height: 3.62,
-      skew: 1.99,
+      left: 20.54,
+      top: 50.78,
+      width: 15.63,
+      height: 3.59,
+      skew: 2.08,
       lean: 0,
       yaw: 5,
       haze: 0.25,
@@ -295,10 +304,10 @@ export const scenes: Scene[] = [
     sign: {
       left: 89.38,
       top: -0.6,
-      width: 5.59,
-      height: 27.84,
-      skew: -13.97,
-      lean: 9.3,
+      width: 5.56,
+      height: 27.83,
+      skew: -16.22,
+      lean: 9.33,
       yaw: -14,
       haze: 0.1,
       vertical: true,

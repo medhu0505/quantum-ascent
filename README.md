@@ -1,7 +1,7 @@
 # Quantum V2.0
 
 The event site for Quantum V2.0, the inter-school tech and culture fest at
-A.F.S. Bal Bharati School, Lodhi Road, New Delhi.
+Air Force Bal Bharati School, Lodhi Road, New Delhi.
 
 Built on the repo's existing stack: TanStack Start, Vite, Tailwind v4, shadcn/ui.
 
@@ -29,11 +29,8 @@ than look like a phone number.
 
 Event copy, FAQ answers and the About editorial are final — no placeholders there.
 
-**Confirm the school's name.** The brief for this work said "F.S. Bal Bharati
-School"; the repo already said "Air Force Bal Bharati School" in one place and
-"A.F.S. Bal Bharati School" in another. The site currently uses **A.F.S. Bal
-Bharati School** throughout, from `school.name`. Change it in one place if that
-is wrong.
+The school's name is settled: **Air Force Bal Bharati School**, set once in
+`school.name` and read from there everywhere.
 
 ## Structure
 

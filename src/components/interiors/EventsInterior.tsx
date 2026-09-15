@@ -20,6 +20,11 @@ import { SqueezeCarousel, type SqueezeSlide } from "@/components/ui/carousel-squ
  * The open event is mirrored into `?event=<id>` so a single event can be
  * linked to and shared. History is replaced rather than pushed: stepping along
  * a carousel should not fill up the back button.
+ *
+ * Name, tagline and description are painted onto the open panel; entry, format
+ * and the registration link sit under the rail. The same words stay in the
+ * paragraph below as well, where the live region reads them out on a change
+ * and where a viewport too narrow for a caption falls back to them.
  */
 
 /**
@@ -60,7 +65,16 @@ export function EventsInterior() {
         title: `${event.name}. ${event.tagline}`,
         description: event.description,
         background: PANEL[event.accent] ?? PANEL_CYAN,
-        overlay: <span className="rail-mark">{event.name}</span>,
+        // Painted on the panel itself rather than read underneath it. The
+        // panels are lit gradients with nothing in them, so all that space was
+        // going to waste while the entry it belongs to sat below the rail.
+        caption: (
+          <span className="rail-caption" data-accent={event.accent}>
+            <span className="rail-mark">{event.name}</span>
+            <span className="rail-tagline">{event.tagline}</span>
+            <span className="rail-blurb">{event.description}</span>
+          </span>
+        ),
         details: (
           <div className="rail-detail" data-accent={event.accent}>
             <p className="rail-team">

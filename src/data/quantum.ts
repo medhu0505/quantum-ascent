@@ -29,7 +29,7 @@ export const BROCHURE_URL = `${TODO} — brochure PDF URL`;
 export const FEST_DATES = `${TODO} — fest dates`;
 
 export const school = {
-  name: "A.F.S. Bal Bharati School",
+  name: "Air Force Bal Bharati School",
   city: "Lodhi Road, New Delhi",
 } as const;
 
@@ -185,6 +185,12 @@ export type SignGeometry = {
   /** Degrees of vertical skew matching the billboard's plane. */
   skew: number;
   /**
+   * Degrees of horizontal skew, for a billboard that leans. The blade sign
+   * over the right-hand corner hangs off a wall running away from the camera,
+   * so its long edges are not vertical on screen; skew alone cannot say that.
+   */
+  lean?: number;
+  /**
    * Degrees of yaw, so the panel sits on the building's wall rather than
    * flat to the camera. Positive turns the right edge away, which is what a
    * panel on the left-hand side of the street does; right-hand panels take a
@@ -228,7 +234,16 @@ export const scenes: Scene[] = [
     blurb: "Six events. One championship.",
     to: "/events",
     accent: "cyan",
-    sign: { left: 18.6, top: 24.4, width: 11.6, height: 14.8, skew: -1.5, yaw: 8, haze: 0.45 },
+    sign: {
+      left: 18.38,
+      top: 25.98,
+      width: 11.78,
+      height: 11.35,
+      skew: 1.36,
+      lean: -3.81,
+      yaw: 8,
+      haze: 0.45,
+    },
     view: "/media/view-events.webp",
     room: "A control room lined with six screens, one per event.",
   },
@@ -238,7 +253,16 @@ export const scenes: Scene[] = [
     blurb: "Get your school on the list.",
     to: "/register",
     accent: "magenta",
-    sign: { left: 67.6, top: 25.4, width: 12.4, height: 14.6, skew: -6.4, yaw: -10, haze: 0.45 },
+    sign: {
+      left: 67.83,
+      top: 27.81,
+      width: 12.02,
+      height: 11.37,
+      skew: -8.26,
+      lean: 3.5,
+      yaw: -10,
+      haze: 0.45,
+    },
     view: "/media/view-register.webp",
     room: "A registration terminal facing a window over the city.",
   },
@@ -249,11 +273,12 @@ export const scenes: Scene[] = [
     to: "/team",
     accent: "cyan",
     sign: {
-      left: 20.6,
-      top: 51.2,
-      width: 12.9,
-      height: 5.9,
-      skew: 2.5,
+      left: 20.53,
+      top: 50.86,
+      width: 15.62,
+      height: 3.62,
+      skew: 1.99,
+      lean: 0,
       yaw: 5,
       haze: 0.25,
       compact: true,
@@ -268,11 +293,12 @@ export const scenes: Scene[] = [
     to: "/resources",
     accent: "violet",
     sign: {
-      left: 90.3,
-      top: 2.5,
-      width: 5.9,
-      height: 24.2,
-      skew: 0,
+      left: 89.38,
+      top: -0.6,
+      width: 5.59,
+      height: 27.84,
+      skew: -13.97,
+      lean: 9.3,
       yaw: -14,
       haze: 0.1,
       vertical: true,
@@ -373,7 +399,7 @@ export const festFacts = [
 ] as const;
 
 export const about = {
-  lede: "Quantum is the inter-school tech and culture fest run by the students of A.F.S. Bal Bharati School. V2.0 is the second edition, and it is bigger in the only way that matters: more schools in the building, competing on the same day for the same trophy.",
+  lede: "Quantum is the inter-school tech and culture fest run by the students of Air Force Bal Bharati School. V2.0 is the second edition, and it is bigger in the only way that matters: more schools in the building, competing on the same day for the same trophy.",
   body: [
     "The format is deliberately simple. Six events run across one day — Quiz, Film Making, Ad Shoot, Online Gaming, Pitch, and one that stays sealed until the morning. Every event is scored the same way and carries the same weight, so a school that is strong in one discipline cannot coast. The cumulative score across all six decides the overall champion.",
     "Everything you see on the day is student-run. Students write the quiz, judge the prelims, cut the highlight reel, manage the brackets, staff the help desk and run the tech. Faculty are there as coordinators and nothing more. That is the point of the fest: not a showcase put on for students, but one put on by them.",

@@ -39,6 +39,7 @@ function Sign({ scene }: { scene: Scene }) {
           "--sign-width": scene.sign.width,
           "--sign-height": scene.sign.height,
           "--sign-skew": `${scene.sign.skew}deg`,
+          "--sign-lean": `${scene.sign.lean ?? 0}deg`,
           "--sign-yaw": `${scene.sign.yaw}deg`,
           "--sign-haze": scene.sign.haze,
           // Written per frame by CrossroadsGL from the same camera that draws

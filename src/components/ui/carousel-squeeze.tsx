@@ -43,6 +43,19 @@ export type SqueezeSlide = {
   background?: string;
   /** Sits in the corner of the open panel: a wordmark, a logo, a caption. */
   overlay?: ReactNode;
+  /**
+   * Copy painted onto the open panel itself, rather than read under the row.
+   *
+   * It is laid out at the open card's width whatever the card is doing, for
+   * the same reason the picture is drawn at a fixed block: a card on its way
+   * to being a slat would otherwise re-wrap its text on every frame of the
+   * slide. One layout, and the card only changes how much of it you can see.
+   *
+   * A slide that has one keeps `title` and `description` as well — they are
+   * what the row's live region announces when the open slide changes, and
+   * what a viewport too narrow for a caption falls back to.
+   */
+  caption?: ReactNode;
   /** Anything that belongs under the description — a list, a spec, a note. */
   details?: ReactNode;
   /** Text on the button. No text, no button. */
@@ -311,6 +324,10 @@ export function SqueezeCarousel({
     // the viewport cannot spare the width, which is what keeps the columns
     // from collapsing to slivers on a phone.
     "--sq-hero": "calc(var(--sq-h) * var(--sq-aspect, 16 / 9))",
+    // The open card's width with nobody hovering. Captions are laid out
+    // against this rather than against the card, so a card being stretched or
+    // squeezed under the pointer does not re-wrap the words on it.
+    "--sq-open": `calc(var(--sq-hero) + var(--sq-room) * ${SHARES[0]})`,
     "--sq-room": `calc(100cqi - var(--sq-hero) - ${slats} * var(--sq-slat-gap) - 3 * var(--sq-gap) - ${slats} * ${slat})`,
   } as CSSProperties;
 
@@ -383,6 +400,26 @@ export function SqueezeCarousel({
               >
                 <Picture slide={slide} />
 
+                {slide.caption && (
+                  <span
+                    aria-hidden="true"
+                    className="sq-caption pointer-events-none absolute inset-0 flex items-end text-left"
+                    style={{
+                      opacity: front ? 1 : 0,
+                      transition: `opacity var(--sq-ms) var(--sq-ease)`,
+                      backgroundImage:
+                        "linear-gradient(to top, rgb(0 0 0 / 0.74), rgb(0 0 0 / 0.34) 52%, transparent 84%)",
+                    }}
+                  >
+                    <span
+                      className="flex shrink-0 flex-col items-start gap-2 p-5 sm:p-7"
+                      style={{ width: "var(--sq-open)" }}
+                    >
+                      {slide.caption}
+                    </span>
+                  </span>
+                )}
+
                 {slide.overlay && (
                   <span
                     aria-hidden="true"
@@ -419,7 +456,12 @@ export function SqueezeCarousel({
               }}
             >
               <div className="flex max-w-[46rem] flex-col gap-4">
-                <p className="text-[15px] leading-[1.6] text-balance @lg:text-[17px]">
+                <p
+                  className={cn(
+                    "text-[15px] leading-[1.6] text-balance @lg:text-[17px]",
+                    slide.caption && "sq-summary",
+                  )}
+                >
                   <span className="text-foreground">{slide.title}</span>{" "}
                   {slide.description && (
                     <span className="text-muted-foreground">{slide.description}</span>

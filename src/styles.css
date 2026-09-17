@@ -2554,7 +2554,7 @@ button.screen:active {
   display: flex;
   flex-direction: column;
   gap: var(--s-5);
-  max-width: 34rem;
+  max-width: 40rem;
 }
 
 .field {
@@ -2584,9 +2584,16 @@ button.screen:active {
   font: inherit;
   font-size: var(--text-base); /* 16px stops iOS Safari zooming on focus. */
   color: var(--foreground);
-  background: oklch(0.2 0.035 267 / 0.9);
+  /* A whisper of top sheen over the flat fill — the same glass the footer
+     pill and the chips use, dialled down to a hairline so a form field
+     still reads as a form field rather than a floating panel. */
+  background:
+    linear-gradient(180deg, oklch(1 0 0 / 0.05), transparent 55%),
+    oklch(0.2 0.035 267 / 0.9);
   box-shadow: inset 0 0 0 1px var(--input);
-  transition: box-shadow var(--dur-ui) var(--ease-out);
+  transition:
+    box-shadow var(--dur-ui) var(--ease-out),
+    background-color var(--dur-ui) var(--ease-out);
 }
 
 .field textarea {
@@ -2605,8 +2612,65 @@ button.screen:active {
   box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.3);
 }
 
+/* Branded focus: the same cyan every other interactive surface on the site
+   lights up as, not the generic keyboard-nav outline the base :focus-visible
+   rule hands out everywhere else. The outline stays — it is what forced-
+   colors mode and high-contrast users get — the glow is the extra. */
+.field input:focus-visible,
+.field select:focus-visible,
+.field textarea:focus-visible {
+  outline-color: var(--neon-cyan);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--neon-cyan) 70%, transparent),
+    0 0 0 4px color-mix(in oklab, var(--neon-cyan) 20%, transparent);
+}
+
 .field [aria-invalid="true"] {
   box-shadow: inset 0 0 0 2px var(--destructive);
+}
+
+.field [aria-invalid="true"]:focus-visible {
+  outline-color: var(--destructive);
+  box-shadow:
+    inset 0 0 0 2px var(--destructive),
+    0 0 0 4px color-mix(in oklab, var(--destructive) 20%, transparent);
+}
+
+/* Native select chrome does not exist anywhere else on this site, so it
+   reads as the one un-designed control on the page. Same box as an input,
+   own chevron drawn to match the line weight of the site's other glyphs. */
+.field select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-inline-end: var(--s-8);
+  background-image:
+    linear-gradient(180deg, oklch(1 0 0 / 0.05), transparent 55%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%237dd3f0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat, no-repeat;
+  background-position:
+    0 0,
+    right var(--s-4) center;
+  background-size:
+    auto,
+    0.7rem auto;
+  background-color: oklch(0.2 0.035 267 / 0.9);
+}
+
+.field select:has(option:checked[value=""]) {
+  color: oklch(0.62 0.025 265);
+}
+
+/* Two related fields on one line once there is room — the same rhythm the
+   team-member rows below already use. */
+.field-row {
+  display: grid;
+  gap: var(--s-4);
+}
+
+@media (min-width: 36rem) {
+  .field-row {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .field-hint {
@@ -2748,6 +2812,18 @@ button.screen:active {
   display: flex;
   justify-content: center;
   pointer-events: none;
+}
+
+/* Reduced motion drops the sticky pin (see .descent-pin), so the title
+   stacks above the stage instead of fading off it and the whole hub runs
+   taller than one viewport. The Team sign, the lowest billboard, can then
+   land under this fixed pill on shorter desktop viewports. Only this path
+   needs the extra clearance — the pinned experience already centres the
+   stage well clear of the fixed bottom edge. */
+@media (prefers-reduced-motion: reduce) and (min-width: 48rem) and (min-aspect-ratio: 5 / 4) {
+  .crossroads-footer {
+    inset-block-end: clamp(3.5rem, 11dvh, 6rem);
+  }
 }
 
 .crossroads-footer-nav {

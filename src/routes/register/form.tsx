@@ -411,97 +411,103 @@ function RegisterForm() {
           required
         />
 
-        <Field
-          id="school"
-          label="School"
-          error={errors.school}
-          value={values.school}
-          onChange={set("school")}
-          autoComplete="organization"
-          required
-        />
-
-        <div className="field">
-          <label htmlFor="field-grade">
-            Class <RequiredMark />
-          </label>
-          <select
-            id="field-grade"
-            name="grade"
-            value={values.grade}
-            onChange={set("grade")}
-            aria-invalid={errors.grade ? true : undefined}
-            aria-describedby={errors.grade ? "error-grade" : undefined}
+        <div className="field-row">
+          <Field
+            id="school"
+            label="School"
+            error={errors.school}
+            value={values.school}
+            onChange={set("school")}
+            autoComplete="organization"
             required
-          >
-            <option value="">Choose a class</option>
-            {[9, 10, 11, 12].map((g) => (
-              <option key={g} value={String(g)}>
-                Class {g}
-              </option>
-            ))}
-          </select>
-          <FieldError id="error-grade" message={errors.grade} />
+          />
+
+          <div className="field">
+            <label htmlFor="field-grade">
+              Class <RequiredMark />
+            </label>
+            <select
+              id="field-grade"
+              name="grade"
+              value={values.grade}
+              onChange={set("grade")}
+              aria-invalid={errors.grade ? true : undefined}
+              aria-describedby={errors.grade ? "error-grade" : undefined}
+              required
+            >
+              <option value="">Choose a class</option>
+              {[9, 10, 11, 12].map((g) => (
+                <option key={g} value={String(g)}>
+                  Class {g}
+                </option>
+              ))}
+            </select>
+            <FieldError id="error-grade" message={errors.grade} />
+          </div>
         </div>
 
-        <Field
-          id="email"
-          label="Email"
-          type="email"
-          hint="We send your team code and reporting times here."
-          error={errors.email}
-          value={values.email}
-          onChange={set("email")}
-          autoComplete="email"
-          required
-        />
-
-        <Field
-          id="phone"
-          label="Phone"
-          type="tel"
-          hint="Reachable on the day of the fest."
-          error={errors.phone}
-          value={values.phone}
-          onChange={set("phone")}
-          autoComplete="tel"
-          required
-        />
-
-        <Field
-          id="discord"
-          label="Discord"
-          hint="Optional. Briefing and results go out on the fest server, so add it if you have one."
-          error={errors.discord}
-          value={values.discord}
-          onChange={set("discord")}
-          autoComplete="off"
-        />
-
-        <div className="field">
-          <label htmlFor="field-event">
-            Event <RequiredMark />
-          </label>
-          <select
-            id="field-event"
-            name="event"
-            value={values.event}
-            onChange={set("event")}
-            aria-invalid={errors.event ? true : undefined}
-            aria-describedby={errors.event ? "error-event hint-event" : "hint-event"}
+        <div className="field-row">
+          <Field
+            id="email"
+            label="Email"
+            type="email"
+            hint="We send your team code and reporting times here."
+            error={errors.email}
+            value={values.email}
+            onChange={set("email")}
+            autoComplete="email"
             required
-          >
-            <option value="">Choose an event</option>
-            {events.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.name} — {e.team}
-              </option>
-            ))}
-          </select>
-          <p id="hint-event" className="field-hint">
-            Entering more than one? Submit the form once per event.
-          </p>
-          <FieldError id="error-event" message={errors.event} />
+          />
+
+          <Field
+            id="phone"
+            label="Phone"
+            type="tel"
+            hint="Reachable on the day of the fest."
+            error={errors.phone}
+            value={values.phone}
+            onChange={set("phone")}
+            autoComplete="tel"
+            required
+          />
+        </div>
+
+        <div className="field-row">
+          <Field
+            id="discord"
+            label="Discord"
+            hint="Optional. Briefing and results go out on the fest server, so add it if you have one."
+            error={errors.discord}
+            value={values.discord}
+            onChange={set("discord")}
+            autoComplete="off"
+          />
+
+          <div className="field">
+            <label htmlFor="field-event">
+              Event <RequiredMark />
+            </label>
+            <select
+              id="field-event"
+              name="event"
+              value={values.event}
+              onChange={set("event")}
+              aria-invalid={errors.event ? true : undefined}
+              aria-describedby={errors.event ? "error-event hint-event" : "hint-event"}
+              required
+            >
+              <option value="">Choose an event</option>
+              {events.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.name} — {e.team}
+                </option>
+              ))}
+            </select>
+            <p id="hint-event" className="field-hint">
+              Entering more than one? Submit the form once per event.
+            </p>
+            <FieldError id="error-event" message={errors.event} />
+          </div>
         </div>
 
         <fieldset className="party">

@@ -1625,10 +1625,6 @@
   font-weight: 700;
 }
 
-.room-notes {
-  margin-top: var(--section);
-}
-
 .room-notice {
   margin: 0 0 var(--s-6);
 }
@@ -1762,29 +1758,6 @@ button.screen:active {
 
 .screen-body {
   margin: 0;
-  font-size: var(--text-sm);
-  line-height: 1.6;
-  color: var(--muted-foreground);
-  text-wrap: pretty;
-}
-
-.notes-grid {
-  display: grid;
-  gap: var(--s-5) var(--s-6);
-  margin: 0;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
-}
-
-.notes-grid dt {
-  font-family: var(--font-display);
-  font-size: var(--text-micro);
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: color-mix(in oklab, var(--accent-hue) 75%, white);
-}
-
-.notes-grid dd {
-  margin: var(--s-2) 0 0;
   font-size: var(--text-sm);
   line-height: 1.6;
   color: var(--muted-foreground);
@@ -3381,16 +3354,6 @@ button.screen:active {
   .desk-screen-label {
     transition: none;
   }
-}
-
-/* The "Before you register" block. Resources has nothing below its desk —
-   the three screens are the whole page — but Register's desk has exactly one
-   destination, so what someone needs to decide before they click still has
-   to live somewhere on this page rather than one they have to go find. */
-.desk-notes {
-  max-width: 76rem;
-  margin-inline: auto;
-  padding: 0 var(--gutter) var(--s-9);
 }
 
 /* ------------------------------------------------------------------ *

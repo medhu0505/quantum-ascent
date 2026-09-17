@@ -1,7 +1,7 @@
 import { Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { usePhaseLink } from "@/components/scene/PhaseTransition";
-import { fest, isTodo, school } from "@/data/quantum";
+import { isTodo } from "@/data/quantum";
 
 /**
  * Renders a value the organisers have not supplied yet as a visibly unfinished
@@ -50,30 +50,6 @@ export function RegisterChip() {
       Register
       <span aria-hidden="true">→</span>
     </Link>
-  );
-}
-
-/** Header for the conventional pages. Scenes use the chips instead. */
-export function SiteHeader() {
-  return (
-    <header className="site-header">
-      <Link to="/" className="site-mark">
-        {fest.name} <span className="text-gradient-neon">{fest.edition}</span>
-        <span className="sr-only"> — {school.name}</span>
-      </Link>
-
-      <nav aria-label="Main" className="site-nav">
-        <Link to="/">Crossroads</Link>
-        <Link to="/events">Events</Link>
-        <Link to="/faq">FAQ</Link>
-        <Link to="/about">About</Link>
-        <Link to="/contact">Contact</Link>
-      </nav>
-
-      <Link to="/register/form" className="btn btn-accent btn-sm" data-magnetic>
-        Register
-      </Link>
-    </header>
   );
 }
 

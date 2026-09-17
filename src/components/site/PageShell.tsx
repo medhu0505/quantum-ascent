@@ -1,29 +1,38 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { contact, fest, school } from "@/data/quantum";
-import { SiteHeader, Value } from "@/components/site/Bits";
+import { ExitToCrossroads, RegisterChip, Value } from "@/components/site/Bits";
 import { Beam, Reveal } from "@/components/scene/Reveal";
 import { RevealText } from "@/components/scene/RevealText";
 
 /**
  * Layout for the conventional pages.
  *
- * Deliberately the opposite register to the scenes: no plate, no neon field,
- * one column at a readable measure. Someone checking what to bring at 11pm
- * the night before the fest needs the answer, not atmosphere.
+ * Deliberately the opposite register to the scenes in body copy — no plate,
+ * no neon field, one column at a readable measure — but the same chrome as
+ * every other room: the exit chip, the register chip, the interior pill.
+ * These are pages you can arrive at directly (search, a bookmark, the 404
+ * list), so the way back to the crossroads has to be right there rather
+ * than implied by a logo.
  */
 export function PageShell({
   title,
   lede,
   children,
+  registerChip = true,
 }: {
   title: string;
   lede?: string | undefined;
   children: ReactNode;
+  /** Off on the register form itself — the chip would point at the page
+   *  already open. */
+  registerChip?: boolean;
 }) {
   return (
     <>
-      <SiteHeader />
+      <ExitToCrossroads />
+      {registerChip ? <RegisterChip /> : null}
+      <CrossroadsFooter variant="interior" />
 
       <Beam />
 

@@ -320,7 +320,11 @@ function RegisterForm() {
   if (receipt) {
     const eventName = events.find((e) => e.id === values.event)?.name ?? values.event;
     return (
-      <PageShell title="Registered" lede={`${eventName} — ${values.school.trim()}`}>
+      <PageShell
+        title="Registered"
+        lede={`${eventName} — ${values.school.trim()}`}
+        registerChip={false}
+      >
         <div className="notice notice-ok" role="status" tabIndex={-1} ref={receiptRef}>
           <strong>
             {receipt.duplicate
@@ -356,6 +360,7 @@ function RegisterForm() {
     <PageShell
       title="Register"
       lede="One form covers every event. Enter the team lead's details, pick what you are entering, and list the rest of the team."
+      registerChip={false}
     >
       {!registrationOpen ? (
         <p className="notice notice-todo" role="status">

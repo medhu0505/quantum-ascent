@@ -14,14 +14,20 @@
 const SHEET_NAME = 'Registrations';
 const EVENTS = ['quiz', 'film-making', 'ad-shoot', 'surprise', 'online-gaming', 'pitch'];
 const CLASSES = ['9', '10', '11', '12'];
+const TYPES = ['individual', 'school'];
 const MAX_MEMBERS = 5;
-const LEAD_KEYS = ['student', 'school', 'grade', 'email', 'phone', 'discord', 'event'];
+const LEAD_KEYS = ['type', 'student', 'school', 'grade', 'email', 'phone', 'discord', 'event'];
 const MEMBER_KEYS = ['name', 'grade', 'phone', 'discord', 'email'];
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const DISCORD = /^\S{2,37}$/;
 const MAX_LEN = 120;
 const MAX_BODY = 10000;
 
+// 'Type' is appended after the member columns, not inserted up front with
+// the rest of the lead fields — the sheet may already carry real rows from
+// before this field existed, and inserting a column in the middle would
+// misalign every one of them against the new header. Appending only adds a
+// blank cell to old rows, which is what a schema addition is supposed to do.
 function header_() {
   const h = ['Submitted at', 'Registration ID', 'Event', 'Team lead', 'School', 'Class',
     'Email', 'Phone', 'Discord', 'Team size'];
@@ -29,18 +35,41 @@ function header_() {
     h.push('P' + n + ' name', 'P' + n + ' class', 'P' + n + ' phone',
       'P' + n + ' discord', 'P' + n + ' email');
   }
+  h.push('Type');
   return h;
 }
 
-function sheet_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sh = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
+function ensureSheet_(ss, name) {
+  const sh = ss.getSheetByName(name) || ss.insertSheet(name);
   if (sh.getLastRow() === 0) {
     const h = header_();
     sh.getRange(1, 1, 1, h.length).setValues([h]).setFontWeight('bold');
     sh.setFrozenRows(1);
   }
   return sh;
+}
+
+function sheet_() {
+  return ensureSheet_(SpreadsheetApp.getActiveSpreadsheet(), SHEET_NAME);
+}
+
+/**
+ * Sheet tab names cannot hold [ ] * ? / \ : , must be non-empty, and Sheets
+ * itself caps them at 100 characters — trimmed here well under that so a
+ * long school name never collides with Google's own limit. Same school
+ * name always sanitises to the same tab, which is what makes getSheetByName
+ * find the existing one instead of spawning a duplicate per submission.
+ */
+function schoolSheetName_(school) {
+  let name = String(school || '').replace(/[[\]*?/\\:]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!name) name = 'Unknown school';
+  if (name.length > 95) name = name.slice(0, 95);
+  if (name === SHEET_NAME) name = name + ' (school)';
+  return name;
+}
+
+function schoolSheet_(school) {
+  return ensureSheet_(SpreadsheetApp.getActiveSpreadsheet(), schoolSheetName_(school));
 }
 
 /** Run once from the editor: creates the tab and header, and triggers the auth prompt. */
@@ -69,6 +98,7 @@ function shortPhone_(s) {
 function validate_(body) {
   const lead = {};
   LEAD_KEYS.forEach(function (k) { lead[k] = text_(body[k]); });
+  if (TYPES.indexOf(lead.type) < 0) throw new Invalid('type');
   if (!lead.student) throw new Invalid('student');
   if (!lead.school) throw new Invalid('school');
   if (CLASSES.indexOf(lead.grade) < 0) throw new Invalid('grade');
@@ -142,11 +172,27 @@ function doPost(e) {
       const m = members[i] || {};
       MEMBER_KEYS.forEach(function (k) { row.push(m[k] || ''); });
     }
+    row.push(lead.type);
     const out = row.map(function (val, i) { return i === 0 ? val : escape_(val); });
+    const formats = [out.map(function (_, i) { return i === 0 ? 'yyyy-mm-dd hh:mm:ss' : '@'; })];
     const range = sh.getRange(last + 1, 1, 1, out.length);
-    range.setNumberFormats([out.map(function (_, i) { return i === 0 ? 'yyyy-mm-dd hh:mm:ss' : '@'; })]);
+    range.setNumberFormats(formats);
     range.setValues([out]);
     SpreadsheetApp.flush();
+
+    // Every entry names a school whether it is filed as individual or
+    // school, so every entry gets a copy on that school's own tab -- the
+    // master sheet above stays the record of truth and the only thing the
+    // duplicate check reads, so a school-tab hiccup here must not turn an
+    // already-saved registration into a reported failure.
+    try {
+      const schoolSh = schoolSheet_(lead.school);
+      const schoolRange = schoolSh.getRange(schoolSh.getLastRow() + 1, 1, 1, out.length);
+      schoolRange.setNumberFormats(formats);
+      schoolRange.setValues([out]);
+    } catch (schoolErr) {
+      console.error('school sheet write failed: ' + schoolErr);
+    }
 
     return json_({ ok: true, id: id });
   } catch (err) {

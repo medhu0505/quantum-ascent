@@ -40,6 +40,7 @@ export const Route = createFileRoute("/register/form")({
 });
 
 type Fields = {
+  type: string;
   student: string;
   school: string;
   grade: string;
@@ -92,6 +93,7 @@ function phoneShort(value: string): boolean {
 
 function validate(values: Fields): Errors {
   const errors: Errors = {};
+  if (!values.type) errors.type = "Choose individual/team or school.";
   if (!values.student.trim()) errors.student = "Enter the name of the team lead.";
   if (!values.school.trim()) errors.school = "Enter your school's name.";
   if (!values.grade) errors.grade = "Choose the team lead's class.";
@@ -121,6 +123,7 @@ function validateMembers(list: Participant[]): MemberErrors[] {
 }
 
 const FIELD_ORDER: (keyof Fields)[] = [
+  "type",
   "student",
   "school",
   "grade",
@@ -183,6 +186,7 @@ function RegisterForm() {
   const registrationOpen = !isTodo(REGISTRATION_ENDPOINT);
 
   const [values, setValues] = useState<Fields>({
+    type: "",
     student: "",
     school: "",
     grade: "",
@@ -397,6 +401,31 @@ function RegisterForm() {
             </ul>
           </div>
         ) : null}
+
+        <div className="field">
+          <label htmlFor="field-type">
+            Registering as <RequiredMark />
+          </label>
+          <select
+            id="field-type"
+            name="type"
+            value={values.type}
+            onChange={set("type")}
+            aria-invalid={errors.type ? true : undefined}
+            aria-describedby={errors.type ? "error-type hint-type" : "hint-type"}
+            required
+          >
+            <option value="">Choose one</option>
+            <option value="individual">Individual or team</option>
+            <option value="school">School (coordinator entry)</option>
+          </select>
+          <p id="hint-type" className="field-hint">
+            A student or team entering directly is individual. A teacher or coordinator
+            submitting on the school&rsquo;s behalf is school — same form either way, one event
+            per submission.
+          </p>
+          <FieldError id="error-type" message={errors.type} />
+        </div>
 
         <Field
           id="student"

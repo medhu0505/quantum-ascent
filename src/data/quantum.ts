@@ -273,7 +273,7 @@ export const scenes: Scene[] = [
       haze: 0.45,
     },
     view: "/media/view-register.webp",
-    room: "A registration terminal facing a window over the city.",
+    room: "A gaming desk facing three monitors, the city outside the window behind it.",
   },
   {
     id: "team",

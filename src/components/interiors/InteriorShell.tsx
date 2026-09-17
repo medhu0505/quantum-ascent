@@ -5,13 +5,13 @@ import { RevealText } from "@/components/scene/RevealText";
 import type { Scene } from "@/data/quantum";
 
 /**
- * The room every interior is built from.
+ * The room Events and Team are built from.
  *
- * One shell, four fills. The window, the rim light, the type scale and the
- * exit are identical in all four scenes; only the console content changes.
- * Building them from a single component is what keeps the interiors one
- * system rather than four independently-vibed rooms — and it means an
- * accessibility or layout fix lands in all of them at once.
+ * One shell, two fills. The window, the rim light, the type scale and the
+ * exit are identical in both; only the console content changes. Register and
+ * Resources don't use this shell — each of their scenes is a photograph of an
+ * actual desk with its own console already in the picture, so there is
+ * nothing here for them to build around.
  *
  * The view through the window is a real frame from the descent film, so the
  * room sits in the same city the visitor just fell through.
@@ -28,7 +28,7 @@ export function InteriorShell({
   return (
     <>
       <ExitToCrossroads />
-      <RegisterChip hidden={scene.id === "register"} />
+      <RegisterChip />
       <main id="main" className="room phase-enter" data-accent={scene.accent} data-room={scene.id}>
         <div className="room-window" aria-hidden="true">
           <img src={scene.view} alt="" width={760} height={540} decoding="async" />

@@ -40,11 +40,11 @@ export function ExitToCrossroads() {
 
 /**
  * Registration is the site's whole job, so it stays one click away from every
- * interior rather than only from its own scene. Suppressed on the Register
- * scene itself, where it would point at the room you are standing in.
+ * interior rather than only from its own scene. Register itself never renders
+ * this — it is the room the chip would point at — so there is no visibility
+ * toggle to thread through: any scene that mounts it wants it shown.
  */
-export function RegisterChip({ hidden = false }: { hidden?: boolean }) {
-  if (hidden) return null;
+export function RegisterChip() {
   return (
     <Link to="/register/form" className="chip chip-right chip-accent" data-magnetic>
       Register

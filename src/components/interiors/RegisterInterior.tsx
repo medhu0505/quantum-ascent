@@ -1,44 +1,70 @@
 import { Link } from "@tanstack/react-router";
-import { InteriorShell } from "@/components/interiors/InteriorShell";
+import { ExitToCrossroads } from "@/components/site/Bits";
 import { Reveal } from "@/components/scene/Reveal";
 import { events, getScene } from "@/data/quantum";
 
 /**
- * Register: one terminal, and it is the only thing in the room.
+ * Register: the desk, and the centre monitor is the door.
  *
- * Registration is the site's whole job, so this scene deliberately has a
- * single target. Everything else here is the information someone needs
- * before they commit — who can enter, what a team looks like, what happens
- * after — placed under the terminal rather than on a page they have to go
- * find first.
+ * This was a terminal card floating over a small window photo, with the copy
+ * doing all the work of saying "this is where you register." The desk is now
+ * the whole page — the same room-is-the-page treatment as Resources — and the
+ * one screen with nothing on it is the button, because a screen with nothing
+ * on it is exactly what a form waiting to be opened should look like. The two
+ * side monitors are dressing, not controls: they are part of the photograph,
+ * not part of the interface, so nothing is hung on them.
+ *
+ * Registration is the site's whole job, so what someone needs to decide
+ * before they click still sits under the desk rather than on a page they
+ * have to go find first.
  */
 export function RegisterInterior() {
   const scene = getScene("register")!;
 
   return (
-    <InteriorShell
-      scene={scene}
-      lead="One form covers every event. Pick your school, name your team, choose what you are entering, and you are on the list."
-    >
-      <Reveal className="console">
-        <div className="console-readout" aria-hidden="true">
-          <span className="console-dot" />
-          <span>TERMINAL 01 — INTAKE</span>
-        </div>
-        <Link to="/register/form" className="console-face">
-          <span className="console-kicker">Registration terminal</span>
-          <span className="console-title">Open the entry form</span>
-          <span className="console-sub">
-            {events.length} events open · classes 9 to 12 · one form
-          </span>
-        </Link>
-      </Reveal>
+    <>
+      <ExitToCrossroads />
 
-      <Reveal as="section" className="room-notes" aria-labelledby="before-you-register" delay={1}>
+      <main id="main" className="desk">
+        {/* The room carries no visible heading of its own — the photograph is
+            the identity — so this is what a screen reader announces instead. */}
+        <h1 className="sr-only">{scene.label}</h1>
+        <p className="sr-only">
+          One form covers every event. Pick your school, name your team, choose what you are
+          entering, and you are on the list.
+        </p>
+
+        <div className="desk-frame">
+          <div className="desk-room">
+            <img
+              className="desk-plate"
+              src={scene.view}
+              alt=""
+              width={1280}
+              height={720}
+              decoding="async"
+              fetchPriority="high"
+            />
+          </div>
+
+          <ul className="desk-screens">
+            <li style={{ left: "33.36%", top: "26.3%", width: "24.93%", height: "19.66%" }}>
+              <Link to="/register/form" className="desk-screen" data-cursor-label="Open">
+                <span className="desk-screen-label">Register</span>
+                <span className="sr-only">
+                  . Open the entry form — {events.length} events open.
+                </span>
+              </Link>
+            </li>
+          </ul>
+        </div>
+      </main>
+
+      <Reveal as="section" className="room-notes desk-notes" aria-labelledby="before-you-register">
         <h2 id="before-you-register" className="room-subhead">
           Before you register
         </h2>
-        <dl className="notes-grid">
+        <dl className="notes-grid" data-accent={scene.accent}>
           <div>
             <dt>Who can enter</dt>
             <dd>
@@ -69,6 +95,6 @@ export function RegisterInterior() {
           </div>
         </dl>
       </Reveal>
-    </InteriorShell>
+    </>
   );
 }

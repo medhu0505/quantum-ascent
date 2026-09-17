@@ -2393,10 +2393,6 @@ button.screen:active {
 
 .about-list li {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-1);
-  padding: var(--s-2) 0 var(--s-3) var(--s-4);
   border-top: 1px solid var(--rule);
 }
 
@@ -2410,11 +2406,41 @@ button.screen:active {
   width: var(--s-4);
   height: 2px;
   background: var(--accent-hue, var(--neon-cyan));
+  transition: width var(--dur-ui) var(--ease-out);
+}
+
+/* Reads on the page, not just a caption for it — this is the same event the
+   crossroads sign and the events rail point at, so it opens straight to
+   that entry's own panel rather than the top of the list. */
+.about-list-link {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+  padding: var(--s-2) 0 var(--s-3) var(--s-4);
+  color: inherit;
+  text-decoration: none;
+}
+
+.about-list li:hover::before,
+.about-list-link:focus-visible::before {
+  width: var(--s-6);
+}
+
+.about-list-link:hover .about-list-name,
+.about-list-link:focus-visible .about-list-name {
+  color: var(--accent-hue, var(--neon-cyan));
+}
+
+.about-list-link:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 .about-list-name {
   font-family: var(--font-display);
   font-weight: 700;
+  transition: color var(--dur-ui) var(--ease-out);
 }
 
 .about-list-note {
@@ -2466,18 +2492,67 @@ button.screen:active {
 }
 
 .faq-mark {
+  position: relative;
   flex: none;
-  display: grid;
-  place-items: center;
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 999px;
-  font-size: var(--text-lg);
-  color: var(--neon-cyan);
   background: oklch(0.24 0.04 267 / 0.8);
+  transition: background var(--dur-ui) var(--ease-out);
 }
 
+.faq-trigger:hover .faq-mark,
+.faq-trigger:focus-visible .faq-mark {
+  background: oklch(0.3 0.05 267 / 0.9);
+}
+
+/* Drawn rather than typed, so opening is a turn instead of a character swap
+   — the same bar stays, the crossing one folds away under it. */
+.faq-mark::before,
+.faq-mark::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background: var(--neon-cyan);
+  border-radius: 1px;
+  transition: transform var(--dur-2) var(--ease-out);
+}
+
+.faq-mark::before {
+  width: 0.7rem;
+  height: 2px;
+  translate: -50% -50%;
+}
+
+.faq-mark::after {
+  width: 2px;
+  height: 0.7rem;
+  translate: -50% -50%;
+}
+
+.faq-trigger[aria-expanded="true"] .faq-mark::after {
+  transform: scaleY(0);
+}
+
+/* Height-from-content, not a hard show/hide: grid-template-rows animates
+   from 0fr to 1fr, and the inner clip keeps the collapsed panel from
+   painting over whatever is below it while it is at zero height. A plain
+   height:auto cannot transition at all; measuring it in JS is the usual fix
+   and is exactly the complexity this avoids. */
 .faq-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--dur-3) var(--ease);
+}
+
+.faq-panel[data-open] {
+  grid-template-rows: 1fr;
+}
+
+.faq-panel-inner {
+  overflow: hidden;
+  min-height: 0;
   padding: 0 var(--s-1) 1.35rem;
 }
 
@@ -2487,6 +2562,17 @@ button.screen:active {
   line-height: 1.7;
   color: var(--muted-foreground);
   text-wrap: pretty;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faq-panel {
+    transition: none;
+  }
+
+  .faq-mark::before,
+  .faq-mark::after {
+    transition: none;
+  }
 }
 
 /* ---- Contact -------------------------------------------------------- */
@@ -2503,6 +2589,19 @@ button.screen:active {
 .channels li {
   padding: var(--s-4) 0 var(--s-5);
   border-top: 1px solid var(--rule);
+}
+
+.channel-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.channel-icon {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  color: var(--neon-cyan);
 }
 
 .channel-label {

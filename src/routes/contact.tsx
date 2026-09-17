@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Instagram, Mail, Phone } from "lucide-react";
 import { PageShell } from "@/components/site/PageShell";
 import { Value } from "@/components/site/Bits";
 import { contact, isTodo, school } from "@/data/quantum";
@@ -17,18 +18,21 @@ export const Route = createFileRoute("/contact")({
 const channels = [
   {
     label: "Email",
+    icon: Mail,
     value: contact.email,
     href: (v: string) => `mailto:${v}`,
     note: "Best for anything that needs a written answer: entry queries, schedule clashes, accessibility requirements.",
   },
   {
     label: "Phone",
+    icon: Phone,
     value: contact.phone,
     href: (v: string) => `tel:${v.replace(/\s/g, "")}`,
     note: "For the day itself — running late, finding the venue, or anything urgent once the fest has started.",
   },
   {
     label: "Instagram",
+    icon: Instagram,
     value: contact.instagram,
     href: (v: string) => `https://instagram.com/${v.replace(/^@/, "")}`,
     note: "Announcements, results and the highlight reel.",
@@ -44,7 +48,10 @@ function Contact() {
       <ul className="channels">
         {channels.map((channel) => (
           <li key={channel.label}>
-            <p className="channel-label">{channel.label}</p>
+            <div className="channel-head">
+              <channel.icon className="channel-icon" aria-hidden="true" strokeWidth={1.75} />
+              <p className="channel-label">{channel.label}</p>
+            </div>
             <p className="channel-value">
               {isTodo(channel.value) ? (
                 <Value value={channel.value} label={channel.label} />

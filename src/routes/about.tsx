@@ -43,8 +43,10 @@ function About() {
         <ul className="about-list">
           {events.map((event) => (
             <li key={event.id} data-accent={event.accent}>
-              <span className="about-list-name">{event.name}</span>
-              <span className="about-list-note">{event.tagline}</span>
+              <Link to="/events" search={{ event: event.id }} className="about-list-link">
+                <span className="about-list-name">{event.name}</span>
+                <span className="about-list-note">{event.tagline}</span>
+              </Link>
             </li>
           ))}
         </ul>

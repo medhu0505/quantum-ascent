@@ -63,9 +63,7 @@ function Faq() {
                   onClick={() => toggle(i)}
                 >
                   <span>{item.q}</span>
-                  <span className="faq-mark" aria-hidden="true">
-                    {isOpen ? "−" : "+"}
-                  </span>
+                  <span className="faq-mark" aria-hidden="true" />
                 </button>
               </h2>
               <div
@@ -73,9 +71,12 @@ function Faq() {
                 role="region"
                 aria-labelledby={`faq-trigger-${i}`}
                 className="faq-panel"
-                hidden={!isOpen}
+                data-open={isOpen || undefined}
+                inert={!isOpen || undefined}
               >
-                <p>{item.a}</p>
+                <div className="faq-panel-inner">
+                  <p>{item.a}</p>
+                </div>
               </div>
             </li>
           );

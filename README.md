@@ -21,7 +21,7 @@ than look like a phone number.
 
 | Value | Where | What breaks until it is set |
 | --- | --- | --- |
-| `REGISTRATION_ENDPOINT` | `src/data/quantum.ts` | The Apps Script web app URL for the registrations sheet (see `backend/registrations.gs`). Until it is set the form validates but cannot submit, and says so plainly. **This is the one that matters most.** |
+| `REGISTRATION_FORM_URL` | `src/data/quantum.ts` | The registration form validates but cannot submit. The page says so plainly and the submit button is disabled. **This is the one that matters most.** |
 | `team` roster | `src/data/quantum.ts` | Meet the Team shows real roles with the names badged as pending. |
 | `contact` | `src/data/quantum.ts` | Contact page and footer show badges instead of an email, phone and handle. |
 | `FEST_DATES` | `src/data/quantum.ts` | Not currently rendered; wire it in once dates are public. |
@@ -31,22 +31,6 @@ Event copy, FAQ answers and the About editorial are final — no placeholders th
 
 The school's name is settled: **Air Force Bal Bharati School**, set once in
 `school.name` and read from there everywhere.
-
-## Registrations backend
-
-Entries go to a Google Sheet, **Quantum V2.0 Registrations**, on the organiser's Drive.
-A bound Apps Script (`backend/registrations.gs`) is deployed as a web app and is
-the only thing that writes to it. The form POSTs JSON to `REGISTRATION_ENDPOINT`,
-and the script checks every field again, rejects anything else, and appends one row
-to the `Registrations` tab. It returns a `QV2-XXXXXXXX` ID. If the same email
-registers again for the same event, the script returns the original ID and adds no
-row. It also neutralises formula injection and ignores anything that fills in the
-hidden `website` field.
-
-To change the script, paste the new file into the sheet's Extensions > Apps Script
-editor. Then use Deploy > Manage deployments > Edit > New version. That keeps the
-same `/exec` URL. A *new* deployment gets a new URL, and `REGISTRATION_ENDPOINT`
-would have to change with it.
 
 ## Structure
 

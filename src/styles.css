@@ -2656,17 +2656,6 @@ button.screen:active {
   margin-top: var(--s-2);
 }
 
-/* The early copy of the submit button, above the fields. Its own
-   margin-bottom is what separates it from "Team lead's full name" below --
-   .form-actions' margin-top is for the block that follows the form, which
-   this one does not. */
-.form-actions-top {
-  margin-top: 0;
-  margin-bottom: var(--s-6);
-  padding-bottom: var(--s-5);
-  border-bottom: 1px solid var(--border);
-}
-
 .btn:disabled {
   cursor: not-allowed;
   opacity: 0.55;
@@ -2732,156 +2721,6 @@ button.screen:active {
 .footer-links a:hover,
 .footer-links a:focus-visible {
   color: var(--foreground);
-}
-
-/* ---- The crossroads' own footer: a floating pill ------------------- *
- * Same glass as .chip (dark, blurred, a hairline inset border) so it reads
- * as the same floating-UI system as the exit/register chips fixed to the
- * top of the screen, just parked at the bottom instead.
- * ------------------------------------------------------------------ */
-
-.crossroads-footer {
-  position: fixed;
-  inset-block-end: clamp(0.75rem, 3dvh, 1.5rem);
-  inset-inline: 0;
-  z-index: 50;
-  display: flex;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.crossroads-footer-nav {
-  pointer-events: auto;
-  max-width: calc(100dvw - 2rem);
-  /* Hidden — not merely faded — until the hub is actually the thing on
-     screen: the descent is one long route, and this pill floats "on the
-     road" specifically, not over the moon during the aerial beat or the
-     canyon dive. visibility (rather than opacity alone) also takes it out of
-     tab order and off-screen-reader-radar while it is not there to find,
-     the same job `inert` does for the signs during the scrub above it.
-     [data-hub="arrived"] is set on <html> by Descent the moment the hub is
-     on screen, whichever of its three paths got you there. */
-  visibility: hidden;
-  opacity: 0;
-  transition:
-    opacity var(--dur-ui) var(--ease-out),
-    visibility 0s var(--dur-ui);
-}
-
-:root[data-hub="arrived"] .crossroads-footer-nav {
-  visibility: visible;
-  opacity: 1;
-  transition: opacity var(--dur-ui) var(--ease-out);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .crossroads-footer-nav {
-    transition: none;
-  }
-}
-
-.crossroads-footer-nav ul {
-  display: flex;
-  align-items: center;
-  gap: clamp(var(--s-4), 3vw, var(--s-6));
-  margin: 0;
-  padding: var(--s-2) var(--s-5);
-  list-style: none;
-  border-radius: 999px;
-  background: oklch(0.14 0.028 265 / 0.72);
-  box-shadow: inset 0 0 0 1px var(--border);
-  backdrop-filter: blur(14px) saturate(150%);
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-}
-
-.crossroads-footer-nav ul::-webkit-scrollbar {
-  display: none;
-}
-
-/* Ported from a plain-text link treatment: the underline is two copies of
-   the same bar, one sharp and one blurred under it, both growing in from the
-   left on hover; the label itself shifts into a lit gradient at the same
-   time. Tuned down from the original — 50px display type and a 5px bar are
-   sized for a hero, not a nav pill — and recoloured from its green-on-white
-   to the site's own cyan, which is what everything else that lights up on
-   this page lights up as. */
-.crossroads-footer-nav a {
-  position: relative;
-  display: inline-block;
-  padding-block: 0.2rem;
-  color: var(--foreground);
-  font-family: var(--font-display, inherit);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  text-decoration: none;
-  transition: color var(--dur-ui) var(--ease-out);
-}
-
-.crossroads-footer-nav a:hover,
-.crossroads-footer-nav a:focus-visible {
-  color: transparent;
-  background: linear-gradient(
-    0deg,
-    var(--neon-cyan),
-    color-mix(in oklab, var(--neon-cyan) 25%, white) 80%
-  );
-  background-clip: text;
-  -webkit-background-clip: text;
-}
-
-.crossroads-footer-nav a:focus-visible {
-  outline: 2px solid var(--neon-cyan);
-  outline-offset: 4px;
-}
-
-.crossroads-footer-nav a::before,
-.crossroads-footer-nav a::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: -2px;
-  width: 0%;
-  height: 2px;
-  pointer-events: none;
-  transition:
-    width var(--dur-ui) var(--ease-out),
-    left var(--dur-ui) var(--ease-out);
-}
-
-.crossroads-footer-nav a::after {
-  background-color: color-mix(in oklab, var(--neon-cyan) 70%, white);
-}
-
-/* The soft twin underneath, same bar blurred — a glow the sharp line alone
-   cannot give without losing its edge. */
-.crossroads-footer-nav a::before {
-  background-color: var(--neon-cyan);
-  filter: blur(4px);
-}
-
-.crossroads-footer-nav a:hover::before,
-.crossroads-footer-nav a:hover::after,
-.crossroads-footer-nav a:focus-visible::before,
-.crossroads-footer-nav a:focus-visible::after {
-  width: 100%;
-}
-
-@media (max-width: 30rem) {
-  .crossroads-footer-nav ul {
-    gap: var(--s-4);
-    padding: var(--s-2) var(--s-4);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .crossroads-footer-nav a,
-  .crossroads-footer-nav a::before,
-  .crossroads-footer-nav a::after {
-    transition: none;
-  }
 }
 
 /* ------------------------------------------------------------------ *
@@ -3291,7 +3130,6 @@ button.screen:active {
   .site-header,
   .page-actions,
   .form-actions,
-  .form-actions-top,
   .scroll-hint {
     display: none !important;
   }
@@ -3435,7 +3273,14 @@ button.screen:active {
   place-items: center;
   border-radius: 2px;
   text-decoration: none;
+  /* The screens are already lit in the photograph. A resting state that added
+     anything would read as a rectangle stuck over the picture, so the link is
+     invisible until it is reached for. */
   background: transparent;
+  box-shadow: inset 0 0 0 0 transparent;
+  transition:
+    background-color var(--dur-2) var(--ease),
+    box-shadow var(--dur-2) var(--ease);
 }
 
 .desk-screen-label {
@@ -3451,13 +3296,14 @@ button.screen:active {
   transition: text-shadow var(--dur-2) var(--ease);
 }
 
-/* No fill, no ring, no glow shape on the screen element itself, on either
-   room — a filled rectangle or a glow bleeding past its edges is still a
-   container drawn on top of the glass, whether it is Resources' three
-   screens or Register's one. The label's own text-shadow, below, is the
-   only thing that answers a hover or a focus. focus-visible keeps its
-   outline regardless: a mouse never sees that one, so it is accessibility,
-   not a container to remove. */
+.desk-screen:hover,
+.desk-screen:focus-visible {
+  background: oklch(0.84 0.13 215 / 0.22);
+  box-shadow:
+    inset 0 0 0 2px oklch(0.84 0.13 215 / 0.85),
+    0 0 26px oklch(0.84 0.13 215 / 0.45);
+}
+
 .desk-screen:focus-visible {
   outline: 2px solid var(--neon-cyan);
   outline-offset: 4px;

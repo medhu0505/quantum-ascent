@@ -60,10 +60,28 @@ function depthReader(image: CanvasImageSource, w: number, h: number) {
   };
 }
 
+/**
+ * Software rasterisers (SwiftShader, llvmpipe, "Microsoft Basic Render
+ * Driver") answer `getContext` and then choke on real work — measured here
+ * at ~370ms a frame running this layer's bloom pass, against a solid 60fps
+ * with it skipped. That is not a slow machine being slow, it is a full GPU
+ * pipeline stall every frame. Real hardware, even a weak integrated GPU,
+ * does not hit this; software rendering is what school lab machines fall
+ * back to when IT policy disables GPU acceleration, or when a desktop is
+ * virtualised — both realistic for this site's actual audience. Treating a
+ * software renderer as "no WebGL" is the same fallback the component
+ * already has for that case, just extended to cover this one too.
+ */
+const SOFTWARE_RENDERERS = ["swiftshader", "llvmpipe", "software", "basic render driver"];
+
 function webglAvailable(): boolean {
   try {
     const c = document.createElement("canvas");
-    return !!(c.getContext("webgl2") ?? c.getContext("webgl"));
+    const gl = c.getContext("webgl2") ?? c.getContext("webgl");
+    if (!gl) return false;
+    const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+    const renderer = dbg ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)) : "";
+    return !SOFTWARE_RENDERERS.some((needle) => renderer.toLowerCase().includes(needle));
   } catch {
     return false;
   }
@@ -220,7 +238,14 @@ export function CrossroadsGL({ stageRef }: { stageRef: RefObject<HTMLElement | n
         if (!r.width || !r.height) return;
         renderer.setSize(r.width, r.height, false);
         composer.setSize(r.width, r.height);
-        bloom.resolution.set(r.width, r.height);
+        // Bloom's cost is its own render-target size, not the final output —
+        // its blur chain runs every frame for as long as the stage is on
+        // screen, which during the real scroll-scrubbed descent is the whole
+        // pinned section. A soft glow does not need full resolution to read
+        // right, and capping the larger side well under the stage's own size
+        // cuts the pixel count the blur passes churn through considerably.
+        const bloomScale = Math.min(1, 640 / Math.max(r.width, r.height));
+        bloom.resolution.set(r.width * bloomScale, r.height * bloomScale);
         camera.aspect = r.width / r.height;
         // Frame the plane to the stage however the stage is proportioned, so
         // the WebGL frame always matches the DOM plate exactly.

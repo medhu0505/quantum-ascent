@@ -393,6 +393,14 @@ function RegisterForm() {
           </div>
         ) : null}
 
+        {/* A second way down to the same submit, for anyone who has filled
+            the form and would rather not scroll past the team roster to
+            find it again. Same button, same handler -- the form does not
+            care which one was pressed. */}
+        <div className="form-actions form-actions-top">
+          <SubmitButton registrationOpen={registrationOpen} sending={sending} />
+        </div>
+
         <Field
           id="student"
           label="Team lead's full name"
@@ -629,24 +637,32 @@ function RegisterForm() {
         ) : null}
 
         <div className="form-actions">
-          <button
-            type="submit"
-            className={`btn btn-block ${registrationOpen ? "btn-accent" : "btn-ghost"}`}
-            disabled={sending}
-            aria-busy={sending || undefined}
-          >
-            {!registrationOpen
-              ? "Check my details"
-              : sending
-                ? "Submitting…"
-                : "Submit registration"}
-          </button>
+          <SubmitButton registrationOpen={registrationOpen} sending={sending} />
           <Link to="/events" className="btn btn-ghost btn-block" data-magnetic>
             Read the event details first
           </Link>
         </div>
       </form>
     </PageShell>
+  );
+}
+
+function SubmitButton({
+  registrationOpen,
+  sending,
+}: {
+  registrationOpen: boolean;
+  sending: boolean;
+}) {
+  return (
+    <button
+      type="submit"
+      className={`btn btn-block ${registrationOpen ? "btn-accent" : "btn-ghost"}`}
+      disabled={sending}
+      aria-busy={sending || undefined}
+    >
+      {!registrationOpen ? "Check my details" : sending ? "Submitting…" : "Submit registration"}
+    </button>
   );
 }
 

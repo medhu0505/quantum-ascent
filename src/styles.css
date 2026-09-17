@@ -2656,6 +2656,17 @@ button.screen:active {
   margin-top: var(--s-2);
 }
 
+/* The early copy of the submit button, above the fields. Its own
+   margin-bottom is what separates it from "Team lead's full name" below --
+   .form-actions' margin-top is for the block that follows the form, which
+   this one does not. */
+.form-actions-top {
+  margin-top: 0;
+  margin-bottom: var(--s-6);
+  padding-bottom: var(--s-5);
+  border-bottom: 1px solid var(--border);
+}
+
 .btn:disabled {
   cursor: not-allowed;
   opacity: 0.55;
@@ -3280,6 +3291,7 @@ button.screen:active {
   .site-header,
   .page-actions,
   .form-actions,
+  .form-actions-top,
   .scroll-hint {
     display: none !important;
   }

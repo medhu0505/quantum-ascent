@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Descent } from "@/components/Descent";
 import { Preloader } from "@/components/scene/Preloader";
-import { SiteFooter } from "@/components/site/PageShell";
+import { CrossroadsFooter } from "@/components/site/PageShell";
 import { descentFilm, crossroadsPlate, fest, school } from "@/data/quantum";
 import { seo } from "@/lib/seo";
 
@@ -35,7 +35,7 @@ function Index() {
       <div id="main">
         <Descent />
       </div>
-      <SiteFooter />
+      <CrossroadsFooter />
     </>
   );
 }

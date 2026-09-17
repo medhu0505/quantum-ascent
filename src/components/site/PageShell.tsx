@@ -115,10 +115,27 @@ export function SiteFooter() {
  * of the screen read as one system rather than two different ideas of what
  * "floating UI" looks like on this site.
  */
-export function CrossroadsFooter() {
+/**
+ * The floating pill.
+ *
+ * On the crossroads it parks on the road, gated behind [data-hub="arrived"]
+ * so it waits for the descent to actually land there. Everywhere else there
+ * is no road and no arrival to wait for — a room's own content runs to an
+ * unpredictable length (a carousel, a fan of cards, a photo), so a pill
+ * pinned to the bottom of the viewport would drift over whatever that room
+ * happens to be showing. `variant="interior"` instead sits it at the top,
+ * in the same fixed chrome band as the exit and register chips, which is
+ * clear of body content on every room by construction rather than by
+ * checking each room's layout by hand.
+ */
+export function CrossroadsFooter({
+  variant = "crossroads",
+}: {
+  variant?: "crossroads" | "interior";
+}) {
   return (
-    <footer className="crossroads-footer">
-      <nav aria-label="Footer" className="crossroads-footer-nav">
+    <footer className="crossroads-footer" data-variant={variant}>
+      <nav aria-label="Quick navigation" className="crossroads-footer-nav" data-variant={variant}>
         <ul>
           <li>
             <Link to="/events">Events</Link>

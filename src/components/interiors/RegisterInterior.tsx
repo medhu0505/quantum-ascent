@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ExitToCrossroads } from "@/components/site/Bits";
+import { CrossroadsFooter } from "@/components/site/PageShell";
 import { events, getScene } from "@/data/quantum";
 
 /**
@@ -18,6 +19,7 @@ export function RegisterInterior() {
   return (
     <>
       <ExitToCrossroads />
+      <CrossroadsFooter variant="interior" />
 
       <main id="main" className="desk">
         {/* The wall behind the desk carries no readable heading of its own —

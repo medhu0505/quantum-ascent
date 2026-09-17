@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { ExitToCrossroads, RegisterChip } from "@/components/site/Bits";
+import { CrossroadsFooter } from "@/components/site/PageShell";
 import { Beam, Reveal } from "@/components/scene/Reveal";
 import { RevealText } from "@/components/scene/RevealText";
 import type { Scene } from "@/data/quantum";
@@ -29,6 +30,7 @@ export function InteriorShell({
     <>
       <ExitToCrossroads />
       <RegisterChip />
+      <CrossroadsFooter variant="interior" />
       <main id="main" className="room phase-enter" data-accent={scene.accent} data-room={scene.id}>
         <div className="room-window" aria-hidden="true">
           <img src={scene.view} alt="" width={760} height={540} decoding="async" />

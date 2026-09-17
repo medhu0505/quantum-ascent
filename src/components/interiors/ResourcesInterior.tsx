@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ExitToCrossroads, RegisterChip } from "@/components/site/Bits";
+import { CrossroadsFooter } from "@/components/site/PageShell";
 import { faqs, getScene } from "@/data/quantum";
 
 /**
@@ -57,6 +58,7 @@ export function ResourcesInterior() {
     <>
       <ExitToCrossroads />
       <RegisterChip />
+      <CrossroadsFooter variant="interior" />
 
       <main id="main" className="desk">
         {/* The wall behind the desk already says Resources in neon. This is

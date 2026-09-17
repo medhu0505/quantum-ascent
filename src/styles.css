@@ -2810,8 +2810,30 @@ button.screen:active {
    needs the extra clearance — the pinned experience already centres the
    stage well clear of the fixed bottom edge. */
 @media (prefers-reduced-motion: reduce) and (min-width: 48rem) and (min-aspect-ratio: 5 / 4) {
-  .crossroads-footer {
+  .crossroads-footer:not([data-variant="interior"]) {
     inset-block-end: clamp(3.5rem, 11dvh, 6rem);
+  }
+}
+
+/* Interior rooms have no road and no predictable amount of body content —
+   a carousel, a fan of cards, a photograph all run to different lengths —
+   so this variant moves to the top, into the same fixed chrome band the
+   exit and register chips already sit in. That band is clear of body
+   content on every room by construction; the bottom of the viewport is not. */
+.crossroads-footer[data-variant="interior"] {
+  inset-block-end: auto;
+  inset-block-start: 1rem;
+}
+
+/* Three fixed elements sharing one band is too tight below this — measured:
+   the pill's centred position collides with the exit chip's right edge up
+   to and including 900px wide, so 1024px is the first width with real
+   margin on both sides. The crossroads itself is reachable in one tap from
+   any room, so this drops rather than crowds on phone, tablet and
+   small-laptop widths. */
+@media (max-width: 64rem) {
+  .crossroads-footer[data-variant="interior"] {
+    display: none;
   }
 }
 
@@ -2825,7 +2847,8 @@ button.screen:active {
      tab order and off-screen-reader-radar while it is not there to find,
      the same job `inert` does for the signs during the scrub above it.
      [data-hub="arrived"] is set on <html> by Descent the moment the hub is
-     on screen, whichever of its three paths got you there. */
+     on screen, whichever of its three paths got you there. The interior
+     variant has no arrival to wait for, so it skips the gate outright. */
   visibility: hidden;
   opacity: 0;
   transition:
@@ -2833,7 +2856,8 @@ button.screen:active {
     visibility 0s var(--dur-ui);
 }
 
-:root[data-hub="arrived"] .crossroads-footer-nav {
+:root[data-hub="arrived"] .crossroads-footer-nav,
+.crossroads-footer-nav[data-variant="interior"] {
   visibility: visible;
   opacity: 1;
   transition: opacity var(--dur-ui) var(--ease-out);

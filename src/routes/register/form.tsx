@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { PageShell } from "@/components/site/PageShell";
-import { REGISTRATION_FORM_URL, events, isTodo } from "@/data/quantum";
+import { REGISTRATION_ENDPOINT, events, isTodo } from "@/data/quantum";
 import { seo } from "@/lib/seo";
 
 /**
@@ -12,10 +12,12 @@ import { seo } from "@/lib/seo";
  * wiring — aria-invalid, aria-describedby, focus on the first bad field,
  * a live region for the summary — is explicit and testable.
  *
- * Submission deliberately has no fake success path. Until the organisers
- * supply REGISTRATION_FORM_URL the form validates, keeps the visitor's
- * input, and says plainly that entries are not open yet. Accepting a
- * registration that goes nowhere is worse than not accepting one.
+ * Submission deliberately has no fake success path. Until
+ * REGISTRATION_ENDPOINT is set the form validates, keeps the visitor's input,
+ * and says plainly that entries are not open yet. Once it is set, a
+ * registration only counts as received when the sheet backend answers with
+ * an ID. Accepting a registration that goes nowhere is worse than not
+ * accepting one.
  */
 
 type Search = { event?: string | undefined };
@@ -138,9 +140,47 @@ const MEMBER_LABEL: Record<keyof Participant, string> = {
   email: "Email",
 };
 
+type Receipt = { id: string; duplicate: boolean };
+
+type BackendReply =
+  { ok: true; id: string; duplicate?: boolean } | { ok: false; error: string; field?: string };
+
+const SEND_TIMEOUT_MS = 20_000;
+
+/**
+ * Apps Script cannot answer a CORS preflight, so the body goes as text/plain,
+ * which keeps this a "simple" request. The script parses it as JSON.
+ */
+async function sendRegistration(payload: unknown): Promise<BackendReply> {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), SEND_TIMEOUT_MS);
+  try {
+    const res = await fetch(REGISTRATION_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload),
+      redirect: "follow",
+      signal: controller.signal,
+    });
+    if (!res.ok) return { ok: false, error: `http_${res.status}` };
+    return (await res.json()) as BackendReply;
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
+function describeFailure(reply: Extract<BackendReply, { ok: false }>): string {
+  if (reply.error === "invalid") {
+    return reply.field === "members"
+      ? "One of the team member rows did not pass the server's checks. Check them and submit again."
+      : `The ${reply.field ?? "form"} field did not pass the server's checks. Check it and submit again.`;
+  }
+  return "The registration server could not save this entry. Your answers are still here, so try again in a minute.";
+}
+
 function RegisterForm() {
   const { event: preselected } = Route.useSearch();
-  const registrationOpen = !isTodo(REGISTRATION_FORM_URL);
+  const registrationOpen = !isTodo(REGISTRATION_ENDPOINT);
 
   const [values, setValues] = useState<Fields>({
     student: "",
@@ -161,6 +201,13 @@ function RegisterForm() {
   const [checked, setChecked] = useState(false);
   const formRef = useRef<HTMLFormElement | null>(null);
   const checkedRef = useRef<HTMLParagraphElement | null>(null);
+  const [sending, setSending] = useState(false);
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const sendErrorRef = useRef<HTMLDivElement | null>(null);
+  const receiptRef = useRef<HTMLDivElement | null>(null);
+  /** Honeypot. Hidden from people and assistive tech; bots fill it in. */
+  const [website, setWebsite] = useState("");
 
   const set =
     (key: keyof Fields) =>
@@ -228,23 +275,32 @@ function RegisterForm() {
     }
 
     if (registrationOpen) {
-      // The organisers' form is the system of record; hand off with the
-      // answers we already have so nothing is retyped.
-      const url = new URL(REGISTRATION_FORM_URL);
-      for (const [k, v] of Object.entries(values)) url.searchParams.set(k, v);
-      // Flattened one key per person: the lead is participant 1, so the rows
-      // below start at 2. Most form backends take prefill as flat keys.
-      members.filter(used).forEach((m, i) => {
-        const n = i + 2;
-        for (const key of MEMBER_ORDER) {
-          if (m[key].trim())
-            url.searchParams.set(
-              `participant${n}${MEMBER_LABEL[key].replace(/\s/g, "")}`,
-              m[key].trim(),
-            );
-        }
-      });
-      window.location.href = url.toString();
+      if (sending) return;
+      setSending(true);
+      setSendError(null);
+      const trimmed = Object.fromEntries(
+        Object.entries(values).map(([k, v]) => [k, v.trim()]),
+      ) as Fields;
+      const team = members
+        .filter(used)
+        .map((m) => Object.fromEntries(MEMBER_ORDER.map((k) => [k, m[k].trim()])) as Participant);
+      sendRegistration({ ...trimmed, members: team, website })
+        .then((reply) => {
+          if (reply.ok) {
+            setReceipt({ id: reply.id, duplicate: Boolean(reply.duplicate) });
+            window.requestAnimationFrame(() => receiptRef.current?.focus());
+          } else {
+            setSendError(describeFailure(reply));
+            window.requestAnimationFrame(() => sendErrorRef.current?.focus());
+          }
+        })
+        .catch(() => {
+          setSendError(
+            "Could not reach the registration server. Check your connection; your answers are still here, so submit again when you are back online.",
+          );
+          window.requestAnimationFrame(() => sendErrorRef.current?.focus());
+        })
+        .finally(() => setSending(false));
       return;
     }
 
@@ -260,6 +316,41 @@ function RegisterForm() {
     MEMBER_ORDER.filter((k) => row[k]).map((k) => ({ row: i, key: k, message: row[k] as string })),
   );
   const problems = errorList.length + memberErrorList.length;
+
+  if (receipt) {
+    const eventName = events.find((e) => e.id === values.event)?.name ?? values.event;
+    return (
+      <PageShell title="Registered" lede={`${eventName} — ${values.school.trim()}`}>
+        <div className="notice notice-ok" role="status" tabIndex={-1} ref={receiptRef}>
+          <strong>
+            {receipt.duplicate
+              ? "This team is already registered for this event."
+              : "Registration received."}
+          </strong>
+          <span>
+            Your registration ID is <strong>{receipt.id}</strong>. Keep it; the organisers will ask
+            for it at the desk. Reporting times go to {values.email.trim()}.
+          </span>
+        </div>
+        <div className="form-actions">
+          <button
+            type="button"
+            className="btn btn-accent btn-block"
+            onClick={() => {
+              setReceipt(null);
+              setSubmitted(false);
+              setValues((v) => ({ ...v, event: "" }));
+            }}
+          >
+            Register the same lead for another event
+          </button>
+          <Link to="/events" className="btn btn-ghost btn-block" data-magnetic>
+            Back to the events
+          </Link>
+        </div>
+      </PageShell>
+    );
+  }
 
   return (
     <PageShell
@@ -506,6 +597,27 @@ function RegisterForm() {
           </div>
         </fieldset>
 
+        {/* Off-screen honeypot. Real visitors never reach it. */}
+        <div className="sr-only" aria-hidden="true">
+          <label htmlFor="field-website">Website</label>
+          <input
+            id="field-website"
+            name="website"
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+          />
+        </div>
+
+        {sendError ? (
+          <div className="form-summary" role="alert" tabIndex={-1} ref={sendErrorRef}>
+            <p className="form-summary-title">Not submitted</p>
+            <p className="field-hint">{sendError}</p>
+          </div>
+        ) : null}
+
         {checked ? (
           <p className="notice notice-ok" role="status" tabIndex={-1} ref={checkedRef}>
             <strong>Your details are complete.</strong>
@@ -520,8 +632,14 @@ function RegisterForm() {
           <button
             type="submit"
             className={`btn btn-block ${registrationOpen ? "btn-accent" : "btn-ghost"}`}
+            disabled={sending}
+            aria-busy={sending || undefined}
           >
-            {registrationOpen ? "Submit registration" : "Check my details"}
+            {!registrationOpen
+              ? "Check my details"
+              : sending
+                ? "Submitting…"
+                : "Submit registration"}
           </button>
           <Link to="/events" className="btn btn-ghost btn-block" data-magnetic>
             Read the event details first

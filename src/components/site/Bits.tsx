@@ -63,6 +63,7 @@ export function SiteHeader() {
       </Link>
 
       <nav aria-label="Main" className="site-nav">
+        <Link to="/">Crossroads</Link>
         <Link to="/events">Events</Link>
         <Link to="/faq">FAQ</Link>
         <Link to="/about">About</Link>

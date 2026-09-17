@@ -393,14 +393,6 @@ function RegisterForm() {
           </div>
         ) : null}
 
-        {/* A second way down to the same submit, for anyone who has filled
-            the form and would rather not scroll past the team roster to
-            find it again. Same button, same handler -- the form does not
-            care which one was pressed. */}
-        <div className="form-actions form-actions-top">
-          <SubmitButton registrationOpen={registrationOpen} sending={sending} />
-        </div>
-
         <Field
           id="student"
           label="Team lead's full name"

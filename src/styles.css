@@ -3309,6 +3309,16 @@ button.screen:active {
   outline-offset: 4px;
 }
 
+/* Register's one screen reads as a door, not a card — the inset ring on
+   hover framed it like the latter, a hard rectangle sitting on top of the
+   glass rather than the glass itself lighting up. The outer glow stays, and
+   focus-visible keeps its own outline regardless: that one is a mouse never
+   sees, so it is accessibility, not a "border" to remove. */
+.desk[data-room="register"] .desk-screen:hover,
+.desk[data-room="register"] .desk-screen:focus-visible {
+  box-shadow: 0 0 26px oklch(0.84 0.13 215 / 0.45);
+}
+
 .desk-screen:hover .desk-screen-label,
 .desk-screen:focus-visible .desk-screen-label {
   text-shadow:

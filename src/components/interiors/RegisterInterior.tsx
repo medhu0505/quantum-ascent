@@ -19,7 +19,7 @@ export function RegisterInterior() {
     <>
       <ExitToCrossroads />
 
-      <main id="main" className="desk">
+      <main id="main" className="desk" data-room={scene.id}>
         {/* The wall behind the desk carries no readable heading of its own —
             the photograph is the identity — so this is what a screen reader
             announces instead. */}

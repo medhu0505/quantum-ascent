@@ -72,6 +72,22 @@ export function Descent() {
   const lenis = useLenis();
 
   const [revealed, setRevealed] = useState(false);
+
+  // Published on <html> the moment the hub is actually on screen — whether
+  // that is the end of a scrubbed scroll, a skip, or reduced motion handing
+  // over the crossroads immediately — so CSS elsewhere on the page (the
+  // floating footer pill) can key off it without this component needing to
+  // know that pill exists. Same pattern the cursor and the no-JS flag use:
+  // a root-level attribute for a piece of state a completely different part
+  // of the tree needs to react to.
+  useEffect(() => {
+    if (revealed) document.documentElement.dataset["hub"] = "arrived";
+    else delete document.documentElement.dataset["hub"];
+    return () => {
+      delete document.documentElement.dataset["hub"];
+    };
+  }, [revealed]);
+
   const [buffered, setBuffered] = useState(false);
   /**
    * The film failed to load, or the browser cannot decode it. Rare, but the

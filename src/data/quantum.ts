@@ -19,8 +19,13 @@ export function isTodo(value: string): boolean {
   return value.startsWith(TODO);
 }
 
-/** TODO: swap for the real registration form (Google Form, Fillout, etc.). */
-export const REGISTRATION_FORM_URL = `${TODO} — external registration form URL`;
+/**
+ * The registration backend: a Google Apps Script web app bound to the
+ * "Quantum V2.0 Registrations" sheet (source in backend/registrations.gs).
+ * The form POSTs each entry here and the script appends one row.
+ */
+export const REGISTRATION_ENDPOINT =
+  "https://script.google.com/macros/s/AKfycbwa6zpLvsYhGfnQOZTFf64d2wl6-oxAh8dMaLrprT8beOEHwBj1ynQ3cjKVwi8ZVVar/exec";
 
 /** TODO: swap for the real brochure PDF once design signs it off. */
 export const BROCHURE_URL = `${TODO} — brochure PDF URL`;

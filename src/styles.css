@@ -2564,6 +2564,63 @@ button.screen:active {
   line-height: 1.45;
 }
 
+/* ---- Register chooser ------------------------------------------------ */
+
+.register-choice {
+  display: grid;
+  gap: var(--s-4);
+  max-width: 40rem;
+  margin-top: var(--s-2);
+}
+
+@media (min-width: 36rem) {
+  .register-choice {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.register-choice-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-6) var(--s-5);
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in oklab, var(--foreground) 14%, transparent);
+  background: color-mix(in oklab, var(--card) 55%, transparent);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    border-color var(--dur-ui) var(--ease-out),
+    background var(--dur-ui) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.register-choice-card:hover,
+.register-choice-card:focus-visible {
+  border-color: color-mix(in oklab, var(--neon-cyan) 55%, transparent);
+  background: color-mix(in oklab, var(--card) 75%, transparent);
+}
+
+.register-choice-card:active {
+  transform: scale(0.99);
+}
+
+.register-choice-card:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 2px;
+}
+
+.register-choice-title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.register-choice-note {
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
 /* ---- Form ----------------------------------------------------------- */
 
 .form {

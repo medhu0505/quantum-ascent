@@ -4,7 +4,7 @@ import { descentFilm, fest, school } from "@/data/quantum";
 /**
  * Opening title.
  *
- * The hero is a 2.7MB film that is scrubbed by scroll, so the worst possible
+ * The hero is an 8.7MB film that is scrubbed by scroll, so the worst possible
  * first second is a poster sitting still while the bytes arrive — the visitor
  * scrolls, nothing moves, and the site feels broken before it has started.
  *

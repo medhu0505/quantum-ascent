@@ -48,7 +48,7 @@ export const fest = {
 /* ------------------------------------------------------------------ *
  * The descent film.
  *
- * Measured from the supplied file (10.006 s, 1280x720, 24 fps) by sampling
+ * Measured from the supplied file (10.0 s, 1920x1080, 24 fps) by sampling
  * per-frame luma deltas across all 240 frames — not estimated. Boundaries sit
  * where the camera's rate of change actually breaks.
  * ------------------------------------------------------------------ */
@@ -57,22 +57,39 @@ export const fest = {
  * Where the beats actually fall, read off the film rather than asked for.
  *
  * Mean absolute frame-to-frame luma difference over all 240 frames, smoothed
- * across five, marks each boundary: the aerial's slow drift sits under 5, the
- * canyon runs 6 to 24, the arrival decays back through 11, and the hold is
- * everything under 1 — the last dozen frames measure 0.1, which is to say the
- * camera has stopped and the frame is the crossroads plate.
+ * across five, marks each boundary: the aerial's drift sits under 5, the
+ * canyon covers two acceleration bursts peaking near 15-18, and the arrival
+ * decays smoothly from the second burst with no sharp elbow. Unlike the
+ * previous film's empty street, this one keeps traffic and pedestrians
+ * moving through the hold, so it never reads as fully stopped the way a 0.1
+ * floor would — the plate is still the exact final frame regardless.
  */
 export const timeline = {
-  /** Container duration in seconds. */
-  duration: 10.005,
-  /** Wide aerial: moon centred, light beam, skyline below. Slow drift. */
-  aerial: [0, 2.209],
-  /** Descent through the skyscraper canyon of billboard panels. Fast. */
-  canyon: [2.209, 7.087],
-  /** Deceleration into the crossroads. */
-  arrival: [7.087, 9.463],
-  /** Camera holds. The final frame is the crossroads plate. */
-  hold: [9.463, 10.005],
+  /** Container duration in seconds. 240 frames at the source's 24fps. */
+  duration: 10.0,
+  /**
+   * Wide aerial: moon centred, light beam, skyline below. Re-measured against
+   * this film's own motion (frame-to-frame luma difference, smoothed over 5):
+   * it stays under 5 through 2.708s, the same "stays under 5" rule the
+   * previous film's beats were cut on.
+   */
+  aerial: [0, 2.708],
+  /**
+   * Descent through the canyon. Two acceleration bursts (peaks near 4.5s and
+   * 7.0s) rather than one continuous swoop — this film's camera move is not
+   * a single easing curve like the last one's, so this range covers both.
+   */
+  canyon: [2.708, 7.25],
+  /** Deceleration into the crossroads. Smooth decay, no sharp elbow. */
+  arrival: [7.25, 9.5],
+  /**
+   * Camera holds, but unlike the last film this street is not empty: cars and
+   * pedestrians keep the frame alive right through the last frame, so the
+   * luma-difference floor here is a few percent of the canyon's peak, not the
+   * near-zero the empty street gave. The plate is still that exact final
+   * frame, so the cut itself is unaffected.
+   */
+  hold: [9.5, 10.0],
 } as const;
 
 /* ------------------------------------------------------------------ *
@@ -249,13 +266,13 @@ export const scenes: Scene[] = [
     to: "/events",
     accent: "cyan",
     sign: {
-      left: 18.34,
-      top: 26.07,
-      width: 11.76,
-      height: 11.39,
-      skew: 1.33,
-      lean: -3.95,
-      yaw: 8,
+      left: 1.46,
+      top: 15.09,
+      width: 20.94,
+      height: 34.9,
+      skew: 6,
+      lean: -4,
+      yaw: 14,
       haze: 0.45,
     },
     view: "/media/view-events.webp",
@@ -268,13 +285,13 @@ export const scenes: Scene[] = [
     to: "/register",
     accent: "magenta",
     sign: {
-      left: 67.77,
-      top: 27.91,
-      width: 11.98,
-      height: 11.33,
-      skew: -8.25,
-      lean: 3.6,
-      yaw: -10,
+      left: 75.3,
+      top: 17.6,
+      width: 22.1,
+      height: 32.4,
+      skew: -6,
+      lean: 4,
+      yaw: -16,
       haze: 0.45,
     },
     view: "/media/view-register.webp",
@@ -287,14 +304,14 @@ export const scenes: Scene[] = [
     to: "/team",
     accent: "cyan",
     sign: {
-      left: 20.54,
-      top: 50.78,
-      width: 15.63,
-      height: 3.59,
-      skew: 2.08,
+      left: 48.2,
+      top: 30.1,
+      width: 6.5,
+      height: 10.2,
+      skew: 0,
       lean: 0,
-      yaw: 5,
-      haze: 0.25,
+      yaw: 0,
+      haze: 0.4,
       compact: true,
     },
     view: "/media/view-team.webp",
@@ -307,14 +324,14 @@ export const scenes: Scene[] = [
     to: "/resources",
     accent: "violet",
     sign: {
-      left: 89.38,
-      top: -0.6,
-      width: 5.56,
-      height: 27.83,
-      skew: -16.22,
-      lean: 9.33,
-      yaw: -14,
-      haze: 0.1,
+      left: 62.2,
+      top: 33.3,
+      width: 5.7,
+      height: 22.2,
+      skew: -2,
+      lean: 3,
+      yaw: -8,
+      haze: 0.3,
       vertical: true,
     },
     view: "/media/view-resources.webp",
@@ -330,16 +347,16 @@ export function getScene(id: string): Scene | undefined {
 export const crossroadsPlate = {
   webp: "/media/crossroads.webp",
   jpg: "/media/crossroads.jpg",
-  width: 1280,
-  height: 720,
-  alt: "A deserted neon crossroads at night, a full moon centred above the road and lit billboard panels down both sides of the street.",
+  width: 1920,
+  height: 1080,
+  alt: "A neon crossroads at night, traffic and pedestrians beneath a full moon and a vertical beam of light, blank lit billboard panels down both sides of the street.",
 } as const;
 
 export const descentFilm = {
   src: "/media/descent.mp4",
   poster: "/media/descent-poster.webp",
-  width: 1280,
-  height: 720,
+  width: 1920,
+  height: 1080,
   alt: "A full moon over a neon city skyline, a vertical beam of light rising from the streets below.",
 } as const;
 

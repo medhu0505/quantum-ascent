@@ -31,7 +31,6 @@ type Fields = {
   email: string;
   phone: string;
   discord: string;
-  event: string;
 };
 
 /**
@@ -46,7 +45,8 @@ type Participant = {
   email: string;
 };
 
-type Errors = Partial<Record<keyof Fields, string>>;
+/** `events` is not a Fields key — it is the checkbox group, which is a list. */
+type Errors = Partial<Record<keyof Fields | "events", string>>;
 type MemberErrors = Partial<Record<keyof Participant, string>>;
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -71,7 +71,7 @@ function phoneShort(value: string): boolean {
   return value.replace(/\D/g, "").length < 10;
 }
 
-function validate(values: Fields): Errors {
+function validate(values: Fields, picked: string[]): Errors {
   const errors: Errors = {};
   if (!values.student.trim()) errors.student = "Enter the name of the team lead.";
   if (!values.school.trim()) errors.school = "Enter your school's name.";
@@ -83,7 +83,7 @@ function validate(values: Fields): Errors {
     errors.phone = "Enter a full phone number, including the area or country code.";
   if (values.discord.trim() && !DISCORD.test(values.discord.trim()))
     errors.discord = "A Discord handle has no spaces in it — check this one.";
-  if (!values.event) errors.event = "Choose the event you are entering.";
+  if (picked.length === 0) errors.events = "Choose at least one event to enter.";
   return errors;
 }
 
@@ -108,7 +108,6 @@ const FIELD_ORDER: (keyof Fields)[] = [
   "email",
   "phone",
   "discord",
-  "event",
 ];
 
 const MEMBER_ORDER: (keyof Participant)[] = ["name", "grade", "phone", "discord", "email"];
@@ -176,8 +175,15 @@ export function RegisterFormBody({
     email: "",
     phone: "",
     discord: "",
-    event: preselectedEvent ?? "",
   });
+  /*
+   * Events are a list now: one entry can be in several. Kept out of
+   * `values` because that is trimmed as a map of strings on submit, and
+   * because a set of chosen ids is not a form field's value.
+   */
+  const [picked, setPicked] = useState<string[]>(
+    preselectedEvent ? [preselectedEvent] : [],
+  );
   const [members, setMembers] = useState<Participant[]>([]);
   const [errors, setErrors] = useState<Errors>({});
   const [memberErrors, setMemberErrors] = useState<MemberErrors[]>([]);
@@ -240,7 +246,7 @@ export function RegisterFormBody({
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const found = validate(values);
+    const found = validate(values, picked);
     const foundMembers = validateMembers(members);
     setErrors(found);
     setMemberErrors(foundMembers);
@@ -249,6 +255,11 @@ export function RegisterFormBody({
     const firstBad = FIELD_ORDER.find((key) => found[key]);
     if (firstBad) {
       formRef.current?.querySelector<HTMLElement>(`[name="${firstBad}"]`)?.focus();
+      return;
+    }
+
+    if (found.events) {
+      formRef.current?.querySelector<HTMLElement>("[name='events']")?.focus();
       return;
     }
 
@@ -271,7 +282,11 @@ export function RegisterFormBody({
       const team = members
         .filter(used)
         .map((m) => Object.fromEntries(MEMBER_ORDER.map((k) => [k, m[k].trim()])) as Participant);
-      sendRegistration({ ...trimmed, type, members: team, website })
+      // Sent in the order the events are listed, not the order they were
+      // ticked, so the same set always arrives as the same string and the
+      // backend's one-entry-per-team check can compare them.
+      const chosen = events.filter((ev) => picked.includes(ev.id)).map((ev) => ev.id);
+      sendRegistration({ ...trimmed, type, events: chosen, members: team, website })
         .then((reply) => {
           if (reply.ok) {
             setReceipt({ id: reply.id, duplicate: Boolean(reply.duplicate) });
@@ -308,17 +323,17 @@ export function RegisterFormBody({
   const otherFormLabel = isSchool ? "Register as an individual or team instead" : "Register as a school instead";
 
   if (receipt) {
-    const eventName = events.find((e) => e.id === values.event)?.name ?? values.event;
+    const chosenNames = events.filter((e) => picked.includes(e.id)).map((e) => e.name);
     return (
       <PageShell
         title="Registered"
-        lede={`${eventName} — ${values.school.trim()}`}
+        lede={`${chosenNames.join(", ")} — ${values.school.trim()}`}
         registerChip={false}
       >
         <div className="notice notice-ok" role="status" tabIndex={-1} ref={receiptRef}>
           <strong>
             {receipt.duplicate
-              ? "This team is already registered for this event."
+              ? "This team is already registered for these events."
               : "Registration received."}
           </strong>
           <span>
@@ -333,10 +348,10 @@ export function RegisterFormBody({
             onClick={() => {
               setReceipt(null);
               setSubmitted(false);
-              setValues((v) => ({ ...v, event: "" }));
+              setPicked([]);
             }}
           >
-            Register the same lead for another event
+            Register the same lead for a different set of events
           </button>
           <Link to="/events" className="btn btn-ghost btn-block" data-magnetic>
             Back to the events
@@ -351,8 +366,8 @@ export function RegisterFormBody({
       title={isSchool ? "Register a school" : "Register"}
       lede={
         isSchool
-          ? "For the school coordinator submitting on the school's behalf. One form covers every event: enter the team lead's details, pick what you are entering, and list the rest of the team."
-          : "For a student or team entering directly. One form covers every event: enter the team lead's details, pick what you are entering, and list the rest of the team."
+          ? "For the school coordinator submitting on the school's behalf. One form covers every event: enter the team lead's details, tick everything you are entering, and list the rest of the team."
+          : "For a student or team entering directly. One form covers every event: enter the team lead's details, tick everything you are entering, and list the rest of the team."
       }
       registerChip={false}
     >
@@ -474,31 +489,51 @@ export function RegisterFormBody({
             autoComplete="off"
           />
 
-          <div className="field">
-            <label htmlFor="field-event">
-              Event <RequiredMark />
-            </label>
-            <select
-              id="field-event"
-              name="event"
-              value={values.event}
-              onChange={set("event")}
-              aria-invalid={errors.event ? true : undefined}
-              aria-describedby={errors.event ? "error-event hint-event" : "hint-event"}
-              required
-            >
-              <option value="">Choose an event</option>
+          <fieldset
+            className="field events-field"
+            aria-invalid={errors.events ? true : undefined}
+            aria-describedby={errors.events ? "error-events hint-events" : "hint-events"}
+          >
+            <legend>
+              Events <RequiredMark />
+            </legend>
+            <ul className="event-picks">
               {events.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.name} — {e.team}
-                </option>
+                <li key={e.id}>
+                  <label className="event-pick" htmlFor={`field-event-${e.id}`}>
+                    <input
+                      type="checkbox"
+                      id={`field-event-${e.id}`}
+                      name="events"
+                      value={e.id}
+                      checked={picked.includes(e.id)}
+                      onChange={(ev) => {
+                        const on = ev.currentTarget.checked;
+                        setPicked((list) =>
+                          on ? [...list, e.id] : list.filter((id) => id !== e.id),
+                        );
+                        if (errors.events) {
+                          setErrors((prev) => {
+                            const next = { ...prev };
+                            delete next.events;
+                            return next;
+                          });
+                        }
+                      }}
+                    />
+                    <span className="event-pick-body">
+                      <span className="event-pick-name">{e.name}</span>
+                      <span className="event-pick-team">{e.team}</span>
+                    </span>
+                  </label>
+                </li>
               ))}
-            </select>
-            <p id="hint-event" className="field-hint">
-              Entering more than one? Submit the form once per event.
+            </ul>
+            <p id="hint-events" className="field-hint">
+              Tick every event this team is entering. One form covers all of them.
             </p>
-            <FieldError id="error-event" message={errors.event} />
-          </div>
+            <FieldError id="error-events" message={errors.events} />
+          </fieldset>
         </div>
 
         <fieldset className="party">

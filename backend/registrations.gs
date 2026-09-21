@@ -16,7 +16,7 @@ const EVENTS = ['quiz', 'film-making', 'ad-shoot', 'surprise', 'online-gaming', 
 const CLASSES = ['9', '10', '11', '12'];
 const TYPES = ['individual', 'school'];
 const MAX_MEMBERS = 5;
-const LEAD_KEYS = ['type', 'student', 'school', 'grade', 'email', 'phone', 'discord', 'event'];
+const LEAD_KEYS = ['type', 'student', 'school', 'grade', 'email', 'phone', 'discord'];
 const MEMBER_KEYS = ['name', 'grade', 'phone', 'discord', 'email'];
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const DISCORD = /^\S{2,37}$/;
@@ -95,6 +95,28 @@ function shortPhone_(s) {
   return s.replace(/\D/g, '').length < 10;
 }
 
+/**
+ * An entry can entertain more than one event, so the form sends a list.
+ * Older payloads sent a single `event` string; both are accepted, and both
+ * come out as one canonically ordered list so the same selection always
+ * writes the same cell and the duplicate check below can compare them.
+ */
+function events_(body) {
+  const raw = Array.isArray(body.events)
+    ? body.events
+    : (body.event ? [body.event] : []);
+  const seen = {};
+  const picked = [];
+  raw.forEach(function (value) {
+    const id = text_(value);
+    if (EVENTS.indexOf(id) < 0 || seen[id]) return;
+    seen[id] = true;
+    picked.push(id);
+  });
+  // Canonical order: the order EVENTS declares, not the order they arrived.
+  return EVENTS.filter(function (id) { return seen[id]; });
+}
+
 function validate_(body) {
   const lead = {};
   LEAD_KEYS.forEach(function (k) { lead[k] = text_(body[k]); });
@@ -105,7 +127,8 @@ function validate_(body) {
   if (!EMAIL.test(lead.email)) throw new Invalid('email');
   if (shortPhone_(lead.phone)) throw new Invalid('phone');
   if (lead.discord && !DISCORD.test(lead.discord)) throw new Invalid('discord');
-  if (EVENTS.indexOf(lead.event) < 0) throw new Invalid('event');
+  lead.events = events_(body);
+  if (lead.events.length === 0) throw new Invalid('events');
 
   const raw = Array.isArray(body.members) ? body.members : [];
   if (raw.length > MAX_MEMBERS) throw new Invalid('members');
@@ -158,15 +181,16 @@ function doPost(e) {
     if (last > 1) {
       const rows = sh.getRange(2, 2, last - 1, 6).getValues(); // ID .. Email
       const email = lead.email.toLowerCase();
+      const eventCell = lead.events.join(', ');
       for (let i = 0; i < rows.length; i++) {
-        if (rows[i][1] === lead.event && String(rows[i][5]).toLowerCase() === email) {
+        if (rows[i][1] === eventCell && String(rows[i][5]).toLowerCase() === email) {
           return json_({ ok: true, id: rows[i][0], duplicate: true });
         }
       }
     }
 
     const id = 'QV2-' + Utilities.getUuid().slice(0, 8).toUpperCase();
-    const row = [new Date(), id, lead.event, lead.student, lead.school, lead.grade,
+    const row = [new Date(), id, lead.events.join(', '), lead.student, lead.school, lead.grade,
       lead.email, lead.phone, lead.discord, members.length + 1];
     for (let i = 0; i < MAX_MEMBERS; i++) {
       const m = members[i] || {};

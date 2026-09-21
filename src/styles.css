@@ -798,34 +798,6 @@
   filter: brightness(1.1);
 }
 
-/* ------------------------------------------------------------------ *
- * WebGL layer.
- *
- * Sits directly over the DOM plate and fades in only once it has a frame to
- * show, so a slow load or a failed context leaves the photograph visible
- * rather than a hole. Everything above it — scrim, ambience, signage — keeps
- * its own z-index and is unaffected.
- * ------------------------------------------------------------------ */
-
-.gl-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity var(--dur-5) var(--ease);
-}
-
-.gl-layer[data-live] {
-  opacity: 1;
-}
-
-.gl-layer canvas {
-  display: block;
-  width: 100% !important;
-  height: 100% !important;
-}
-
 /* A raked, heavily blurred ellipse standing in for a light source. It sweeps
    in once rather than looping: a light that keeps re-arriving reads as a
    glitch, not as lighting. */
@@ -871,47 +843,19 @@
 /* ------------------------------------------------------------------ *
  * Crossroads depth.
  *
- * The stage does not follow the pointer, and it took two goes to get here.
- * First each layer took its own share of the pointer's offset from centre,
- * plate through ambience through signage, so the differential would read as
- * volume — but the signs got the largest share and the boards they label got
- * the smallest, so they slid straight off them. Then CrossroadsGL projected
- * each sign's own billboard point per frame, which welded them properly and
- * was still wrong: the four boards sit at very nearly the same depth in the
- * map, so the projection put them all within a pixel of each other and the
- * whole street simply slid under the cursor, signs and all. A button that
- * slides is a button you have to chase before you can press it. The depth
- * now comes from the geometry itself and from the dolly that walks into a
- * board when you pick one, neither of which is ambiguous about what is near
- * and what is far.
+ * There is none, deliberately, and it took three goes to get here. First
+ * each layer took its own share of the pointer's offset from centre, plate
+ * through ambience through signage — but the signs got the largest share
+ * and the boards they label got the smallest, so they slid straight off
+ * them. Then a WebGL layer displaced the plate along a depth map and
+ * projected each sign through the same camera, which welded them to a
+ * moving street and warped the street to do it: the film is a photograph of
+ * a real perspective, and pushing its pixels around a made-up depth map
+ * bowed the skyline and pulled the holograms out from under their panels.
+ *
+ * So the plate holds still and the signs hold still on it. The depth is in
+ * the photograph already.
  * ------------------------------------------------------------------ */
-
-@media (min-width: 48rem) and (min-aspect-ratio: 5 / 4) and (pointer: fine) {
-  /* The plate used to be overscanned by 4.5% here, to hide any hairline the
-     stage and the photograph might disagree about. It cost far more than it
-     bought: the signs are positioned in the stage's coordinates and the
-     plate was being blown up out of them, so every sign sat off its
-     hologram by 4.5% of its distance from centre — around 27px at the
-     street's edges, which is exactly the drift that made the old panels
-     look approximate. The stage is 16:9 and so is the plate, so `cover`
-     already fits it exactly, and the stage's own ink background covers any
-     sub-pixel seam. One coordinate space, no drift. */
-
-  /* The one thing that still moves, and only while the dolly is running:
-     CrossroadsGL projects each sign's own billboard point per frame, so a
-     board stays under its sign all the way in. At rest the camera is exactly
-     the rest camera, so every offset resolves to zero and the signs sit
-     still. */
-  .hub-stage:has(.gl-layer[data-live]) .hub-signs > li {
-    translate: var(--sign-dx, 0px) var(--sign-dy, 0px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hub-stage:has(.gl-layer[data-live]) .hub-signs > li {
-    translate: none;
-  }
-}
 
 /* -- Stage layout ------------------------------------------------- *
  * Only wide-and-tall-enough viewports get the billboards. Below this the
@@ -3168,12 +3112,6 @@ button.screen:active {
      during the aerial and canyon beats they would be floating in open sky.
      They arrive with the plate they belong to. */
   .descent-pin .ambient {
-    opacity: var(--reveal, 1);
-  }
-
-  /* The geometry belongs to the crossroads, not to the film, so it arrives
-     with the plate. Without this it would fade up over the playing video. */
-  .descent-pin .gl-layer[data-live] {
     opacity: var(--reveal, 1);
   }
 }

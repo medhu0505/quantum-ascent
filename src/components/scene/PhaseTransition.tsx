@@ -35,17 +35,6 @@ const PhaseContext = createContext<PhaseContextValue | null>(null);
 /** Matches --dur-scene in styles.css. */
 const PHASE_MS = 620;
 
-/**
- * How long the camera is left running at the billboard before the veil comes
- * over the top of it. Without this the veil covers from the first frame and
- * the move through the street is never seen — the cut reads as a page swap
- * with a wipe on it rather than as going in.
- *
- * Only spent when there is a camera to watch. Without the GL layer nothing
- * moves during the lead, so it would just be a delay before the click did
- * anything.
- */
-const ENTER_LEAD_MS = 260;
 
 export function PhaseProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -74,9 +63,7 @@ export function PhaseProvider({ children }: { children: ReactNode }) {
         });
       };
 
-      const watching = !!document.querySelector(".gl-layer[data-live]");
-      if (watching) window.setTimeout(cover, ENTER_LEAD_MS);
-      else cover();
+      cover();
     },
     [router],
   );

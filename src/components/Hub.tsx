@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import { usePhaseLink } from "@/components/scene/PhaseTransition";
-import { announceEnter } from "@/components/scene/enterSignal";
 import { crossroadsPlate, scenes, type Scene } from "@/data/quantum";
 
 /**
@@ -44,16 +43,6 @@ function Sign({ scene }: { scene: Scene }) {
   const phase = usePhaseLink(scene.to);
   const [centreX, centreY] = signCentre(scene.sign.clip);
 
-  // The veil that flies the flat plate at the sign runs either way. When the
-  // geometry is live the camera goes with it, so the cut is a move through the
-  // street rather than a picture sliding over one.
-  const onPhase = (event: React.MouseEvent<HTMLAnchorElement>) => {
-    if (!event.defaultPrevented && event.button === 0 && !event.metaKey && !event.ctrlKey) {
-      announceEnter(scene.id);
-    }
-    phase(event);
-  };
-
   return (
     <li
       data-accent={scene.accent}
@@ -73,11 +62,6 @@ function Sign({ scene }: { scene: Scene }) {
           "--sign-shift-x": `${(centreX - 50).toFixed(2)}%`,
           "--sign-shift-y": `${(centreY - 50).toFixed(2)}%`,
           "--sign-haze": scene.sign.haze,
-          // Written per frame by CrossroadsGL from the same camera that draws
-          // the street. Zero until the GL layer is live, which is what the
-          // flat-parallax fallback below keys off.
-          "--sign-dx": `var(--gl-sign-${scene.id}-x, 0px)`,
-          "--sign-dy": `var(--gl-sign-${scene.id}-y, 0px)`,
         } as React.CSSProperties
       }
     >
@@ -87,7 +71,7 @@ function Sign({ scene }: { scene: Scene }) {
         data-vertical={scene.sign.vertical ? "true" : undefined}
         data-compact={scene.sign.compact ? "true" : undefined}
         preload="intent"
-        onClick={onPhase}
+        onClick={phase}
         data-cursor-label="Enter"
       >
         <span className="sign-face">

@@ -988,29 +988,18 @@
     animation: sign-breathe 5.5s var(--ease-out) infinite;
   }
 
-  /* The light the panel throws onto the building around it. Screen blending
-     means it genuinely brightens the plate's pixels rather than laying a
-     coloured rectangle over them. */
-  .sign-face::before {
-    content: "";
-    position: absolute;
-    inset: -55%;
-    z-index: -1;
-    pointer-events: none;
-    background: radial-gradient(
-      50% 50% at 50% 50%,
-      color-mix(in oklab, var(--accent-hue) 55%, transparent),
-      transparent 70%
-    );
-    mix-blend-mode: screen;
-    opacity: 0.75;
-    transition: opacity var(--dur-2) var(--ease);
-  }
+  /* There used to be a cast-light layer here: a box inset -55% carrying a
+     radial gradient in the sign's accent, screen-blended so the board
+     appeared to light the building around it. It was meant to brighten the
+     plate's own pixels rather than lay a coloured rectangle over them, and
+     it did the second thing. The gradient runs to `transparent 70%`, which
+     over a box more than twice the panel's size never reaches transparent
+     before the box ends — so it painted its own rectangle, hard-edged,
+     hanging in the sky above the two blade signs where there is no building
+     for it to land on.
 
-  .sign:hover .sign-face::before,
-  .sign:focus-visible .sign-face::before {
-    opacity: 1;
-  }
+     The boards do not need it. The film's own neon frames light them, and
+     the labels carry their glow in their text shadow. */
 
   /* Atmosphere. The plate has haze between the camera and the far signage;
      a panel that ignores it sits in front of the picture instead of inside

@@ -923,9 +923,14 @@
     transform-origin: 0 0;
   }
 
+  /* Backs out of the panel's corner-pin (see Hub.tsx) so the words keep the
+     typeface's own proportions instead of being stretched along the
+     board. */
   .sign-inner {
     position: absolute;
     inset: 0;
+    transform: var(--sign-unpin, none);
+    transform-origin: 0 0;
     align-items: center;
     justify-content: center;
     /* The shear brings the two lines closest together at the board's near

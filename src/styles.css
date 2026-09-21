@@ -915,16 +915,14 @@
     will-change: filter;
   }
 
-  /* The panel is the hologram's own quadrilateral, measured off the plate.
-     Clipping rather than transforming is what keeps the label upright: a
-     skew or a rotateY that made the panel sit on the building's plane would
-     drag the text onto that plane with it. */
-  .sign-face {
-    clip-path: polygon(var(--sign-clip));
+  /* Corner-pinned onto the billboard by Hub.tsx, which needs the origin at
+     the panel's own top-left for the matrix to land where it was solved
+     for. The panel's rectangle becomes the hologram's quadrilateral, so
+     there is nothing left to clip. */
+  .hub-signs > li {
+    transform-origin: 0 0;
   }
 
-  /* Translate percentages resolve against this layer's own box, which is the
-     panel's box, so the shift is in the same units the clip is written in. */
   .sign-inner {
     position: absolute;
     inset: 0;
@@ -933,6 +931,8 @@
     gap: 0.15em;
     padding: 4% 6%;
     text-align: center;
+    /* Solved in Hub.tsx: the offset whose image under the corner-pin lands
+       on the board's area centroid, which is what reads as its middle. */
     translate: var(--sign-shift-x, 0) var(--sign-shift-y, 0);
   }
 
@@ -940,32 +940,15 @@
      a 1200px stage, so the panel alone would be a mean target even though it
      clears the 24px WCAG 2.5.8 minimum.
 
-     It carries the same clip as the panel. Because this box is the inset one
-     it resolves those percentages against a slightly larger rectangle, so
-     the target comes out as the panel's own shape, a few pixels proud of it
-     on every edge — rather than a rectangle whose corners reach out over
-     sky the trapezoid cuts away. */
+     It rides the same corner-pin as the panel, so it is the board's own
+     shape a few pixels proud of it on every edge rather than a rectangle
+     reaching out over sky. */
   .sign::before {
     content: "";
     position: absolute;
     inset: -14px -10px;
     min-height: 44px;
     border-radius: 6px;
-    clip-path: polygon(var(--sign-clip));
-  }
-
-  /* Pointer goes to the shapes, keyboard still gets the box: the anchor's
-     own rectangle is what the focus ring is drawn on, and clipping that
-     would cut the ring to the panel and lose its offset entirely. Hover and
-     activation still resolve to the anchor, because a hovered descendant
-     hovers its ancestors and the click bubbles either way. */
-  .sign {
-    pointer-events: none;
-  }
-
-  .sign::before,
-  .sign-face {
-    pointer-events: auto;
   }
 
   .sign-face {

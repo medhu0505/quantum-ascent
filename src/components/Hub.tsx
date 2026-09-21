@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { usePhaseLink } from "@/components/scene/PhaseTransition";
 import { crossroadsPlate, scenes, type Scene } from "@/data/quantum";
@@ -8,43 +9,170 @@ import { crossroadsPlate, scenes, type Scene } from "@/data/quantum";
  * The plate is the descent film's literal final frame, so arriving from the
  * scrubbed video is a cut between identical pixels rather than a match that
  * has to be eyeballed. The signs are DOM elements welded onto the blank
- * holograms in that frame — each one's four corners measured off the plate,
- * expressed as percentages of the 1920x1080 source, and carried here as
- * custom properties. The panel is clipped to those corners, so it takes the
- * hologram's perspective without the label inside it being distorted.
+ * holograms in that frame — each one's four corners measured off the plate
+ * and expressed as percentages of the 1920x1080 source. Each panel is then
+ * corner-pinned onto its own four corners, so it stands on the billboard's
+ * plane rather than square-on to the camera in front of it.
  *
  * One list, two layouts: absolutely positioned onto the billboards on a wide
  * viewport, stacked as cards on a phone. See the hub section of styles.css.
  */
 
+type Pinned = { matrix: string; shiftX: string; shiftY: string };
+
 /**
- * Area centroid of the panel's quadrilateral, in the same percentages the
- * clip uses. The vertex average is not good enough here: these are strong
- * trapezoids, and on the two big boards it sits noticeably off the shape's
- * visual middle.
+ * The transform that lays a panel onto its billboard.
+ *
+ * Clipping a flat rectangle to the hologram's outline got the shape right
+ * and the plane wrong: the panel was still square-on to the camera with a
+ * quadrilateral cut out of it, so the label sat upright on a board that is
+ * turned away from us. This is the projective transform that maps the
+ * panel's own rectangle onto those same four corners — the standard
+ * unit-square homography, composed with the element's size so it works in
+ * the element's own coordinates.
+ *
+ * The perspective divide lives in the matrix's fourth row, so there is no
+ * parent `perspective` to set and nothing else in the tree has to know.
+ * Everything inside rides along: the panel is a plane standing in the
+ * street, and the text on it is painted on that plane rather than floating
+ * in front of it.
  */
-function signCentre(clip: [number, number][]): [number, number] {
+function quadPin(clip: [number, number][], w: number, h: number): Pinned | undefined {
+  if (clip.length !== 4 || w <= 0 || h <= 0) return undefined;
+
+  const [c0, c1, c2, c3] = clip as [
+    [number, number],
+    [number, number],
+    [number, number],
+    [number, number],
+  ];
+  const [x0, y0] = [(c0[0] / 100) * w, (c0[1] / 100) * h];
+  const [x1, y1] = [(c1[0] / 100) * w, (c1[1] / 100) * h];
+  const [x2, y2] = [(c2[0] / 100) * w, (c2[1] / 100) * h];
+  const [x3, y3] = [(c3[0] / 100) * w, (c3[1] / 100) * h];
+
+  const dx1 = x1 - x2;
+  const dx2 = x3 - x2;
+  const dy1 = y1 - y2;
+  const dy2 = y3 - y2;
+  const sx = x0 - x1 + x2 - x3;
+  const sy = y0 - y1 + y2 - y3;
+  const den = dx1 * dy2 - dy1 * dx2;
+  if (!den) return undefined;
+
+  const g = (sx * dy2 - sy * dx2) / den;
+  const k = (dx1 * sy - dy1 * sx) / den;
+
+  // Homography in the panel's own pixels: (x, y) -> (X, Y), divided by W.
+  const a = (x1 - x0 + g * x1) / w;
+  const d = (y1 - y0 + g * y1) / w;
+  const gw = g / w;
+  const b = (x3 - x0 + k * x3) / h;
+  const e = (y3 - y0 + k * y3) / h;
+  const kh = k / h;
+
+  const m = [a, d, 0, gw, b, e, 0, kh, 0, 0, 1, 0, x0, y0, 0, 1];
+  const matrix = `matrix3d(${m.map((n) => Number(n.toFixed(6))).join(",")})`;
+
+  /*
+   * Where the label goes.
+   *
+   * Centring it in the panel's own rectangle is the physically honest
+   * answer — that is the middle of the board's surface, where paint on it
+   * would sit. On a board turned this far it does not read that way: the
+   * near half is magnified and the far half compressed, so the middle of
+   * the surface lands high and toward the far edge, and the label looks
+   * pushed into a corner with a field of empty board under it.
+   *
+   * What reads as the middle of a shape is its area centroid. So that is
+   * solved for on the projected quadrilateral and run back through the
+   * inverse homography, giving the point in the panel's own coordinates
+   * that lands on it. Judged against side-by-side renders, not arithmetic:
+   * a bounding rect around a perspective-transformed element is the
+   * axis-aligned box around its quad, and its centre is not the element's
+   * centre, so measuring this by rect says the opposite of what the eye
+   * does.
+   */
   let area = 0;
-  let cx = 0;
-  let cy = 0;
-  for (let i = 0; i < clip.length; i++) {
-    const [x0, y0] = clip[i]!;
-    const [x1, y1] = clip[(i + 1) % clip.length]!;
-    const cross = x0 * y1 - x1 * y0;
+  let qx = 0;
+  let qy = 0;
+  const quad: [number, number][] = [
+    [x0, y0],
+    [x1, y1],
+    [x2, y2],
+    [x3, y3],
+  ];
+  for (let i = 0; i < 4; i++) {
+    const [px, py] = quad[i]!;
+    const [nx, ny] = quad[(i + 1) % 4]!;
+    const cross = px * ny - nx * py;
     area += cross;
-    cx += (x0 + x1) * cross;
-    cy += (y0 + y1) * cross;
+    qx += (px + nx) * cross;
+    qy += (py + ny) * cross;
   }
-  if (area === 0) return [50, 50];
-  return [cx / (3 * area), cy / (3 * area)];
+  if (!area) return { matrix, shiftX: "0%", shiftY: "0%" };
+  qx /= 3 * area;
+  qy /= 3 * area;
+
+  // Adjugate of [[a, b, x0], [d, e, y0], [gw, kh, 1]] — the scale the
+  // adjugate carries cancels in the divide, so the determinant is not needed.
+  const iA = e - y0 * kh;
+  const iB = x0 * kh - b;
+  const iC = b * y0 - x0 * e;
+  const iD = y0 * gw - d;
+  const iE = a - x0 * gw;
+  const iF = x0 * d - a * y0;
+  const iG = d * kh - e * gw;
+  const iK = b * gw - a * kh;
+  const iL = a * e - b * d;
+
+  const wq = iG * qx + iK * qy + iL;
+  if (!wq) return { matrix, shiftX: "0%", shiftY: "0%" };
+
+  const ux = (iA * qx + iB * qy + iC) / wq;
+  const uy = (iD * qx + iE * qy + iF) / wq;
+
+  return {
+    matrix,
+    shiftX: `${((ux / w) * 100 - 50).toFixed(2)}%`,
+    shiftY: `${((uy / h) * 100 - 50).toFixed(2)}%`,
+  };
 }
 
 function Sign({ scene }: { scene: Scene }) {
   const phase = usePhaseLink(scene.to);
-  const [centreX, centreY] = signCentre(scene.sign.clip);
+  const ref = useRef<HTMLLIElement | null>(null);
+  const [pin, setPin] = useState<Pinned | undefined>(undefined);
+
+  /*
+   * The matrix is in the panel's own pixels, so it is recomputed whenever
+   * the stage resizes. Measured with offsetWidth rather than a bounding
+   * rect: a rect reports the transformed box, which would feed the
+   * transform its own output. Below the billboard breakpoint the signs are
+   * stacked cards and there is no board to lie on, so there is no matrix.
+   */
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const wide = window.matchMedia("(min-width: 48rem) and (min-aspect-ratio: 5 / 4)");
+
+    const update = () => {
+      setPin(wide.matches ? quadPin(scene.sign.clip, el.offsetWidth, el.offsetHeight) : undefined);
+    };
+
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    wide.addEventListener("change", update);
+    return () => {
+      ro.disconnect();
+      wide.removeEventListener("change", update);
+    };
+  }, [scene.sign.clip]);
 
   return (
     <li
+      ref={ref}
       data-accent={scene.accent}
       style={
         {
@@ -52,16 +180,10 @@ function Sign({ scene }: { scene: Scene }) {
           "--sign-top": scene.sign.top,
           "--sign-width": scene.sign.width,
           "--sign-height": scene.sign.height,
-          // The panel is clipped to the hologram's own four corners, so the
-          // billboard's perspective comes from the shape rather than from a
-          // transform the label would have to share.
-          "--sign-clip": scene.sign.clip.map(([x, y]) => `${x}% ${y}%`).join(", "),
-          // A trapezoid's centre is not the centre of the box around it, and
-          // a label centred on the box reads as sitting high on the panel.
-          // Centre it on the shape instead.
-          "--sign-shift-x": `${(centreX - 50).toFixed(2)}%`,
-          "--sign-shift-y": `${(centreY - 50).toFixed(2)}%`,
           "--sign-haze": scene.sign.haze,
+          ...(pin
+            ? { transform: pin.matrix, "--sign-shift-x": pin.shiftX, "--sign-shift-y": pin.shiftY }
+            : {}),
         } as React.CSSProperties
       }
     >

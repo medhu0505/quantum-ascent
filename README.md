@@ -21,7 +21,7 @@ than look like a phone number.
 
 | Value | Where | What breaks until it is set |
 | --- | --- | --- |
-| `REGISTRATION_ENDPOINT` | `src/data/quantum.ts` | The Apps Script web app URL for the registrations sheet (see `backend/registrations.gs`). Until it is set the form validates but cannot submit, and says so plainly. **This is the one that matters most.** |
+| Registrations backend | `.env` / `src/data/quantum.ts` | Either the Firebase variables below or `REGISTRATION_ENDPOINT` (see `backend/registrations.gs`). With neither, the form validates but cannot submit, and says so plainly. **This is the one that matters most.** |
 | `team` roster | `src/data/quantum.ts` | Meet the Team shows real roles with the names badged as pending. |
 | `contact` | `src/data/quantum.ts` | Contact page and footer show badges instead of an email, phone and handle. |
 | `FEST_DATES` | `src/data/quantum.ts` | Not currently rendered; wire it in once dates are public. |
@@ -34,19 +34,94 @@ The school's name is settled: **Air Force Bal Bharati School**, set once in
 
 ## Registrations backend
 
-Entries go to a Google Sheet, **Quantum V2.0 Registrations**, on the organiser's Drive.
-A bound Apps Script (`backend/registrations.gs`) is deployed as a web app and is
-the only thing that writes to it. The form POSTs JSON to `REGISTRATION_ENDPOINT`,
-and the script checks every field again, rejects anything else, and appends one row
-to the `Registrations` tab. It returns a `QV2-XXXXXXXX` ID. If the same email
-registers again for the same event, the script returns the original ID and adds no
-row. It also neutralises formula injection and ignores anything that fills in the
-hidden `website` field.
+Two backends, one contract. `src/lib/registrations.ts` picks between them and is
+the only file that knows which is live; the form asks it `isRegistrationOpen()`
+and gets back a reply with an ID in it or does not. Both answer in the same
+shape, and a registration counts as received only when one of them returns an
+ID. There is no fake success path anywhere in either.
+
+**Firestore** takes the entry when the Firebase variables are set. **Apps
+Script** takes it when they are not, and otherwise receives a copy so the
+organisers' Google Sheet keeps filling — which is still where the day is
+actually run from. A mirror that fails is logged and never fails a
+registration Firestore already accepted.
+
+### Firebase
+
+Copy `.env.example` to `.env.local` and fill in the three required values from
+the Firebase console (Project settings > Your apps > Web app). Set the same
+values in the hosting environment for a deployment. None of them are secret: a
+Firebase web config is published in every client bundle by design, and `apiKey`
+identifies the project rather than authorising anything.
+
+What does the authorising is `firestore.rules`, and they have to be deployed
+before the form goes live:
+
+```bash
+npx firebase deploy --only firestore:rules --project <project-id>
+npm run test:rules      # the rules, against the emulator
+```
+
+The rules are the whole server-side check, because the form is public and
+unauthenticated. They enforce three things rather than assume them:
+
+- **Create only.** No read, no update, no delete, for any client. Entries carry
+  students' names, phone numbers and emails. Organisers read the collection
+  through the console or the Admin SDK, both of which bypass rules.
+- **One entry per email per event set.** A document's id is SHA-256 of the
+  lowercased lead email and the chosen events, and a create only succeeds on a
+  document that does not exist. The rules recompute that hash, so a client
+  cannot pick its own id and write the same entrant a thousand times.
+- **Every field.** Type, class, email, phone, Discord handle, event list,
+  length caps, and each of the five possible team members.
+
+The visible `QV2-XXXXXXXX` ID is the first eight digits of that same hash, so a
+resubmit is answered with the original ID having read nothing back.
+
+Rules are capped at 1000 expression evaluations per request. The checks in
+`firestore.rules` are inlined and repetitive for that reason — a factored
+version of exactly the same checks exceeded the cap on a five-member team, and
+failed only for the largest teams. `tests/firestore-rules.test.mjs` submits that
+worst case deliberately.
+
+**App Check** is the control the rules cannot be. Rules see the shape of a
+write, never its sender, so nothing above stops a script filling the collection
+with plausible teams. Set `VITE_FIREBASE_APPCHECK_SITE_KEY` to a reCAPTCHA v3
+key and enforce App Check on Firestore in the console. It is optional because a
+half-configured App Check rejects real registrations.
+
+The SDK is loaded on demand and only in the browser, from
+`firebase/firestore/lite` — the site writes and never subscribes, so the
+realtime client's transport and offline cache would be several hundred
+kilobytes bought to do one POST. Nothing about Firebase is fetched on a route
+that does not need it, including the analytics module, which stays unrequested
+unless `VITE_FIREBASE_ANALYTICS` is exactly `"true"`. Leave it off and the
+site's no-third-party-requests property still holds.
+
+### Apps Script
+
+Entries go to a Google Sheet, **Quantum V2.0 Registrations**, on the organiser's
+Drive. A bound Apps Script (`backend/registrations.gs`) is deployed as a web app
+and is the only thing that writes to it. The form POSTs JSON to
+`REGISTRATION_ENDPOINT`, and the script checks every field again, rejects
+anything else, and appends one row to the `Registrations` tab. It returns a
+`QV2-XXXXXXXX` ID. If the same email registers again for the same event, the
+script returns the original ID and adds no row. It also neutralises formula
+injection and ignores anything that fills in the hidden `website` field.
+
+Mirrored entries arrive carrying the ID Firestore already issued, and the script
+takes it rather than minting a second one, so a registration does not end up with
+two different IDs in two places. Anything that is not the exact `QV2-XXXXXXXX`
+shape is discarded and an ID is minted as before.
 
 To change the script, paste the new file into the sheet's Extensions > Apps Script
 editor. Then use Deploy > Manage deployments > Edit > New version. That keeps the
 same `/exec` URL. A *new* deployment gets a new URL, and `REGISTRATION_ENDPOINT`
 would have to change with it.
+
+**Deploying the current script is required** for the ID passthrough above.
+Without it the sheet keeps working and simply mints its own IDs, which will not
+match Firestore's.
 
 ## Structure
 
@@ -181,8 +256,25 @@ resolve link targets in the margin — people print the event list before the da
 ## Verification
 
 ```bash
-npm run build && npm run lint          # both clean
+npm run build          # clean
+npm run typecheck      # clean
+npm run test:rules     # 42 checks, against the Firestore emulator
+npm run lint           # see below
 ```
+
+`npm run lint` is not clean and was not clean before this work: `src/data/quantum.ts`
+has CRLF line endings and Prettier wants LF, which is one error per line. Normalising
+it is a one-command fix that rewrites every line of the file, so it is left for a
+commit of its own rather than buried in an unrelated diff. No other file reports an
+error.
+
+`tests/firestore-rules.test.mjs` runs `firestore.rules` against the emulator: the
+happy path, the closed collection, the duplicate limit and four ways to try to
+sidestep it, and every field rejected on its own. `tests/registration-e2e.mjs`
+drives the real form in a real browser against the emulator — the SDK staying off
+every other route, a submit reaching Firestore, the receipt's ID matching the
+stored document, the duplicate answering with the original ID, and the honeypot
+writing nothing. It needs Playwright installed; the file's header has the commands.
 
 Checked with Playwright and axe-core against a running dev server:
 

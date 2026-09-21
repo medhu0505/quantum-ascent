@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { usePhaseLink } from "@/components/scene/PhaseTransition";
 import { crossroadsPlate, scenes, type Scene } from "@/data/quantum";
@@ -127,6 +127,9 @@ function quadPin(clip: [number, number][], w: number, h: number): Pinned | undef
   return { matrix, unpin };
 }
 
+/* Before paint, not after: see the effect below. */
+const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
+
 function Sign({ scene }: { scene: Scene }) {
   const phase = usePhaseLink(scene.to);
   const ref = useRef<HTMLLIElement | null>(null);
@@ -138,8 +141,17 @@ function Sign({ scene }: { scene: Scene }) {
    * rect: a rect reports the transformed box, which would feed the
    * transform its own output. Below the billboard breakpoint the signs are
    * stacked cards and there is no board to lie on, so there is no matrix.
+   *
+   * A layout effect, because a passive one runs after the browser has
+   * already painted: the panel went up as a plain axis-aligned rectangle in
+   * its own accent colour, sat there for a few hundred milliseconds nowhere
+   * near its hologram, and then snapped onto the board. That was the pink
+   * rectangle flashing over the film on load, on resize, and every time the
+   * crossroads remounted on the way back from a room. The stylesheet holds
+   * the panel back until it is pinned as well, so a frame can never get out
+   * before the matrix does.
    */
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
     const wide = window.matchMedia("(min-width: 48rem) and (min-aspect-ratio: 5 / 4)");
@@ -162,6 +174,7 @@ function Sign({ scene }: { scene: Scene }) {
     <li
       ref={ref}
       data-accent={scene.accent}
+      data-pinned={pin ? "" : undefined}
       style={
         {
           "--sign-left": scene.sign.left,

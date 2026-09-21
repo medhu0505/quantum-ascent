@@ -923,6 +923,13 @@
     transform-origin: 0 0;
   }
 
+  /* Nothing shows until Hub.tsx has solved the corner-pin for it. An
+     unpinned panel is a rectangle in its own accent colour sitting well off
+     its board, which is exactly the flash this prevents. */
+  .hub-signs > li:not([data-pinned]) {
+    visibility: hidden;
+  }
+
   /* Backs out of the panel's corner-pin (see Hub.tsx) so the words keep the
      typeface's own proportions instead of being stretched along the
      board. */

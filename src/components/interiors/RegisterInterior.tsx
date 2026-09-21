@@ -31,7 +31,7 @@ export function RegisterInterior() {
           <div className="desk-room">
             <img
               className="desk-plate"
-              src={scene.view}
+              src={scene.view!}
               alt=""
               width={1280}
               height={720}

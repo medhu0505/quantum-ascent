@@ -724,6 +724,17 @@
     transform var(--dur-ui) var(--ease-out);
 }
 
+/* The content layer. Separate from the panel because the panel is clipped to
+   the hologram's quadrilateral and this is not: the label has to be free to
+   sit on the shape's centre rather than the clip's bounding box. */
+.sign-inner {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--s-1);
+  width: 100%;
+}
+
 .sign-face {
   position: relative;
   display: flex;
@@ -731,7 +742,6 @@
   width: 100%;
   flex-direction: column;
   justify-content: center;
-  gap: var(--s-1);
   overflow: hidden;
   min-height: 4.25rem;
   padding: var(--s-4) var(--s-4);
@@ -793,7 +803,7 @@
  *
  * Sits directly over the DOM plate and fades in only once it has a frame to
  * show, so a slow load or a failed context leaves the photograph visible
- * rather than a hole. Everything above it — scrim, crowd, signage — keeps
+ * rather than a hole. Everything above it — scrim, ambience, signage — keeps
  * its own z-index and is unaffected.
  * ------------------------------------------------------------------ */
 
@@ -858,19 +868,12 @@
   }
 }
 
-/* The geometry carries the depth, so the flat plate underneath drops its
-   overscan crop and shows at its fitted size. */
-.hub-stage:has(.gl-layer[data-live]) .hub-plate,
-.hub-stage:has(.gl-layer[data-live]) .descent-plate {
-  scale: 1;
-}
-
 /* ------------------------------------------------------------------ *
  * Crossroads depth.
  *
  * The stage does not follow the pointer, and it took two goes to get here.
  * First each layer took its own share of the pointer's offset from centre,
- * plate through crowd through signage, so the differential would read as
+ * plate through ambience through signage, so the differential would read as
  * volume — but the signs got the largest share and the boards they label got
  * the smallest, so they slid straight off them. Then CrossroadsGL projected
  * each sign's own billboard point per frame, which welded them properly and
@@ -884,15 +887,15 @@
  * ------------------------------------------------------------------ */
 
 @media (min-width: 48rem) and (min-aspect-ratio: 5 / 4) and (pointer: fine) {
-  /* Overscanned slightly so the plate covers the stage even where the frame
-     and the photograph disagree by a hair. Uses the individual `scale`
-     property rather than `transform`, so the signs' own skew and yaw and the
-     scrub loop's inline transform on the title compose with it instead of
-     being overwritten. */
-  .hub-stage .hub-plate,
-  .hub-stage .descent-plate {
-    scale: 1.045;
-  }
+  /* The plate used to be overscanned by 4.5% here, to hide any hairline the
+     stage and the photograph might disagree about. It cost far more than it
+     bought: the signs are positioned in the stage's coordinates and the
+     plate was being blown up out of them, so every sign sat off its
+     hologram by 4.5% of its distance from centre — around 27px at the
+     street's edges, which is exactly the drift that made the old panels
+     look approximate. The stage is 16:9 and so is the plate, so `cover`
+     already fits it exactly, and the stage's own ink background covers any
+     sub-pixel seam. One coordinate space, no drift. */
 
   /* The one thing that still moves, and only while the dolly is running:
      CrossroadsGL projects each sign's own billboard point per frame, so a
@@ -905,11 +908,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hub-stage .hub-plate,
-  .hub-stage .descent-plate,
   .hub-stage:has(.gl-layer[data-live]) .hub-signs > li {
     translate: none;
-    scale: none;
   }
 }
 
@@ -968,28 +968,65 @@
   .sign {
     position: absolute;
     inset: 0;
-    transform: skewY(var(--sign-skew, 0deg)) skewX(var(--sign-lean, 0deg));
-    will-change: transform, filter;
+    will-change: filter;
+  }
+
+  /* The panel is the hologram's own quadrilateral, measured off the plate.
+     Clipping rather than transforming is what keeps the label upright: a
+     skew or a rotateY that made the panel sit on the building's plane would
+     drag the text onto that plane with it. */
+  .sign-face {
+    clip-path: polygon(var(--sign-clip));
+  }
+
+  /* Translate percentages resolve against this layer's own box, which is the
+     panel's box, so the shift is in the same units the clip is written in. */
+  .sign-inner {
+    position: absolute;
+    inset: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15em;
+    padding: 4% 6%;
+    text-align: center;
+    translate: var(--sign-shift-x, 0) var(--sign-shift-y, 0);
   }
 
   /* Expanded pointer target. The Meet the Team banner is only ~31px tall on
      a 1200px stage, so the panel alone would be a mean target even though it
-     clears the 24px WCAG 2.5.8 minimum. */
+     clears the 24px WCAG 2.5.8 minimum.
+
+     It carries the same clip as the panel. Because this box is the inset one
+     it resolves those percentages against a slightly larger rectangle, so
+     the target comes out as the panel's own shape, a few pixels proud of it
+     on every edge — rather than a rectangle whose corners reach out over
+     sky the trapezoid cuts away. */
   .sign::before {
     content: "";
     position: absolute;
     inset: -14px -10px;
     min-height: 44px;
     border-radius: 6px;
+    clip-path: polygon(var(--sign-clip));
+  }
+
+  /* Pointer goes to the shapes, keyboard still gets the box: the anchor's
+     own rectangle is what the focus ring is drawn on, and clipping that
+     would cut the ring to the panel and lose its offset entirely. Hover and
+     activation still resolve to the anchor, because a hovered descendant
+     hovers its ancestors and the click bubbles either way. */
+  .sign {
+    pointer-events: none;
+  }
+
+  .sign::before,
+  .sign-face {
+    pointer-events: auto;
   }
 
   .sign-face {
-    align-items: center;
-    justify-content: center;
-    gap: 0.15em;
     min-height: 0;
-    padding: 4% 6%;
-    text-align: center;
+    padding: 0;
     border-radius: 1px;
     background: color-mix(in oklab, var(--accent-hue) 30%, oklch(0.16 0.03 265 / 0.5));
     /* Only the panel's own edge here. The light it throws is a separate,
@@ -1039,16 +1076,6 @@
       repeating-linear-gradient(0deg, oklch(1 0 0 / 0.08) 0 1px, transparent 1px 3px);
   }
 
-  /* Sit the panel on the building's plane rather than flat to the camera. */
-  .hub-signs > li {
-    perspective: 900px;
-  }
-
-  .sign {
-    transform: skewY(var(--sign-skew, 0deg)) skewX(var(--sign-lean, 0deg))
-      rotateY(var(--sign-yaw, 0deg));
-  }
-
   /* A sign is painted onto a billboard, so it does not move: no scale on
      hover, no magnetic pull toward the pointer, no press-in. Those all slid
      the panel off the board it belongs to, which was the whole problem. The
@@ -1090,8 +1117,8 @@
   /* Short and squat: the blurb has to go, and the label wraps rather than
      holding to one line, because a panel this small cannot be guaranteed
      to fit even a short label on one line at a legible size. */
-  .sign[data-compact="true"] .sign-face {
-    padding: 4% 6%;
+  .sign[data-compact="true"] .sign-inner {
+    padding: 6% 8%;
   }
 
   .sign[data-compact="true"] .sign-label {
@@ -1105,14 +1132,14 @@
   /* The tall blade sign runs its label vertically and drops the blurb. Sized
      against block-size (cqb), not inline-size: vertical-rl text stacks
      characters down the panel's height, so height is what has to fit it. */
-  .sign[data-vertical="true"] .sign-face {
+  .sign[data-vertical="true"] .sign-inner {
     flex-direction: row;
     padding: 8% 4%;
   }
 
   .sign[data-vertical="true"] .sign-label {
     writing-mode: vertical-rl;
-    font-size: clamp(0.55rem, 9cqb, 1.2rem);
+    font-size: clamp(0.6rem, 11cqb, 1.35rem);
     letter-spacing: 0.08em;
   }
 
@@ -1162,164 +1189,6 @@
   }
 }
 
-/* ------------------------------------------------------------------ *
- * The crowd.
- *
- * Silhouettes on the pavements and the crossing. Everything about a figure
- * derives from one --depth value so size, speed, haze and brightness can
- * never disagree with each other — disagreement between those is precisely
- * what makes a layered element look pasted on.
- * ------------------------------------------------------------------ */
-
-.crowd {
-  display: none;
-}
-
-@media (min-width: 48rem) and (min-aspect-ratio: 5 / 4) {
-  .crowd {
-    display: block;
-    position: absolute;
-    inset: 0;
-    z-index: 3;
-    pointer-events: none;
-    overflow: hidden;
-  }
-}
-
-.walker {
-  position: absolute;
-  /* --y is the ground line, so the feet sit on the pavement rather than the
-     head sitting at the given height. */
-  bottom: calc(100% - var(--y));
-  left: 0;
-  /* Container units so figures scale with the stage, not the window.
-     3.6cqi is roughly adult height at the near kerb. */
-  height: calc(3.6cqi * (0.28 + 0.72 * var(--depth)));
-  aspect-ratio: 0.38;
-  /* Distance hazes and dims, exactly as it does in the plate behind them. */
-  filter: blur(calc((1 - var(--depth)) * 0.7px));
-  opacity: calc(0.55 + 0.4 * var(--depth));
-  transform-origin: bottom center;
-  /* One gait for the whole figure, so limbs cannot drift out of step. */
-  --gait: calc(0.68s + (1 - var(--depth)) * 0.42s);
-  animation:
-    walk-path var(--dur) linear var(--delay) infinite,
-    walk-bob var(--gait) ease-in-out var(--delay) infinite;
-  will-change: transform;
-}
-
-/* A figure is five small elements — head, torso, two legs, two arms — and the
-   walk is those rotating about their joints. Everything is a transform, so it
-   is subpixel-smooth and antialiased at any size. */
-.walker {
-  --figure: oklch(0.13 0.025 265 / 0.95);
-}
-
-.walker-head,
-.walker-body,
-.walker-leg,
-.walker-arm {
-  position: absolute;
-  background: var(--figure);
-  /* A hairline of neon from whichever bank of signage is lighting them. */
-  box-shadow: calc(var(--rim-x) * 0.5px) 0 0 0 var(--rim-color);
-}
-
-.walker-head {
-  left: 34%;
-  top: 0;
-  width: 31%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-}
-
-/* Torso, tapered so the silhouette reads as shouldered rather than as a post. */
-.walker-body {
-  left: 22%;
-  top: 14%;
-  width: 56%;
-  height: 41%;
-  border-radius: 42% 42% 26% 26% / 30% 30% 14% 14%;
-}
-
-.walker-leg {
-  left: 38%;
-  top: 52%;
-  width: 24%;
-  height: 48%;
-  border-radius: 40% 40% 30% 30%;
-  transform-origin: top center;
-  animation: walk-leg var(--gait) ease-in-out var(--delay) infinite;
-}
-
-.walker-arm {
-  left: 62%;
-  top: 20%;
-  width: 15%;
-  height: 33%;
-  border-radius: 40%;
-  transform-origin: top center;
-  animation: walk-arm var(--gait) ease-in-out var(--delay) infinite;
-}
-
-/* The two sides run the same cycle half a period apart, which is the whole
-   trick: one gait duration, one pair of keyframes, a negative delay. */
-.walker-leg[data-side="back"],
-.walker-arm[data-side="front"] {
-  animation-delay: calc(var(--delay) - var(--gait) / 2);
-  opacity: 0.82;
-}
-
-/* The far arm sits behind the torso; only the near one needs to show. */
-.walker-arm[data-side="back"] {
-  left: 23%;
-}
-
-@keyframes walk-leg {
-  0%,
-  100% {
-    transform: rotate(20deg);
-  }
-  50% {
-    transform: rotate(-20deg);
-  }
-}
-
-@keyframes walk-arm {
-  0%,
-  100% {
-    transform: rotate(-16deg);
-  }
-  50% {
-    transform: rotate(16deg);
-  }
-}
-
-@keyframes walk-path {
-  from {
-    transform: translate3d(var(--from), 0, 0) scaleX(1);
-  }
-  49.9% {
-    transform: translate3d(var(--to), 0, 0) scaleX(1);
-  }
-  /* Turn around rather than teleport back. */
-  50% {
-    transform: translate3d(var(--to), 0, 0) scaleX(-1);
-  }
-  to {
-    transform: translate3d(var(--from), 0, 0) scaleX(-1);
-  }
-}
-
-@keyframes walk-bob {
-  0%,
-  100% {
-    margin-top: 0;
-  }
-  50% {
-    margin-top: -0.14cqi;
-  }
-}
 
 /* A sign across the junction with a failing ballast. */
 .ambient-flicker {
@@ -3298,8 +3167,7 @@ button.screen:active {
   /* The ambient fixtures are positioned against the crossroads frame, so
      during the aerial and canyon beats they would be floating in open sky.
      They arrive with the plate they belong to. */
-  .descent-pin .ambient,
-  .descent-pin .crowd {
+  .descent-pin .ambient {
     opacity: var(--reveal, 1);
   }
 
@@ -3393,8 +3261,7 @@ button.screen:active {
     scroll-behavior: auto;
   }
 
-  .ambient,
-  .crowd {
+  .ambient {
     display: none;
   }
 
@@ -3811,6 +3678,21 @@ button.screen:active {
   place-items: center;
   width: min(92%, 37.5rem);
   aspect-ratio: 5 / 3;
+  /* Horizontal drags turn the ring, vertical ones still scroll the page —
+     without this the browser claims the gesture and the ring never moves. */
+  touch-action: pan-y;
+  cursor: grab;
+}
+
+.fan[data-dragging] .fan-stage {
+  cursor: grabbing;
+}
+
+/* While a finger is on it the ring tracks the hand exactly; the easing is
+   for the release, where it settles onto the nearest card. */
+.fan[data-dragging] .fan-orbit,
+.fan[data-dragging] .fan-thumb {
+  transition: none;
 }
 
 .fan-ring,
@@ -3915,7 +3797,19 @@ button.screen:active {
   scale: 0.9;
 }
 
+/* Dragging the ring is direct manipulation, so it stays — what goes is the
+   overshoot the ring coasts on afterwards, and the easing behind the arrow
+   buttons. The card still changes; it just arrives rather than swings. */
 @media (prefers-reduced-motion: reduce) {
+  .fan-orbit,
+  .fan-thumb,
+  .fan-button {
+    transition: none;
+  }
+
+  .fan-button:active {
+    scale: 1;
+  }
 }
 
 /* A frame whose picture has not been supplied yet. Deliberately reads as an

@@ -40,7 +40,7 @@ function NotFoundComponent() {
           <p className="eyebrow">Error 404</p>
           <h1 className="lost-title">You took a wrong turn</h1>
           <p className="lost-lede">
-            There is no street here. Every part of {fest.fullName} is one of these four.
+            There is no street here. Every part of {fest.fullName} is one of these.
           </p>
 
           <ul className="lost-links">

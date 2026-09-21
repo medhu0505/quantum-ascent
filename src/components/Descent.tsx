@@ -1,6 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Ambient } from "@/components/scene/Ambient";
-import { Crowd } from "@/components/scene/Crowd";
 import { HubPlate, HubSigns } from "@/components/Hub";
 import { fest, school, descentFilm, timeline } from "@/data/quantum";
 import { clamp, lerp, progress, usePrefersReducedMotion, useStageLayout } from "@/lib/motion";
@@ -474,7 +473,6 @@ export function Descent() {
 
             <div className="hub-scrim" />
             <Ambient />
-            <Crowd />
 
             <HubSigns inert={scrubbing && !revealed} />
 

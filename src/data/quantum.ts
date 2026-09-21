@@ -213,21 +213,22 @@ export type SignGeometry = {
   top: number;
   width: number;
   height: number;
-  /** Degrees of vertical skew matching the billboard's plane. */
-  skew: number;
   /**
-   * Degrees of horizontal skew, for a billboard that leans. The blade sign
-   * over the right-hand corner hangs off a wall running away from the camera,
-   * so its long edges are not vertical on screen; skew alone cannot say that.
+   * The panel's four corners — top-left, top-right, bottom-right, bottom-left
+   * — as percentages of this sign's own box.
+   *
+   * The holograms in the film are perspective quadrilaterals: every one of
+   * them has four different edge lengths and no right angles. A skew plus a
+   * yaw can only ever approximate that, which is what left the old panels
+   * sitting slightly proud of their frames. These corners are measured off
+   * the plate itself and the panel is clipped to them, so it lands on the
+   * glass exactly.
+   *
+   * The clip shapes the panel; it does not transform it. The label inside
+   * stays upright and undistorted — the billboard takes the perspective, the
+   * text does not.
    */
-  lean?: number;
-  /**
-   * Degrees of yaw, so the panel sits on the building's wall rather than
-   * flat to the camera. Positive turns the right edge away, which is what a
-   * panel on the left-hand side of the street does; right-hand panels take a
-   * negative value.
-   */
-  yaw: number;
+  clip: [number, number][];
   /**
    * How much of the scene's atmospheric haze sits between camera and panel,
    * 0 (at the kerb) to 1 (far down the street). A panel that ignores the haze
@@ -252,8 +253,11 @@ export type Scene = {
   to: string;
   accent: Accent;
   sign: SignGeometry;
-  /** Interior window view. */
-  view: string;
+  /**
+   * Interior window view. Only the four rooms have one; a sign that points
+   * at an ordinary page (the FAQ) has no interior to look into.
+   */
+  view?: string;
   /** What the room is, for the interior's accessible description. */
   room: string;
 };
@@ -266,13 +270,16 @@ export const scenes: Scene[] = [
     to: "/events",
     accent: "cyan",
     sign: {
-      left: 1.46,
-      top: 15.09,
-      width: 20.94,
-      height: 34.9,
-      skew: 6,
-      lean: -4,
-      yaw: 14,
+      left: 2.81,
+      top: 15.19,
+      width: 19.64,
+      height: 34.35,
+      clip: [
+        [0.3, 0.0],
+        [98.9, 36.9],
+        [100.0, 100.0],
+        [0.0, 88.4],
+      ],
       haze: 0.45,
     },
     view: "/media/view-events.webp",
@@ -285,13 +292,16 @@ export const scenes: Scene[] = [
     to: "/register",
     accent: "magenta",
     sign: {
-      left: 75.3,
-      top: 17.6,
-      width: 22.1,
-      height: 32.4,
-      skew: -6,
-      lean: 4,
-      yaw: -16,
+      left: 76.15,
+      top: 18.33,
+      width: 20.52,
+      height: 32.31,
+      clip: [
+        [2.0, 39.8],
+        [99.2, 0.0],
+        [100.0, 89.4],
+        [0.0, 100.0],
+      ],
       haze: 0.45,
     },
     view: "/media/view-register.webp",
@@ -304,13 +314,16 @@ export const scenes: Scene[] = [
     to: "/team",
     accent: "cyan",
     sign: {
-      left: 48.2,
-      top: 30.1,
-      width: 6.5,
-      height: 10.2,
-      skew: 0,
-      lean: 0,
-      yaw: 0,
+      left: 44.64,
+      top: 32.31,
+      width: 9.53,
+      height: 8.15,
+      clip: [
+        [1.1, 3.4],
+        [100.0, 0.0],
+        [100.0, 96.6],
+        [0.0, 100.0],
+      ],
       haze: 0.4,
       compact: true,
     },
@@ -324,18 +337,43 @@ export const scenes: Scene[] = [
     to: "/resources",
     accent: "violet",
     sign: {
-      left: 62.2,
-      top: 33.3,
-      width: 5.7,
-      height: 22.2,
-      skew: -2,
-      lean: 3,
-      yaw: -8,
+      left: 62.81,
+      top: 36.48,
+      width: 3.33,
+      height: 19.91,
+      clip: [
+        [4.7, 6.0],
+        [93.8, 0.0],
+        [100.0, 97.7],
+        [0.0, 100.0],
+      ],
       haze: 0.3,
       vertical: true,
     },
     view: "/media/view-resources.webp",
     room: "An archive room with a wall of labelled links.",
+  },
+  {
+    id: "faq",
+    label: "FAQ",
+    blurb: "The questions we get asked.",
+    to: "/faq",
+    accent: "violet",
+    sign: {
+      left: 32.97,
+      top: 34.26,
+      width: 2.92,
+      height: 21.02,
+      clip: [
+        [1.8, 1.8],
+        [100.0, 0.0],
+        [94.6, 99.1],
+        [0.0, 100.0],
+      ],
+      haze: 0.35,
+      vertical: true,
+    },
+    room: "A wall of the questions we are asked most, answered.",
   },
 ];
 

@@ -18,7 +18,7 @@ import { crossroadsPlate, scenes, type Scene } from "@/data/quantum";
  * viewport, stacked as cards on a phone. See the hub section of styles.css.
  */
 
-type Pinned = { matrix: string; unpin: string };
+type Pinned = { matrix: string };
 
 /**
  * The transform that lays a panel onto its billboard.
@@ -37,9 +37,12 @@ type Pinned = { matrix: string; unpin: string };
  * street, and the text on it is painted on that plane rather than floating
  * in front of it.
  *
- * The label does not ride it. It carries the inverse of the same matrix, so
- * the two cancel and the type renders at its true proportions over a panel
- * that is still pinned to the board — angled surface, undistorted words.
+ * This is the only transform in play for a sign. The border, the glass, the
+ * glow and the type are all inside the element it is set on, so they share
+ * one coordinate system and cannot drift out of plane with each other: the
+ * label is on the hologram's face, carrying the same perspective a real
+ * screen would have from this camera, rather than floating in front of it
+ * in screen space.
  */
 function quadPin(clip: [number, number][], w: number, h: number): Pinned | undefined {
   if (clip.length !== 4 || w <= 0 || h <= 0) return undefined;
@@ -78,53 +81,7 @@ function quadPin(clip: [number, number][], w: number, h: number): Pinned | undef
   const m = [a, d, 0, gw, b, e, 0, kh, 0, 0, 1, 0, x0, y0, 0, 1];
   const matrix = `matrix3d(${m.map((n) => Number(n.toFixed(6))).join(",")})`;
 
-  /*
-   * And the way back out of it.
-   *
-   * The panel has to take the board's perspective; the words on it must
-   * not. Run through the pin, type is stretched wide at the near edge and
-   * squeezed at the far one, and the letterforms stop being the typeface —
-   * which is what makes it look wrong rather than angled.
-   *
-   * So the content layer carries the inverse of the same matrix. The two
-   * compose to the identity, the label renders at its true proportions in
-   * the panel's own rectangle, and the glass underneath it stays pinned to
-   * the hologram. Adjugate rather than a full inverse: the scale it carries
-   * cancels in the perspective divide, and normalising by the last entry
-   * keeps the matrix in the form CSS expects.
-   */
-  const iA = e - y0 * kh;
-  const iB = x0 * kh - b;
-  const iC = b * y0 - x0 * e;
-  const iD = y0 * gw - d;
-  const iE = a - x0 * gw;
-  const iF = x0 * d - a * y0;
-  const iG = d * kh - e * gw;
-  const iK = b * gw - a * kh;
-  const iL = a * e - b * d;
-  if (!iL) return undefined;
-
-  const inv = [
-    iA / iL,
-    iD / iL,
-    0,
-    iG / iL,
-    iB / iL,
-    iE / iL,
-    0,
-    iK / iL,
-    0,
-    0,
-    1,
-    0,
-    iC / iL,
-    iF / iL,
-    0,
-    1,
-  ];
-  const unpin = `matrix3d(${inv.map((n) => Number(n.toFixed(6))).join(",")})`;
-
-  return { matrix, unpin };
+  return { matrix };
 }
 
 /* Before paint, not after: see the effect below. */
@@ -182,7 +139,7 @@ function Sign({ scene }: { scene: Scene }) {
           "--sign-width": scene.sign.width,
           "--sign-height": scene.sign.height,
           "--sign-haze": scene.sign.haze,
-          ...(pin ? { transform: pin.matrix, "--sign-unpin": pin.unpin } : {}),
+          ...(pin ? { transform: pin.matrix } : {}),
         } as React.CSSProperties
       }
     >

@@ -930,14 +930,13 @@
     visibility: hidden;
   }
 
-  /* Backs out of the panel's corner-pin (see Hub.tsx) so the words keep the
-     typeface's own proportions instead of being stretched along the
-     board. */
+  /* No transform of its own. The panel's corner-pin is the one transform in
+     play and this is inside it, so the border, the glass, the glow and the
+     type all sit on the same plane — the text is on the hologram's face
+     rather than in front of it. */
   .sign-inner {
     position: absolute;
     inset: 0;
-    transform: var(--sign-unpin, none);
-    transform-origin: 0 0;
     align-items: center;
     justify-content: center;
     /* The shear brings the two lines closest together at the board's near
@@ -2602,6 +2601,109 @@ button.screen:active {
   margin: 0;
   font-size: var(--text-xs);
   line-height: 1.45;
+  color: var(--muted-foreground);
+}
+
+/* ---- Event picker ---------------------------------------------------- *
+ * A team can enter more than one event, so this is a set of checkboxes
+ * rather than a select. Each one is a full-width target with the team size
+ * under the name, because the team size is what decides whether a given
+ * event is even open to you.
+ */
+.events-field {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  margin: 0;
+  /* Six options in a grid need the whole row, not half of a field pair. */
+  grid-column: 1 / -1;
+}
+
+.events-field legend {
+  padding: 0;
+  margin-block-end: var(--s-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.event-picks {
+  display: grid;
+  gap: var(--s-2);
+  margin: 0 0 var(--s-2);
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 36rem) {
+  .event-picks {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.event-pick {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-3);
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in oklab, var(--foreground) 14%, transparent);
+  background: color-mix(in oklab, var(--card) 55%, transparent);
+  cursor: pointer;
+  transition:
+    border-color var(--dur-ui) var(--ease-out),
+    background var(--dur-ui) var(--ease-out);
+}
+
+.event-pick:hover {
+  border-color: color-mix(in oklab, var(--neon-cyan) 45%, transparent);
+  background: color-mix(in oklab, var(--card) 75%, transparent);
+}
+
+/* `.field input` dresses every control in the form as a text box — full
+   width, 2.75rem tall, padded, with a glass fill. A checkbox needs none of
+   that, and inherits it as a second empty box behind the tick. */
+.event-pick input {
+  flex: none;
+  width: 1.15rem;
+  height: 1.15rem;
+  min-height: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  margin-block-start: 0.1rem;
+  accent-color: var(--neon-cyan);
+}
+
+.event-pick input:hover {
+  box-shadow: none;
+}
+
+/* The whole row reads as selected, not just the box. */
+.event-pick:has(input:checked) {
+  border-color: color-mix(in oklab, var(--neon-cyan) 62%, transparent);
+  background: color-mix(in oklab, var(--neon-cyan) 12%, var(--card));
+}
+
+.event-pick:has(input:focus-visible) {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 2px;
+}
+
+.event-pick-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.event-pick-name {
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.event-pick-team {
+  font-size: var(--text-xs);
   color: var(--muted-foreground);
 }
 

@@ -2805,8 +2805,20 @@ button.screen:active {
 }
 
 .footer-links a {
+  /* The line box alone was 21px tall, under the 24px WCAG 2.5.8 minimum, and
+     on a phone these are the only way out of a page. Padding makes the target
+     comfortable without moving the text: the gap above absorbs it. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
   color: var(--muted-foreground);
   transition: color var(--dur-ui) var(--ease-out);
+}
+
+/* The rows already carry their own height now, so the list does not need to
+   space them as well. */
+.footer-links {
+  gap: 0;
 }
 
 .footer-links a:hover,
@@ -4040,6 +4052,18 @@ button.screen:active {
 @media (max-width: 40rem) {
   .rail {
     --sq-aspect: 1;
+  }
+
+  /* Even squared off, there is not enough room left for four columns to
+     shade into each other: the shares landed at 30, 22, 8, 22 and 22 pixels,
+     which reads as a ragged set of bars rather than cards waiting their
+     turn, and the 8px one was a link nobody could hit. One width for all of
+     them is both tidier and a real target.
+
+     The width has to beat an inline style, because the component computes
+     each card's width from shares of the room it assumes it has. */
+  .rail [role="tab"][aria-selected="false"] {
+    width: 2rem !important;
   }
 }
 

@@ -129,6 +129,11 @@ export function EventsInterior() {
           onIndexChange={onIndexChange}
           label="The six events"
           height="clamp(180px, 30cqi, 320px)"
+          /* The tail cards are links. At the component's 8px default they
+             were 8px-wide click targets carrying no readable edge — a pair
+             of hairlines at the end of the row rather than cards waiting
+             their turn. */
+          slatWidth={26}
           accent="var(--neon-cyan)"
           accentForeground="#05070d"
         />

@@ -18,7 +18,7 @@ import { crossroadsPlate, scenes, type Scene } from "@/data/quantum";
  * viewport, stacked as cards on a phone. See the hub section of styles.css.
  */
 
-type Pinned = { matrix: string; shiftX: string; shiftY: string };
+type Pinned = { matrix: string };
 
 /**
  * The transform that lays a panel onto its billboard.
@@ -36,6 +36,13 @@ type Pinned = { matrix: string; shiftX: string; shiftY: string };
  * Everything inside rides along: the panel is a plane standing in the
  * street, and the text on it is painted on that plane rather than floating
  * in front of it.
+ *
+ * The label is then simply centred in the panel's own rectangle, which is
+ * the middle of the board's surface. An earlier pass offset it to the
+ * projected shape's area centroid instead, which did read better while the
+ * type was small and floating; once the type fills the board the way
+ * artwork on a real hoarding does, that offset only pushes the whole
+ * composition off to one side.
  */
 function quadPin(clip: [number, number][], w: number, h: number): Pinned | undefined {
   if (clip.length !== 4 || w <= 0 || h <= 0) return undefined;
@@ -74,69 +81,7 @@ function quadPin(clip: [number, number][], w: number, h: number): Pinned | undef
   const m = [a, d, 0, gw, b, e, 0, kh, 0, 0, 1, 0, x0, y0, 0, 1];
   const matrix = `matrix3d(${m.map((n) => Number(n.toFixed(6))).join(",")})`;
 
-  /*
-   * Where the label goes.
-   *
-   * Centring it in the panel's own rectangle is the physically honest
-   * answer — that is the middle of the board's surface, where paint on it
-   * would sit. On a board turned this far it does not read that way: the
-   * near half is magnified and the far half compressed, so the middle of
-   * the surface lands high and toward the far edge, and the label looks
-   * pushed into a corner with a field of empty board under it.
-   *
-   * What reads as the middle of a shape is its area centroid. So that is
-   * solved for on the projected quadrilateral and run back through the
-   * inverse homography, giving the point in the panel's own coordinates
-   * that lands on it. Judged against side-by-side renders, not arithmetic:
-   * a bounding rect around a perspective-transformed element is the
-   * axis-aligned box around its quad, and its centre is not the element's
-   * centre, so measuring this by rect says the opposite of what the eye
-   * does.
-   */
-  let area = 0;
-  let qx = 0;
-  let qy = 0;
-  const quad: [number, number][] = [
-    [x0, y0],
-    [x1, y1],
-    [x2, y2],
-    [x3, y3],
-  ];
-  for (let i = 0; i < 4; i++) {
-    const [px, py] = quad[i]!;
-    const [nx, ny] = quad[(i + 1) % 4]!;
-    const cross = px * ny - nx * py;
-    area += cross;
-    qx += (px + nx) * cross;
-    qy += (py + ny) * cross;
-  }
-  if (!area) return { matrix, shiftX: "0%", shiftY: "0%" };
-  qx /= 3 * area;
-  qy /= 3 * area;
-
-  // Adjugate of [[a, b, x0], [d, e, y0], [gw, kh, 1]] — the scale the
-  // adjugate carries cancels in the divide, so the determinant is not needed.
-  const iA = e - y0 * kh;
-  const iB = x0 * kh - b;
-  const iC = b * y0 - x0 * e;
-  const iD = y0 * gw - d;
-  const iE = a - x0 * gw;
-  const iF = x0 * d - a * y0;
-  const iG = d * kh - e * gw;
-  const iK = b * gw - a * kh;
-  const iL = a * e - b * d;
-
-  const wq = iG * qx + iK * qy + iL;
-  if (!wq) return { matrix, shiftX: "0%", shiftY: "0%" };
-
-  const ux = (iA * qx + iB * qy + iC) / wq;
-  const uy = (iD * qx + iE * qy + iF) / wq;
-
-  return {
-    matrix,
-    shiftX: `${((ux / w) * 100 - 50).toFixed(2)}%`,
-    shiftY: `${((uy / h) * 100 - 50).toFixed(2)}%`,
-  };
+  return { matrix };
 }
 
 function Sign({ scene }: { scene: Scene }) {
@@ -181,9 +126,7 @@ function Sign({ scene }: { scene: Scene }) {
           "--sign-width": scene.sign.width,
           "--sign-height": scene.sign.height,
           "--sign-haze": scene.sign.haze,
-          ...(pin
-            ? { transform: pin.matrix, "--sign-shift-x": pin.shiftX, "--sign-shift-y": pin.shiftY }
-            : {}),
+          ...(pin ? { transform: pin.matrix } : {}),
         } as React.CSSProperties
       }
     >

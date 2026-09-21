@@ -928,12 +928,12 @@
     inset: 0;
     align-items: center;
     justify-content: center;
-    gap: 0.15em;
-    padding: 4% 6%;
+    /* The shear brings the two lines closest together at the board's near
+       edge, so they need more air between them than a flat panel would. */
+    gap: 0.62em;
+    /* Enough margin that the type never touches the frame, no more. */
+    padding: 7% 9%;
     text-align: center;
-    /* Solved in Hub.tsx: the offset whose image under the corner-pin lands
-       on the board's area centroid, which is what reads as its middle. */
-    translate: var(--sign-shift-x, 0) var(--sign-shift-y, 0);
   }
 
   /* Expanded pointer target. The Meet the Team banner is only ~31px tall on
@@ -951,18 +951,29 @@
     border-radius: 6px;
   }
 
+  /* The board in the film is already a lit glass panel with a gradient
+     across it and its own double neon frame, and it is the best-looking
+     thing on the page. Everything this used to add — a 30% colour wash, an
+     inset border competing with that frame, a blur over the type — was
+     covering it up and reading as a coloured rectangle taped to a
+     billboard. What is left is a breath of the section's colour, heaviest
+     where the board catches the most light, so the glass still reads as
+     glass and the panel still says which room it opens. */
   .sign-face {
     min-height: 0;
     padding: 0;
     border-radius: 1px;
-    background: color-mix(in oklab, var(--accent-hue) 30%, oklch(0.16 0.03 265 / 0.5));
-    /* Only the panel's own edge here. The light it throws is a separate,
-       screen-blended layer — see .sign-face::before — because a box-shadow
-       paints over the photograph instead of brightening it, which is what
-       made these read as stickers with a halo. */
-    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 65%, transparent);
-    /* A lit panel photographed at this distance has no razor edge. */
-    filter: blur(0.35px);
+    /* The card treatment's inset edge and halo belong to the stacked phone
+       layout. On a board they draw a hairline just inside the film's own
+       neon frame, which reads as a seam between the panel and the
+       billboard — the one thing this whole approach is trying to avoid. */
+    box-shadow: none;
+    background: linear-gradient(
+      168deg,
+      color-mix(in oklab, var(--accent-hue) 14%, transparent),
+      color-mix(in oklab, var(--accent-hue) 4%, transparent) 58%,
+      transparent
+    );
     animation: sign-breathe 5.5s var(--ease-out) infinite;
   }
 
@@ -994,13 +1005,11 @@
      a panel that ignores it sits in front of the picture instead of inside
      it. Depth is set per sign from its position in the frame. */
   .sign-face::after {
-    background:
-      linear-gradient(
-        180deg,
-        oklch(0.62 0.05 265 / calc(0.16 * var(--sign-haze, 0))),
-        oklch(0.62 0.05 265 / calc(0.06 * var(--sign-haze, 0)))
-      ),
-      repeating-linear-gradient(0deg, oklch(1 0 0 / 0.08) 0 1px, transparent 1px 3px);
+    background: linear-gradient(
+      180deg,
+      oklch(0.62 0.05 265 / calc(0.16 * var(--sign-haze, 0))),
+      oklch(0.62 0.05 265 / calc(0.06 * var(--sign-haze, 0)))
+    );
   }
 
   /* A sign is painted onto a billboard, so it does not move: no scale on
@@ -1013,21 +1022,40 @@
      the rule that kept a sign still was itself a copy of the rule that moved
      it, and the copy that came last won. The duplicate is gone; leaving the
      transform to `.sign` alone is what makes it impossible to come back. */
+  /* The board lights up, but not so hard that the glass turns into a flat
+     colour — the gradient in the film is what makes it read as a screen. */
   .sign:hover,
   .sign:focus-visible {
-    filter: brightness(1.34) saturate(1.12);
+    filter: brightness(1.18) saturate(1.08);
   }
 
   .sign:active {
     filter: brightness(1.1) saturate(1.05);
   }
 
+  /* Set to the board, not to the stage — cqi here is a share of the panel's
+     own width. Big enough that the label fills most of the board the way
+     artwork pasted on a real billboard would: a small block of type
+     floating in the middle of a hoarding at this angle reads as a mistake,
+     while type that fills it reads as perspective.
+
+     Lit, too: a tight white core so the letterforms stay crisp, then the
+     section's colour bleeding out of them, so the label looks emitted by
+     the glass rather than laid on top of it. */
   .sign-label {
-    font-size: clamp(0.6rem, 2.1cqi, 1.7rem);
+    font-size: clamp(0.7rem, 15cqi, 3rem);
+    line-height: 1;
+    letter-spacing: 0.015em;
+    text-shadow:
+      0 0 0.06em oklch(1 0 0 / 0.5),
+      0 0 0.45em color-mix(in oklab, var(--accent-hue) 85%, transparent),
+      0 0 1.3em color-mix(in oklab, var(--accent-hue) 45%, transparent);
   }
 
   .sign-blurb {
-    font-size: clamp(0.44rem, 1.05cqi, 0.82rem);
+    font-size: clamp(0.46rem, 4.4cqi, 1.05rem);
+    color: oklch(0.99 0 0 / 0.82);
+    text-shadow: 0 0 0.7em color-mix(in oklab, var(--accent-hue) 55%, transparent);
   }
 
   /* Both variants get sized against their own box, not the stage: a billboard
@@ -1036,8 +1064,7 @@
      the whole stage's width to work against. Without this, a panel much
      smaller than the stage sizes its label as if it had the whole stage's
      width to fill, and the label overruns the panel. */
-  .sign[data-compact="true"],
-  .sign[data-vertical="true"] {
+  .sign {
     container-type: size;
   }
 
@@ -1049,7 +1076,7 @@
   }
 
   .sign[data-compact="true"] .sign-label {
-    font-size: clamp(0.55rem, 13cqi, 1.05rem);
+    font-size: clamp(0.55rem, 13cqi, 1.15rem);
   }
 
   .sign[data-compact="true"] .sign-blurb {

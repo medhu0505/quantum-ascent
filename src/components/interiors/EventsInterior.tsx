@@ -128,6 +128,7 @@ export function EventsInterior() {
           defaultIndex={start}
           onIndexChange={onIndexChange}
           label="The six events"
+          hint="Swipe, or use the arrows, to switch events"
           height="clamp(180px, 30cqi, 320px)"
           /* The tail cards are links. At the component's 8px default they
              were 8px-wide click targets carrying no readable edge — a pair

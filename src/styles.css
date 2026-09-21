@@ -3964,6 +3964,18 @@ button.screen:active {
 }
 
 /* The featured rail above the event screens. */
+/* Sits opposite the rail's arrows, in the space that was empty beside them.
+   Says how to drive the row, which on a phone is not otherwise discoverable:
+   the arrows are there, but the swipe is the thing a thumb reaches for. */
+.sq-hint {
+  margin: 0;
+  min-width: 0;
+  font-size: var(--text-xs);
+  line-height: 1.35;
+  color: var(--muted-foreground);
+  text-wrap: balance;
+}
+
 .rail {
   container-type: inline-size;
   margin-block-end: var(--s-9);

@@ -1,4 +1,5 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useLayoutEffect } from "react";
 import { ExitToCrossroads } from "@/components/site/Bits";
 import { CrossroadsFooter } from "@/components/site/PageShell";
 import { events, getScene } from "@/data/quantum";
@@ -12,9 +13,24 @@ import { events, getScene } from "@/data/quantum";
  * button, because a screen with nothing on it is exactly what a form waiting
  * to be opened should look like. The two side monitors are dressing in the
  * photograph, not part of the interface — nothing is hung on them.
+ *
+ * None of that survives a phone. The room is a wide photograph with a
+ * monitor in the middle of it, and at that width the monitor is a thumbnail
+ * carrying a single link — a whole screen and a tap spent on a door. So a
+ * narrow viewport skips the room and goes to the form, replacing this entry
+ * in history rather than stacking on it, or Back would land here and bounce
+ * straight through again.
  */
+const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
+
 export function RegisterInterior() {
   const scene = getScene("register")!;
+  const navigate = useNavigate();
+
+  useIsomorphicLayoutEffect(() => {
+    if (!window.matchMedia("(max-width: 48rem)").matches) return;
+    void navigate({ to: "/register/form", replace: true });
+  }, [navigate]);
 
   return (
     <>

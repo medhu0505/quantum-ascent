@@ -964,28 +964,22 @@
 
   /* The board in the film is already a lit glass panel with a gradient
      across it and its own double neon frame, and it is the best-looking
-     thing on the page. Everything this used to add — a 30% colour wash, an
-     inset border competing with that frame, a blur over the type — was
-     covering it up and reading as a coloured rectangle taped to a
-     billboard. What is left is a breath of the section's colour, heaviest
-     where the board catches the most light, so the glass still reads as
-     glass and the panel still says which room it opens. */
+     thing on the page. Everything the panel used to add on top of it — a
+     colour wash, an inset border competing with that frame, a haze layer,
+     a brightness pulse — was a container drawn over the glass. A faint one
+     is still one: a rectangle in the section's accent, with edges, sitting
+     on a billboard that already has edges of its own.
+
+     So it paints nothing at all, the same as the screens in the Resources
+     and Register rooms. The film's hologram is the button; the label on it
+     is the only thing this adds. */
   .sign-face {
     min-height: 0;
     padding: 0;
     border-radius: 1px;
-    /* The card treatment's inset edge and halo belong to the stacked phone
-       layout. On a board they draw a hairline just inside the film's own
-       neon frame, which reads as a seam between the panel and the
-       billboard — the one thing this whole approach is trying to avoid. */
     box-shadow: none;
-    background: linear-gradient(
-      168deg,
-      color-mix(in oklab, var(--accent-hue) 14%, transparent),
-      color-mix(in oklab, var(--accent-hue) 4%, transparent) 58%,
-      transparent
-    );
-    animation: sign-breathe 5.5s var(--ease-out) infinite;
+    background: transparent;
+    animation: none;
   }
 
   /* There used to be a cast-light layer here: a box inset -55% carrying a
@@ -1001,15 +995,15 @@
      The boards do not need it. The film's own neon frames light them, and
      the labels carry their glow in their text shadow. */
 
-  /* Atmosphere. The plate has haze between the camera and the far signage;
-     a panel that ignores it sits in front of the picture instead of inside
-     it. Depth is set per sign from its position in the frame. */
+  /* This carried a haze gradient, to sit the panel inside the plate's own
+     depth rather than in front of it. The plate already has that haze — it
+     is in the photograph — so all this added was a second translucent sheet
+     over the glass, which is the box again by another name. Removed rather
+     than re-tuned, and display:none rather than deleted: the stacked card
+     layout paints scanlines through this same pseudo-element, and without
+     this they would come back on the boards. */
   .sign-face::after {
-    background: linear-gradient(
-      180deg,
-      oklch(0.62 0.05 265 / calc(0.16 * var(--sign-haze, 0))),
-      oklch(0.62 0.05 265 / calc(0.06 * var(--sign-haze, 0)))
-    );
+    display: none;
   }
 
   /* A sign is painted onto a billboard, so it does not move: no scale on
@@ -1022,15 +1016,40 @@
      the rule that kept a sign still was itself a copy of the rule that moved
      it, and the copy that came last won. The duplicate is gone; leaving the
      transform to `.sign` alone is what makes it impossible to come back. */
-  /* The board lights up, but not so hard that the glass turns into a flat
-     colour — the gradient in the film is what makes it read as a screen. */
-  .sign:hover,
-  .sign:focus-visible {
-    filter: brightness(1.18) saturate(1.08);
+  /* The stacked card layout fills its panel on hover, and that rule is not
+     scoped to it — so hovering a billboard painted an 88%-opaque block of
+     accent over the film, putting back on hover the exact box this layout
+     removes at rest. Measured: rgba(0,0,0,0) at rest, oklab(0.44 … / 0.885)
+     under the pointer. The board stays glass whatever the pointer is doing. */
+  .sign:hover .sign-face,
+  .sign:focus-visible .sign-face {
+    background: transparent;
   }
 
+  /* Same reason: the card layout dims itself on press. There is nothing to
+     dim here but the type. */
   .sign:active {
-    filter: brightness(1.1) saturate(1.05);
+    filter: none;
+  }
+
+  /* With nothing painted, brightness on the panel had nothing left to
+     brighten but the type — and it did that badly, washing a white label
+     toward flat white instead of lighting it. The label answers instead,
+     through its own glow, exactly as the screen labels do in the two desk
+     rooms. */
+  .sign:hover .sign-label,
+  .sign:focus-visible .sign-label {
+    text-shadow:
+      0 0 0.05em oklch(1 0 0 / 0.75),
+      0 0 0.55em color-mix(in oklab, var(--accent-hue) 95%, transparent),
+      0 0 1.6em color-mix(in oklab, var(--accent-hue) 60%, transparent);
+  }
+
+  .sign:active .sign-label {
+    text-shadow:
+      0 0 0.05em oklch(1 0 0 / 0.65),
+      0 0 0.5em color-mix(in oklab, var(--accent-hue) 90%, transparent),
+      0 0 1.45em color-mix(in oklab, var(--accent-hue) 52%, transparent);
   }
 
   /* Set to the board, not to the stage — cqi here is a share of the panel's
@@ -1101,21 +1120,10 @@
     display: none;
   }
 
-  /* The breathing stops while a sign is being used, so the thing under the
-     pointer holds still rather than pulsing under it. */
-  .sign:hover .sign-face,
-  .sign:focus-visible .sign-face {
-    animation: none;
-  }
-}
-
-@keyframes sign-breathe {
-  0%,
-  100% {
-    filter: brightness(1);
-  }
-  50% {
-    filter: brightness(1.09);
+  /* The label carries the transition, so the glow above comes up rather
+     than snapping on. */
+  .sign-label {
+    transition: text-shadow var(--dur-ui) var(--ease-out);
   }
 }
 

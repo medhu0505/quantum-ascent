@@ -138,7 +138,6 @@ function Sign({ scene }: { scene: Scene }) {
           "--sign-top": scene.sign.top,
           "--sign-width": scene.sign.width,
           "--sign-height": scene.sign.height,
-          "--sign-haze": scene.sign.haze,
           ...(pin ? { transform: pin.matrix } : {}),
         } as React.CSSProperties
       }

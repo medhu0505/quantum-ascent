@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useLayoutEffect } from "react";
 import { ExitToCrossroads } from "@/components/site/Bits";
 import { CrossroadsFooter } from "@/components/site/PageShell";
-import { events, getScene } from "@/data/quantum";
+import { events, fest, getScene } from "@/data/quantum";
 
 /**
  * Register: the desk. Same treatment as Resources — the room is the page.
@@ -38,10 +38,19 @@ export function RegisterInterior() {
       <CrossroadsFooter variant="interior" />
 
       <main id="main" className="desk">
-        {/* The wall behind the desk carries no readable heading of its own —
-            the photograph is the identity — so this is what a screen reader
-            announces instead. */}
-        <h1 className="sr-only">{scene.label}</h1>
+        {/* The photograph is the identity on a wide viewport, so this is what
+            a screen reader announces instead. On a phone the photograph is
+            gone and this is the header people read. A phone normally never
+            sees this room at all — the effect above sends it to the form —
+            but that is a layout effect, and no script means no redirect. */}
+        <header className="desk-head">
+          <p className="eyebrow">{fest.fullName}</p>
+          <h1 className="page-title">{scene.label}</h1>
+          <p className="page-lede">
+            One form covers every event. Classes 9 to 12, enter as many events as you can
+            attend, and list your team on the same form.
+          </p>
+        </header>
 
         <div className="desk-frame">
           <div className="desk-room">

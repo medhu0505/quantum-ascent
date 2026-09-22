@@ -2309,14 +2309,22 @@ button.screen:active {
   grid-template-rows: 1fr;
 }
 
+/* The padding used to live here, and padding is not content: min-height:0
+   zeroes what the grid item contributes from its children, not its own box,
+   so a collapsed panel stood 21.59px tall instead of 0 — measured, and
+   exactly the 1.35rem that was on its bottom edge. overflow:hidden clips to
+   the padding box, so the first line of every answer rendered inside that
+   strip. Every question on the page carried a severed line of its own answer
+   under it. The padding is on the paragraph now; the item's box collapses to
+   nothing. */
 .faq-panel-inner {
   overflow: hidden;
   min-height: 0;
-  padding: 0 var(--s-1) 1.35rem;
+  padding-inline: var(--s-1);
 }
 
 .faq-panel p {
-  margin: 0;
+  margin: 0 0 1.35rem;
   max-width: var(--measure);
   line-height: 1.7;
   color: var(--muted-foreground);
@@ -3344,6 +3352,7 @@ button.screen:active {
   display: none;
 }
 
+
 /* ------------------------------------------------------------------ *
  * Reduced motion.
  *
@@ -3519,6 +3528,24 @@ button.screen:active {
  * screen you click is a screen you click whichever room it is in.
  * ------------------------------------------------------------------ */
 
+/* The room's header and the per-card blurbs. On a wide viewport the
+   photograph carries both — the neon on the wall names the room, the monitor
+   you are pointing at is self-evident — so these are here for screen readers
+   only. The phone layout below unhides them, because there it has no
+   photograph to carry anything. */
+.desk-head,
+.desk-screen-blurb {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 .desk {
   display: grid;
   place-items: center;
@@ -3616,32 +3643,6 @@ button.screen:active {
    labels sit under the picture as a plain row of links instead, and the
    monitors stop pretending to be buttons. */
 @media (max-width: 40rem) {
-  .desk {
-    align-content: center;
-    gap: var(--s-5);
-  }
-
-  .desk-screens {
-    position: static;
-    display: grid;
-    gap: var(--s-3);
-    margin-block-start: var(--s-5);
-  }
-
-  .desk-screens > li {
-    position: static;
-    width: auto !important;
-    height: auto !important;
-  }
-
-  .desk-screen {
-    position: static;
-    justify-items: start;
-    padding: var(--s-4) var(--s-5);
-    border: 1px solid color-mix(in oklab, var(--neon-cyan) 45%, transparent);
-    border-radius: var(--radius-lg);
-    background: color-mix(in oklab, var(--card) 80%, transparent);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -4167,5 +4168,185 @@ button.screen:active {
 @media (max-width: 40rem) {
   .sq-caption {
     display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Phones: one world, one language.
+ *
+ * On a wide viewport a room is a photograph you stand in and the crossroads
+ * is somewhere else. On a phone neither of those survived: the photograph
+ * shrank to a letterbox and the rooms became flat near-black documents —
+ * a grey rule, a column of grey links, a title. The hero was the only screen
+ * with any of the fest on it, and everything you could reach from it looked
+ * like a different, sadder site.
+ *
+ * So below the hub's own breakpoint there are no interiors. Every page sits
+ * on the crossroads, and anything you can tap is built the way the signs on
+ * that crossroads are built: accent glass, a neon edge, a little bloom.
+ * ------------------------------------------------------------------ */
+
+@media (max-width: 48rem) {
+  /* The world, once, behind everything. Fixed rather than scrolled: these
+     pages run several screens long and a cover-sized backdrop stretched down
+     all of it turns the street into a smear. */
+  .page,
+  .desk {
+    background: transparent;
+  }
+
+  .page::before,
+  .desk::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(
+        180deg,
+        oklch(0.12 0.026 265 / 0.82) 0%,
+        oklch(0.11 0.024 265 / 0.93) 55%,
+        oklch(0.1 0.022 265 / 0.97) 100%
+      ),
+      url("/media/crossroads.webp") center / cover no-repeat;
+    pointer-events: none;
+  }
+
+  /* The room's photograph is the interior, and there is no interior here.
+     It was a 16:9 letterbox of a desk with the actual destinations listed
+     underneath it — the picture took the space and the links did the work. */
+  .desk-room {
+    display: none;
+  }
+
+  .desk {
+    min-height: 0;
+    padding: calc(var(--s-8) + var(--s-4)) var(--gutter) var(--s-9);
+    place-items: stretch;
+  }
+
+  .desk-frame {
+    margin-inline: auto;
+    max-width: 52rem;
+  }
+
+  /* Out of the photograph's coordinate space and into ordinary flow. This
+     used to live at 40rem while the rule hiding the photograph is at 48rem,
+     and between the two the links stayed absolutely positioned over a room
+     that was no longer there: measured 120x0 and 131x0 at 700px and 760px —
+     three destinations with no height, unreachable. One breakpoint now. */
+  .desk-screens {
+    position: static;
+    display: grid;
+    gap: var(--s-3);
+    margin-block-start: 0;
+  }
+
+  .desk-screens > li {
+    position: static;
+    /* Beats the percentage geometry the component sets inline, which is
+       measured off the photograph. */
+    width: auto !important;
+    height: auto !important;
+  }
+
+  .desk-head,
+  .desk-screen-blurb {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+  }
+
+  .desk-head {
+    margin-bottom: var(--section);
+  }
+
+  .desk-screen {
+    position: static;
+    display: grid;
+    gap: 0.2rem;
+    place-items: start;
+    text-align: left;
+  }
+
+  /* Sized against the card's own width by a container query, which on a
+     phone works out at the 0.7rem floor — eleven pixels of tracked-out caps
+     for the only thing on the card. */
+  .desk-screen-label {
+    font-size: var(--text-base);
+    letter-spacing: 0.12em;
+  }
+
+  .desk-screen-blurb {
+    font-size: var(--text-xs);
+    line-height: 1.35;
+    color: oklch(0.99 0 0 / 0.72);
+  }
+
+  /* One panel, three places: the room's destinations, the FAQ's questions,
+     and the form's events. Same build as a sign on the crossroads — accent
+     glass over the street, a neon edge, a bloom off it. */
+  .desk-screen,
+  .faq-item,
+  .event-pick {
+    border: 0;
+    border-radius: var(--radius-md);
+    background: color-mix(in oklab, var(--panel-accent) 15%, oklch(0.16 0.03 265 / 0.84));
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--panel-accent) 48%, transparent),
+      0 0 22px color-mix(in oklab, var(--panel-accent) 16%, transparent);
+  }
+
+  .desk-screen {
+    --panel-accent: var(--neon-cyan);
+    min-height: 3.5rem;
+    padding: var(--s-4) var(--s-5);
+  }
+
+  .faq {
+    display: grid;
+    gap: var(--s-2);
+    border-top: 0;
+  }
+
+  .faq-item {
+    --panel-accent: var(--neon-violet);
+    border-bottom: 0;
+    overflow: hidden;
+  }
+
+  .faq-trigger,
+  .faq-panel-inner {
+    padding-inline: var(--s-4);
+  }
+
+  .event-pick {
+    --panel-accent: var(--neon-cyan);
+    padding: var(--s-4);
+  }
+
+  /* A ticked event has to read as ticked across a row of six, from arm's
+     length, on a bright day. */
+  .event-pick:has(input:checked) {
+    background: color-mix(in oklab, var(--neon-cyan) 26%, oklch(0.16 0.03 265 / 0.84));
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--neon-cyan) 85%, transparent),
+      0 0 26px color-mix(in oklab, var(--neon-cyan) 28%, transparent);
+  }
+
+  /* Seven destinations in one grey column ran most of a screen on its own,
+     and the way out of a page should not be a scroll. */
+  .footer-links {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--s-1) var(--s-4);
+  }
+
+  .site-footer {
+    background: oklch(0.1 0.022 265 / 0.92);
   }
 }

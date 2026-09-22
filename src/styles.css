@@ -2835,7 +2835,20 @@ button.screen:active {
 
 .crossroads-footer-nav {
   pointer-events: auto;
+  box-sizing: border-box;
   max-width: calc(100dvw - 2rem);
+  /* The pill is drawn here, not on the <ul> inside it. The <ul> is the
+     scroller: below about 430px the six labels do not fit, and a scroller
+     that carries its own background cannot fade its trailing edge without
+     fading the pill out from under itself. Split in two, the pill holds its
+     shape and the row of labels inside it can say "there is more this way".
+     Without that, the last label simply stopped at the pill's edge, which
+     reads as a clipped nav rather than a scrollable one. */
+  padding: var(--s-2) var(--s-5);
+  border-radius: 999px;
+  background: oklch(0.14 0.028 265 / 0.72);
+  box-shadow: inset 0 0 0 1px var(--border);
+  backdrop-filter: blur(14px) saturate(150%);
   /* Hidden — not merely faded — until the hub is actually the thing on
      screen: the descent is one long route, and this pill floats "on the
      road" specifically, not over the moon during the aerial beat or the
@@ -2870,12 +2883,8 @@ button.screen:active {
   align-items: center;
   gap: clamp(var(--s-4), 3vw, var(--s-6));
   margin: 0;
-  padding: var(--s-2) var(--s-5);
+  padding: 0;
   list-style: none;
-  border-radius: 999px;
-  background: oklch(0.14 0.028 265 / 0.72);
-  box-shadow: inset 0 0 0 1px var(--border);
-  backdrop-filter: blur(14px) saturate(150%);
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scrollbar-width: none;
@@ -2954,10 +2963,32 @@ button.screen:active {
   width: 100%;
 }
 
+/* Measured, at the site's own type: the six labels are 285px of text, so
+   the row is 285 + 5 gaps + 2 paddings. At the wide spacing that came to
+   397px and overflowed every phone. At 8px gaps and 8px of pill padding it
+   is 341px, which fits from 373px up — every iPhone from the SE on, and the
+   common Android widths. */
 @media (max-width: 30rem) {
+  .crossroads-footer-nav {
+    padding-inline: var(--s-2);
+  }
+
   .crossroads-footer-nav ul {
-    gap: var(--s-4);
-    padding: var(--s-2) var(--s-4);
+    gap: var(--s-2);
+  }
+}
+
+/* Narrower than that it genuinely does not fit, and it scrolls. The fade is
+   so that reads as a scroller rather than as a label someone cut in half:
+   the last word runs out instead of stopping dead at the pill's edge.
+
+   372px is where the arithmetic above crosses over: the row is 325px and
+   the pill reserves 48px of margin and padding, so anything wider has room
+   to spare and must not be faded — a fade over a row that fits would dim a
+   label for no reason. */
+@media (max-width: 23.25rem) {
+  .crossroads-footer-nav ul {
+    mask-image: linear-gradient(to right, #000 calc(100% - 1.25rem), transparent);
   }
 }
 

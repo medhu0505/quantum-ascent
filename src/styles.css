@@ -355,6 +355,9 @@
     opacity var(--dur-3) linear var(--dur-4);
   /* Lifts from the bottom edge, the way the descent moves. */
   clip-path: inset(0 0 0 0);
+  /* See the failsafe below: this is the only thing that gets a visitor into
+     the site when the script never runs. */
+  animation: preloader-failsafe var(--dur-5) var(--ease) 8s forwards;
 }
 
 .preloader[data-done] {
@@ -362,6 +365,29 @@
   opacity: 0;
   pointer-events: none;
   visibility: hidden;
+}
+
+/* The failsafe.
+ *
+ * Everything above depends on an attribute that JavaScript sets, over an
+ * opaque fixed layer at z-index 300 that covers the entire site. So when the
+ * script does not arrive — a chunk that 404s, a hydration that throws, a
+ * bundle still in flight on a bad connection — the curtain never lifts.
+ * Measured with scripting off: 0%, no data-done, and the page underneath
+ * unreachable. Not a rare state on school wifi, and there is no way out of
+ * it from the visitor's side but a reload that hits the same wall.
+ *
+ * This lifts it regardless, because CSS is already parsed by the time it
+ * matters. The 8s delay clears the 6s the script is allowed, so on any
+ * normal load the attribute has long since won and this animation finishes
+ * by applying an end state the element is already sitting in. */
+@keyframes preloader-failsafe {
+  to {
+    clip-path: inset(0 0 100% 0);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
 }
 
 /* The film's first frame, sunk right back so the curtain is not flat black

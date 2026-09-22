@@ -1144,38 +1144,6 @@
 }
 
 
-/* A sign across the junction with a failing ballast. */
-.ambient-flicker {
-  position: absolute;
-  background: color-mix(in oklab, var(--neon-magenta) 60%, transparent);
-  mix-blend-mode: screen;
-  filter: blur(1.5px);
-  animation: flicker 7s steps(1, end) infinite;
-}
-
-@keyframes flicker {
-  0%,
-  40%,
-  44%,
-  100% {
-    opacity: 0.45;
-  }
-  41%,
-  43% {
-    opacity: 0.05;
-  }
-  42% {
-    opacity: 0.7;
-  }
-  70%,
-  72% {
-    opacity: 0.1;
-  }
-  71% {
-    opacity: 0.55;
-  }
-}
-
 /* Headlights crossing the junction, well behind the signage. */
 .ambient-pass {
   position: absolute;

@@ -364,7 +364,7 @@ export function RegisterFormBody({
   return (
     <PageShell
       title="Register"
-      lede="One form covers every event. Enter the team lead's details, tick everything you are entering, and list the rest of the team under them. A teacher entering a school's teams fills this in once per team."
+      lede="One form covers every event. Enter the team lead's details, tick everything you are entering, and list the rest of the team under them. Entering more than one team? Fill this in once per team."
       registerChip={false}
     >
       {!registrationOpen ? (

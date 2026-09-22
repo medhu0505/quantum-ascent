@@ -9,7 +9,7 @@ export const Route = createFileRoute("/")({
   head: () => {
     const base = seo({
       title: "Inter-school tech & culture fest",
-      description: `${fest.fullName} at ${school.name}: six inter-school events — Quiz, Film Making, Ad Shoot, Online Gaming, Pitch and one sealed Surprise. Register your school.`,
+      description: `${fest.fullName} at ${school.name}: six inter-school events — Quiz, Film Making, Ad Shoot, Online Gaming, Pitch and one sealed Surprise. Register for the events.`,
       path: "/",
     });
     return {

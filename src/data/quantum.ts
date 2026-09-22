@@ -288,7 +288,7 @@ export const scenes: Scene[] = [
   {
     id: "register",
     label: "Register",
-    blurb: "Get your school on the list.",
+    blurb: "Pick your events and enter.",
     to: "/register",
     accent: "magenta",
     sign: {

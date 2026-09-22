@@ -52,7 +52,7 @@ function About() {
         </ul>
         <div className="page-actions">
           <Link to="/register/form" className="btn btn-accent" data-magnetic>
-            Register your school
+            Register for the events
           </Link>
           <Link to="/events" className="btn btn-ghost" data-magnetic>
             Read the full event details

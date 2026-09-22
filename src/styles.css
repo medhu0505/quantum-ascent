@@ -440,6 +440,23 @@
   color: var(--neon-cyan);
 }
 
+/* Only a phone gets told this, because only a phone is being warned about
+   something. Desktop is the version the thing was drawn for. */
+.preloader-note {
+  display: none;
+}
+
+@media (max-width: 48rem) {
+  .preloader-note {
+    display: block;
+    margin: var(--s-4) 0 0;
+    max-width: 22rem;
+    font-size: var(--text-xs);
+    line-height: 1.5;
+    color: var(--muted-foreground);
+  }
+}
+
 .preloader-track {
   display: block;
   width: min(48vw, 18rem);
@@ -3005,34 +3022,11 @@ button.screen:active {
   width: 100%;
 }
 
-/* Measured, at the site's own type: the six labels are 285px of text, so
-   the row is 285 + 5 gaps + 2 paddings. At the wide spacing that came to
-   397px and overflowed every phone. At 8px gaps and 8px of pill padding it
-   is 341px, which fits from 373px up — every iPhone from the SE on, and the
-   common Android widths. */
-@media (max-width: 30rem) {
-  .crossroads-footer-nav {
-    padding-inline: var(--s-2);
-  }
-
-  .crossroads-footer-nav ul {
-    gap: var(--s-2);
-  }
-}
-
-/* Narrower than that it genuinely does not fit, and it scrolls. The fade is
-   so that reads as a scroller rather than as a label someone cut in half:
-   the last word runs out instead of stopping dead at the pill's edge.
-
-   372px is where the arithmetic above crosses over: the row is 325px and
-   the pill reserves 48px of margin and padding, so anything wider has room
-   to spare and must not be faded — a fade over a row that fits would dim a
-   label for no reason. */
-@media (max-width: 23.25rem) {
-  .crossroads-footer-nav ul {
-    mask-image: linear-gradient(to right, #000 calc(100% - 1.25rem), transparent);
-  }
-}
+/* The pill's own narrow-width tuning used to live here: tighter gaps so the
+   six labels fit, and a trailing fade below 372px where they cannot. Both
+   are gone with it — the pill is display:none below 48rem now, and the menu
+   button carries a phone's navigation, so nothing here was ever reached. The
+   pill only renders at widths that had room for it all along. */
 
 @media (prefers-reduced-motion: reduce) {
   .crossroads-footer-nav a,
@@ -4172,6 +4166,161 @@ button.screen:active {
 }
 
 /* ------------------------------------------------------------------ *
+ * The phone's menu bar.
+ * ------------------------------------------------------------------ */
+
+/* Desktop has the pill on the road and does not need this at all. */
+.menu {
+  display: none;
+}
+
+.menu-button {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  /* Over the chips and the phase veil, under the skip link so a keyboard can
+     always reach that, and well under the preloader. */
+  z-index: 96;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: oklch(0.1 0.03 265 / 0.86);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--neon-cyan) 40%, transparent);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+}
+
+.menu-button:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 3px;
+}
+
+.menu-bars {
+  display: grid;
+  gap: 4px;
+  width: 1.05rem;
+}
+
+.menu-bars > span {
+  display: block;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--foreground);
+  transition:
+    transform var(--dur-ui) var(--ease-out),
+    opacity var(--dur-fast) linear;
+}
+
+/* Three lines into a cross: the outer two meet in the middle and turn, the
+   middle one goes. */
+.menu-button[aria-expanded="true"] .menu-bars > span:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.menu-button[aria-expanded="true"] .menu-bars > span:nth-child(2) {
+  opacity: 0;
+}
+
+.menu-button[aria-expanded="true"] .menu-bars > span:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+.menu-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 5rem var(--gutter) var(--s-7);
+  background:
+    linear-gradient(180deg, oklch(0.07 0.026 265 / 0.95), oklch(0.06 0.022 265 / 0.98)),
+    url("/media/crossroads.webp") center / cover no-repeat;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-1.5rem);
+  transition:
+    opacity var(--dur-ui) var(--ease-out),
+    transform var(--dur-3) var(--ease),
+    visibility 0s var(--dur-3);
+}
+
+.menu-panel[data-open] {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition:
+    opacity var(--dur-ui) var(--ease-out),
+    transform var(--dur-3) var(--ease);
+}
+
+.menu-panel ul {
+  display: grid;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  max-width: 32rem;
+  margin-inline: auto;
+  list-style: none;
+}
+
+/* Same build as a sign on the crossroads and as every other panel on a
+   phone: accent glass, a neon edge, a little bloom. */
+.menu-panel a {
+  display: grid;
+  gap: 0.15rem;
+  min-height: 3.75rem;
+  align-content: center;
+  padding: var(--s-4) var(--s-5);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 16%, oklch(0.15 0.03 265 / 0.86));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 52%, transparent),
+    0 0 22px color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 18%, transparent);
+  text-decoration: none;
+  color: var(--foreground);
+}
+
+.menu-panel a:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 3px;
+}
+
+.menu-label {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-shadow: 0 0 0.6em color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 60%, transparent);
+}
+
+.menu-note {
+  font-size: var(--text-xs);
+  line-height: 1.35;
+  color: oklch(0.99 0 0 / 0.7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-panel {
+    transform: none;
+    transition:
+      opacity var(--dur-ui) linear,
+      visibility 0s var(--dur-ui);
+  }
+
+  .menu-panel[data-open] {
+    transform: none;
+  }
+
+  .menu-bars > span {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------------ *
  * Phones: one world, one language.
  *
  * On a wide viewport a room is a photograph you stand in and the crossroads
@@ -4347,6 +4496,51 @@ button.screen:active {
   }
 
   .site-footer {
-    background: oklch(0.1 0.022 265 / 0.92);
+    background: oklch(0.08 0.024 265 / 0.94);
+  }
+
+  /* Darker ground, hotter neon. The palette was tuned on a desktop panel in
+     a room; a phone is held at arm's length, often outdoors, usually with
+     the brightness turned down, and the same values go muddy. Dropping the
+     ground and lifting the chroma is what keeps the neon reading as neon
+     rather than as grey-blue with a tint. Scoped here, so the desktop
+     palette is untouched. */
+  :root {
+    --ink: oklch(0.085 0.03 265);
+    --background: oklch(0.085 0.03 265);
+    --card: oklch(0.165 0.038 267);
+    --neon-cyan: oklch(0.85 0.155 215);
+    --neon-magenta: oklch(0.72 0.25 325);
+    --neon-violet: oklch(0.68 0.215 280);
+    --border: oklch(1 0 0 / 16%);
+  }
+
+  .page::before,
+  .desk::before {
+    background:
+      linear-gradient(
+        180deg,
+        oklch(0.085 0.03 265 / 0.8) 0%,
+        oklch(0.075 0.026 265 / 0.93) 55%,
+        oklch(0.07 0.024 265 / 0.97) 100%
+      ),
+      url("/media/crossroads.webp") center / cover no-repeat;
+  }
+
+  /* One navigation, not two. The pill carries the same six destinations the
+     menu does, and below this width it could not even hold their labels —
+     the row is 325px against a viewport that gives it 272 at 320px. */
+  .crossroads-footer {
+    display: none;
+  }
+
+  /* The Register chip sat exactly where the menu button goes, and Register
+     is the first thing in the menu. */
+  .chip-right {
+    display: none;
+  }
+
+  .menu {
+    display: block;
   }
 }

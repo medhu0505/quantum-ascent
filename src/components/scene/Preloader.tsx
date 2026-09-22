@@ -114,6 +114,11 @@ export function Preloader() {
         <span className="preloader-track" aria-hidden="true">
           <span className="preloader-bar" style={{ transform: `scaleX(${progress})` }} />
         </span>
+        {/* Shown on a phone only — see styles.css. The descent is a film
+            scrubbed by a 620vh scroll and the crossroads is a 1920-wide
+            plate; a phone gets a real version of both, but not the one this
+            was drawn for. */}
+        <p className="preloader-note">For the best experience, visit on a laptop.</p>
       </div>
       <img className="preloader-poster" src={descentFilm.poster} alt="" aria-hidden="true" />
     </div>

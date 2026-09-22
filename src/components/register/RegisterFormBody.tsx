@@ -101,14 +101,7 @@ function validateMembers(list: Participant[]): MemberErrors[] {
   });
 }
 
-const FIELD_ORDER: (keyof Fields)[] = [
-  "student",
-  "school",
-  "grade",
-  "email",
-  "phone",
-  "discord",
-];
+const FIELD_ORDER: (keyof Fields)[] = ["student", "school", "grade", "email", "phone", "discord"];
 
 const MEMBER_ORDER: (keyof Participant)[] = ["name", "grade", "phone", "discord", "email"];
 
@@ -158,11 +151,7 @@ function describeFailure(reply: Extract<BackendReply, { ok: false }>): string {
   return "The registration server could not save this entry. Your answers are still here, so try again in a minute.";
 }
 
-export function RegisterFormBody({
-  preselectedEvent,
-}: {
-  preselectedEvent?: string | undefined;
-}) {
+export function RegisterFormBody({ preselectedEvent }: { preselectedEvent?: string | undefined }) {
   const registrationOpen = !isTodo(REGISTRATION_ENDPOINT);
 
   const [values, setValues] = useState<Fields>({
@@ -178,9 +167,7 @@ export function RegisterFormBody({
    * `values` because that is trimmed as a map of strings on submit, and
    * because a set of chosen ids is not a form field's value.
    */
-  const [picked, setPicked] = useState<string[]>(
-    preselectedEvent ? [preselectedEvent] : [],
-  );
+  const [picked, setPicked] = useState<string[]>(preselectedEvent ? [preselectedEvent] : []);
   const [members, setMembers] = useState<Participant[]>([]);
   const [errors, setErrors] = useState<Errors>({});
   const [memberErrors, setMemberErrors] = useState<MemberErrors[]>([]);

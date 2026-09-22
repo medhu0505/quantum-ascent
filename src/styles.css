@@ -2771,6 +2771,16 @@ button.screen:active {
 
 /* ---- Footer --------------------------------------------------------- */
 
+/* An interior has no footer on a wide viewport: the room is the page, the
+   chrome floats over the photograph, and a footer under it would be a second
+   page stapled to the bottom of a picture. On a phone there is no photograph
+   and no room — see the phone block at the end of this file — so what is left
+   is a short column of cards and then nothing, and the way out of a page
+   should not be a scroll back to the top. */
+.interior-footer {
+  display: none;
+}
+
 .site-footer {
   padding: var(--s-7) var(--s-4) var(--s-7);
   border-top: 1px solid var(--border);
@@ -4157,10 +4167,17 @@ button.screen:active {
   }
 }
 
-/* Too narrow for it. The card is square here (see --sq-aspect above) and
-   mostly picture, so the copy goes back to the paragraph under the rail. */
+/* The card is square here (see --sq-aspect above), and the whole caption was
+   dropped on the grounds that it is "mostly picture". There is no picture:
+   there are no event photographs and there will not be any before the fest
+   runs, so the panel is a lit gradient. What a phone actually got was a blank
+   coloured square taking the top third of the page with the event's name
+   nowhere on it.
+   The name and the tagline go back on. The description does not — it would
+   not fit a square at this size, and it is already in the paragraph under the
+   rail, which is also what the live region reads out on a change. */
 @media (max-width: 40rem) {
-  .sq-caption {
+  .rail-blurb {
     display: none;
   }
 }
@@ -4541,6 +4558,10 @@ button.screen:active {
   }
 
   .menu {
+    display: block;
+  }
+
+  .interior-footer {
     display: block;
   }
 }

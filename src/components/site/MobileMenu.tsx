@@ -25,7 +25,12 @@ const ITEMS: Item[] = [
   { to: "/events", label: "Events", note: "The six, and how each one runs.", accent: "cyan" },
   { to: "/team", label: "Meet the Team", note: "The students running it.", accent: "cyan" },
   { to: "/faq", label: "FAQ", note: "The questions we get asked.", accent: "violet" },
-  { to: "/about", label: "About", note: "What Quantum is, and how it is scored.", accent: "violet" },
+  {
+    to: "/about",
+    label: "About",
+    note: "What Quantum is, and how it is scored.",
+    accent: "violet",
+  },
   { to: "/contact", label: "Contact", note: "Reach the organising team.", accent: "magenta" },
   { to: "/", label: "Crossroads", note: "Back out to the street.", accent: "magenta" },
 ];

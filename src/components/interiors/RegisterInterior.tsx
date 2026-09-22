@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useLayoutEffect } from "react";
 import { ExitToCrossroads } from "@/components/site/Bits";
-import { CrossroadsFooter } from "@/components/site/PageShell";
+import { CrossroadsFooter, SiteFooter } from "@/components/site/PageShell";
 import { events, fest, getScene } from "@/data/quantum";
 
 /**
@@ -47,8 +47,8 @@ export function RegisterInterior() {
           <p className="eyebrow">{fest.fullName}</p>
           <h1 className="page-title">{scene.label}</h1>
           <p className="page-lede">
-            One form covers every event. Classes 9 to 12, enter as many events as you can
-            attend, and list your team on the same form.
+            One form covers every event. Classes 9 to 12, enter as many events as you can attend,
+            and list your team on the same form.
           </p>
         </header>
 
@@ -77,6 +77,11 @@ export function RegisterInterior() {
           </ul>
         </div>
       </main>
+
+      {/* Phones only; see .interior-footer in styles.css. */}
+      <div className="interior-footer">
+        <SiteFooter />
+      </div>
     </>
   );
 }

@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ExitToCrossroads, RegisterChip } from "@/components/site/Bits";
-import { CrossroadsFooter } from "@/components/site/PageShell";
+import { CrossroadsFooter, SiteFooter } from "@/components/site/PageShell";
 import { faqs, fest, getScene } from "@/data/quantum";
 
 /**
@@ -70,8 +70,8 @@ export function ResourcesInterior() {
           <p className="eyebrow">{fest.fullName}</p>
           <h1 className="page-title">{scene.label}</h1>
           <p className="page-lede">
-            Everything about Quantum that is not an event: what it is, the questions we get
-            asked, and how to reach the people running it.
+            Everything about Quantum that is not an event: what it is, the questions we get asked,
+            and how to reach the people running it.
           </p>
         </header>
 
@@ -111,6 +111,11 @@ export function ResourcesInterior() {
           </ul>
         </div>
       </main>
+
+      {/* Phones only; see .interior-footer in styles.css. */}
+      <div className="interior-footer">
+        <SiteFooter />
+      </div>
     </>
   );
 }

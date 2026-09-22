@@ -176,6 +176,23 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  /*
+   * Analytics, off unless VITE_FIREBASE_ANALYTICS is exactly "true". Off by
+   * default because gtag is a third-party request on every route, and this
+   * site's standing property — asserted by a test — is that there are none.
+   *
+   * The flag is read here rather than only inside startAnalytics, and the
+   * import is dynamic. This is the root component, so its effect runs on
+   * every route: importing first and checking the flag afterwards fetched
+   * src/lib/firebase.ts on every page view to have it decide, almost always,
+   * to do nothing. Checking first means a deployment with analytics off never
+   * requests the module at all.
+   */
+  useEffect(() => {
+    if (import.meta.env["VITE_FIREBASE_ANALYTICS"] !== "true") return;
+    void import("@/lib/firebase").then((m) => m.startAnalytics());
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <SmoothScroll>

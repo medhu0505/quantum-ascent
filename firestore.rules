@@ -1,0 +1,129 @@
+rules_version = '2';
+
+/**
+ * Quantum V2.0 registrations.
+ *
+ * The form is public and unauthenticated, so these rules are the only
+ * server-side check the collection gets. They are written to be that check,
+ * not a reminder of one: everything the browser validates is validated again
+ * here, because the project id is in the client bundle and anyone can talk to
+ * Firestore's REST API without ever loading the form.
+ *
+ * Three properties are enforced rather than assumed.
+ *
+ *   1. Create only. No read, no update, no delete, for anybody. Entries carry
+ *      school students' names, phone numbers and email addresses, and nothing
+ *      client-side is allowed to see them. Organisers read the collection
+ *      through the console or the Admin SDK, both of which bypass rules.
+ *
+ *   2. The document id is SHA-256 of the lowercased lead email and the chosen
+ *      events. A create only succeeds on a document that does not exist yet,
+ *      so that one fact is the one-entry-per-email-per-event-set limit,
+ *      enforced by the database rather than by the client's good manners.
+ *      Without the hash check in keyOk, a client could pick its own ids and
+ *      write the same entrant a thousand times.
+ *
+ *   3. The visible id is the first eight hex digits of that hash, uppercased,
+ *      so a duplicate can be answered with the original id having read nothing.
+ *
+ * Shape limits — event ids, classes, field lengths, team size — mirror
+ * src/lib/registrations.ts exactly, and tests/firestore-rules.test.mjs runs
+ * both against the emulator. Change one, run those.
+ *
+ * On style: the checks below are inlined and repetitive where a helper would
+ * read better. Rules are capped at 1000 expression evaluations per request,
+ * and the first draft of this file — same checks, factored into text() and
+ * optional() helpers — blew that cap on a full five-member team. It failed
+ * only for the largest teams, which is the worst way for a limit to be found.
+ * Helpers are call-by-value, so `optional(m.grade, m.grade in classes())`
+ * evaluated the list build and the lookup even for an empty field, five times
+ * over. The unrolling stays.
+ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * Canonical: the declared order, no repeats, nothing unknown. Removing the
+     * complement leaves the declared order filtered to what was chosen, so one
+     * comparison covers subset, uniqueness and ordering at once. It has to
+     * hold, because the document id is a hash of this list joined — a
+     * reordered list would hash elsewhere and slip past the duplicate check.
+     */
+    function eventsOk(list) {
+      let all = ['quiz', 'film-making', 'ad-shoot', 'surprise', 'online-gaming', 'pitch'];
+      return list is list
+        && list.size() >= 1
+        && all.removeAll(all.removeAll(list)) == list;
+    }
+
+    /**
+     * Ten digits once everything that is not one is stripped, so +91, spaces
+     * and brackets all pass and "call the school" does not.
+     */
+    function memberOk(m) {
+      return m.keys().hasOnly(['name', 'grade', 'phone', 'discord', 'email'])
+        && m.name is string && m.name.size() > 0 && m.name.size() <= 120
+        && m.grade is string && (m.grade == '' || m.grade in ['9', '10', '11', '12'])
+        && m.phone is string && m.phone.size() <= 120
+        && (m.phone == '' || m.phone.replace('[^0-9]', '').size() >= 10)
+        && m.discord is string && m.discord.size() <= 120
+        && (m.discord == '' || m.discord.matches('^\\S{2,37}$'))
+        && m.email is string && m.email.size() <= 120
+        && (m.email == '' || m.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$'));
+    }
+
+    /**
+     * Unrolled to the maximum team size, because rules have no loop. Checking
+     * only the list's length would leave every member field unvalidated, and
+     * that is most of the personal data in the document.
+     */
+    function membersOk(list) {
+      return list is list
+        && list.size() <= 5
+        && (list.size() < 1 || memberOk(list[0]))
+        && (list.size() < 2 || memberOk(list[1]))
+        && (list.size() < 3 || memberOk(list[2]))
+        && (list.size() < 4 || memberOk(list[3]))
+        && (list.size() < 5 || memberOk(list[4]));
+    }
+
+    /** The id is derived, never supplied: both halves are recomputed here. */
+    function keyOk(key, data) {
+      return key.lower() ==
+          hashing.sha256(data.emailLower + '|' + data.events.join(',')).toHexString().lower()
+        && data.id == 'QV2-' + key[0:8].upper();
+    }
+
+    /**
+     * No hasAll beside the hasOnly: reading a key that is not there is an
+     * error, and an error denies the write. A missing field fails on the
+     * check that reads it.
+     */
+    function registrationOk(key, data) {
+      return data.keys().hasOnly(['id', 'type', 'student', 'school', 'grade', 'email',
+          'emailLower', 'phone', 'discord', 'events', 'members', 'teamSize', 'createdAt'])
+        && data.type in ['individual', 'school']
+        && data.student is string && data.student.size() > 0 && data.student.size() <= 120
+        && data.school is string && data.school.size() > 0 && data.school.size() <= 120
+        && data.grade in ['9', '10', '11', '12']
+        && data.email is string && data.email.size() > 0 && data.email.size() <= 120
+        && data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$')
+        && data.emailLower == data.email.lower()
+        && data.phone is string && data.phone.size() <= 120
+        && data.phone.replace('[^0-9]', '').size() >= 10
+        && data.discord is string && data.discord.size() <= 120
+        && (data.discord == '' || data.discord.matches('^\\S{2,37}$'))
+        && data.teamSize == data.members.size() + 1
+        && data.createdAt == request.time
+        && eventsOk(data.events)
+        && membersOk(data.members)
+        && keyOk(key, data);
+    }
+
+    match /registrations/{key} {
+      allow create: if registrationOk(key, request.resource.data);
+      allow read, update, delete: if false;
+    }
+  }
+}

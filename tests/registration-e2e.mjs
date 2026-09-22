@@ -82,7 +82,7 @@ page.on("console", (m) => {
   if (m.type() === "error") console.log("      [console]", m.text());
 });
 page.on("pageerror", (e) => console.log("      [pageerror]", e.message));
-const formResponse = await page.goto(`${BASE}/register/form/individual`, {
+const formResponse = await page.goto(`${BASE}/register/form`, {
   waitUntil: "networkidle",
 });
 check("the form route returns 200", formResponse.status() === 200, String(formResponse.status()));
@@ -128,7 +128,7 @@ check(
 
 console.log("\n4. The same entry submitted twice must come back as the same id, once\n");
 
-await page.goto(`${BASE}/register/form/individual`, { waitUntil: "networkidle" });
+await page.goto(`${BASE}/register/form`, { waitUntil: "networkidle" });
 await fillForm();
 await page.click("button[type=submit]");
 await page.waitForSelector(".notice-ok", { timeout: 25_000 });
@@ -160,7 +160,7 @@ if (docs[0]) {
 
 console.log("\n5. The honeypot must never reach the database\n");
 
-await page.goto(`${BASE}/register/form/individual`, { waitUntil: "networkidle" });
+await page.goto(`${BASE}/register/form`, { waitUntil: "networkidle" });
 await page.fill("#field-student", "Bot");
 await page.fill("#field-school", "Nowhere");
 await page.selectOption("#field-grade", "9");

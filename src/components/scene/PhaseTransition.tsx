@@ -35,7 +35,6 @@ const PhaseContext = createContext<PhaseContextValue | null>(null);
 /** Matches --dur-scene in styles.css. */
 const PHASE_MS = 620;
 
-
 export function PhaseProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>(null);

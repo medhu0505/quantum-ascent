@@ -7,7 +7,7 @@ export const Route = createFileRoute("/register/")({
     seo({
       title: "Register",
       description:
-        "Register your school for Quantum V2.0. One form covers every event — classes 9 to 12, any participating school, more than one team per event allowed.",
+        "Register for Quantum V2.0. One form covers every event — classes 9 to 12, any participating school, and you can enter as many events as you can attend.",
       path: "/register",
     }),
   component: RegisterInterior,

@@ -259,14 +259,8 @@ resolve link targets in the margin — people print the event list before the da
 npm run build          # clean
 npm run typecheck      # clean
 npm run test:rules     # 42 checks, against the Firestore emulator
-npm run lint           # see below
+npm run lint           # clean
 ```
-
-`npm run lint` is not clean and was not clean before this work: `src/data/quantum.ts`
-has CRLF line endings and Prettier wants LF, which is one error per line. Normalising
-it is a one-command fix that rewrites every line of the file, so it is left for a
-commit of its own rather than buried in an unrelated diff. No other file reports an
-error.
 
 `tests/firestore-rules.test.mjs` runs `firestore.rules` against the emulator: the
 happy path, the closed collection, the duplicate limit and four ways to try to

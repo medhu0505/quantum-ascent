@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ExitToCrossroads, RegisterChip } from "@/components/site/Bits";
-import { CrossroadsFooter } from "@/components/site/PageShell";
-import { faqs, getScene } from "@/data/quantum";
+import { CrossroadsFooter, SiteFooter } from "@/components/site/PageShell";
+import { faqs, fest, getScene } from "@/data/quantum";
 
 /**
  * Resources: the desk.
@@ -61,9 +61,19 @@ export function ResourcesInterior() {
       <CrossroadsFooter variant="interior" />
 
       <main id="main" className="desk">
-        {/* The wall behind the desk already says Resources in neon. This is
-            the same word for anyone who cannot see it. */}
-        <h1 className="sr-only">{scene.label}</h1>
+        {/* The wall behind the desk already says Resources in neon, so on a
+            wide viewport this is only for anyone who cannot see it. On a
+            phone there is no wall — the photograph is gone and the room with
+            it — so the same markup becomes the page's actual header rather
+            than three cards floating with nothing to say what they are. */}
+        <header className="desk-head">
+          <p className="eyebrow">{fest.fullName}</p>
+          <h1 className="page-title">{scene.label}</h1>
+          <p className="page-lede">
+            Everything about Quantum that is not an event: what it is, the questions we get asked,
+            and how to reach the people running it.
+          </p>
+        </header>
 
         {/* The list is a sibling of the room, not a child of it. The room has
             to clip its own corners, and a clipping box cannot also let the
@@ -94,13 +104,18 @@ export function ResourcesInterior() {
               >
                 <Link to={s.to} className="desk-screen" data-cursor-label="Open">
                   <span className="desk-screen-label">{s.label}</span>
-                  <span className="sr-only">. {s.blurb}</span>
+                  <span className="desk-screen-blurb">{s.blurb}</span>
                 </Link>
               </li>
             ))}
           </ul>
         </div>
       </main>
+
+      {/* Phones only; see .interior-footer in styles.css. */}
+      <div className="interior-footer">
+        <SiteFooter />
+      </div>
     </>
   );
 }

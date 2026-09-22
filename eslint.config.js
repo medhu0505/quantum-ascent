@@ -6,7 +6,20 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", ".output", ".vinxi"] },
+  // Build output. Without .wrangler in here `npm run lint` walks the compiled
+  // worker bundle and never finishes — it ran fifteen minutes without
+  // reporting on a single source file.
+  {
+    ignores: [
+      "dist",
+      ".output",
+      ".vinxi",
+      ".wrangler",
+      ".vercel",
+      ".tanstack",
+      "src/routeTree.gen.ts",
+    ],
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],

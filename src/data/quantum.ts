@@ -235,12 +235,6 @@ export type SignGeometry = {
    * text does not.
    */
   clip: [number, number][];
-  /**
-   * How much of the scene's atmospheric haze sits between camera and panel,
-   * 0 (at the kerb) to 1 (far down the street). A panel that ignores the haze
-   * in the plate reads as being in front of the picture rather than in it.
-   */
-  haze: number;
   /** Stack the label vertically, for the tall blade sign. */
   vertical?: boolean;
   /**
@@ -286,7 +280,6 @@ export const scenes: Scene[] = [
         [100.0, 100.0],
         [0.0, 88.4],
       ],
-      haze: 0.45,
     },
     view: "/media/view-events.webp",
     room: "A control room lined with six screens, one per event.",
@@ -294,7 +287,7 @@ export const scenes: Scene[] = [
   {
     id: "register",
     label: "Register",
-    blurb: "Get your school on the list.",
+    blurb: "Pick your events and enter.",
     to: "/register",
     accent: "magenta",
     sign: {
@@ -308,7 +301,6 @@ export const scenes: Scene[] = [
         [100.0, 89.4],
         [0.0, 100.0],
       ],
-      haze: 0.45,
     },
     view: "/media/view-register.webp",
     room: "A gaming desk facing three monitors, the city outside the window behind it.",
@@ -330,7 +322,6 @@ export const scenes: Scene[] = [
         [100.0, 96.6],
         [0.0, 100.0],
       ],
-      haze: 0.4,
       compact: true,
     },
     view: "/media/view-team.webp",
@@ -353,7 +344,6 @@ export const scenes: Scene[] = [
         [100.0, 97.7],
         [0.0, 100.0],
       ],
-      haze: 0.3,
       vertical: true,
     },
     view: "/media/view-resources.webp",
@@ -376,7 +366,6 @@ export const scenes: Scene[] = [
         [94.6, 99.1],
         [0.0, 100.0],
       ],
-      haze: 0.35,
       vertical: true,
     },
     room: "A wall of the questions we are asked most, answered.",

@@ -89,6 +89,9 @@ const clamp = (value: number, low: number, high: number) => Math.max(low, Math.m
  */
 const SHARES = [-0.06, 0.61, 0.3, 0.15];
 
+/** Travel before a drag counts as a swipe rather than a tap that wandered. */
+const SWIPE_PX = 44;
+
 /** The hovered column takes more room. */
 const STRETCHED = [0, 0.71, 0.4, 0.25];
 
@@ -134,6 +137,8 @@ export type SqueezeCarouselProps = {
   accent?: string;
   accentForeground?: string;
   label?: string;
+  /** Sits opposite the arrows, saying how to drive the row. */
+  hint?: string;
   panelClassName?: string;
 } & Omit<ComponentProps<"div">, "onSelect">;
 
@@ -147,6 +152,7 @@ export function SqueezeCarousel({
   gap = 16,
   radius = 6,
   duration = 1000,
+  hint,
   hoverGrow = true,
   autoplay = false,
   interval = 6000,
@@ -217,6 +223,19 @@ export function SqueezeCarousel({
     const id = requestAnimationFrame(() => setStill(false));
     return () => cancelAnimationFrame(id);
   }, [still]);
+
+  /*
+   * Dragging the row.
+   *
+   * `touch-action: pan-y` on the strip leaves vertical scrolling to the
+   * browser and gives us the horizontal gesture. A drag is only a drag once
+   * it has travelled far enough and is more sideways than not — otherwise a
+   * thumb moving down the page would flick through the events on its way
+   * past. Every card is a button, so a completed drag also has to suppress
+   * the click it would otherwise end in.
+   */
+  const drag = useRef<{ x: number; y: number; id: number } | null>(null);
+  const dragged = useRef(false);
 
   const step = useCallback(
     (by: number) => {
@@ -349,13 +368,47 @@ export function SqueezeCarousel({
       {...props}
     >
       {controls && count > 1 && (
-        <div className="mb-4 flex justify-end gap-2">
-          <Arrow back label="Previous" onClick={() => step(-1)} />
-          <Arrow label="Next" onClick={() => step(1)} />
+        <div className="sq-controls mb-4 flex items-center justify-between gap-3">
+          {hint ? <p className="sq-hint">{hint}</p> : <span aria-hidden="true" />}
+          <div className="flex shrink-0 gap-2">
+            <Arrow back label="Previous" onClick={() => step(-1)} />
+            <Arrow label="Next" onClick={() => step(1)} />
+          </div>
         </div>
       )}
 
-      <div className="w-full overflow-hidden" style={{ height: "var(--sq-h)" }}>
+      <div
+        className="w-full overflow-hidden"
+        style={{ height: "var(--sq-h)", touchAction: "pan-y" }}
+        onPointerDown={(e) => {
+          if (e.pointerType === "mouse" && e.button !== 0) return;
+          drag.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
+          dragged.current = false;
+        }}
+        onPointerMove={(e) => {
+          const d = drag.current;
+          if (!d || d.id !== e.pointerId || dragged.current) return;
+          const dx = e.clientX - d.x;
+          const dy = e.clientY - d.y;
+          if (Math.abs(dx) < SWIPE_PX || Math.abs(dx) <= Math.abs(dy)) return;
+          dragged.current = true;
+          drag.current = null;
+          step(dx < 0 ? 1 : -1);
+        }}
+        onPointerUp={() => {
+          drag.current = null;
+        }}
+        onPointerCancel={() => {
+          drag.current = null;
+          dragged.current = false;
+        }}
+        onClickCapture={(e) => {
+          if (!dragged.current) return;
+          e.preventDefault();
+          e.stopPropagation();
+          dragged.current = false;
+        }}
+      >
         <div
           role="tablist"
           aria-label={label}

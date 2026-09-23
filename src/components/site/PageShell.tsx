@@ -68,7 +68,7 @@ export function SiteFooter() {
           <nav aria-label="Footer">
             <ul className="footer-links">
               <li>
-                <Link to="/">Crossroads</Link>
+                <Link to="/">Home</Link>
               </li>
               <li>
                 <Link to="/events">Events</Link>

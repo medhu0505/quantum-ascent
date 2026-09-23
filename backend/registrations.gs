@@ -9,6 +9,14 @@
  * CORS preflight, which Apps Script cannot answer. Everything the browser
  * checked is checked again here, because the endpoint is public and anyone
  * can call it without going through the form.
+ *
+ * Where the site is configured for Firebase, Firestore takes the entry first
+ * and this script receives a copy, so the sheet stays the surface the
+ * organisers actually work in. Those copies arrive carrying the id Firestore
+ * already issued, which suppliedId_ accepts so one registration does not end
+ * up with two different ids in two places. A request without one is minted an
+ * id here exactly as before, which is what happens when Firebase is not
+ * configured and this script is the whole backend.
  */
 
 const SHEET_NAME = 'Registrations';
@@ -93,6 +101,18 @@ function escape_(v) {
 
 function shortPhone_(s) {
   return s.replace(/\D/g, '').length < 10;
+}
+
+/**
+ * The registration id the caller already issued, if it is one.
+ *
+ * Only the exact QV2-XXXXXXXX shape is taken; anything else is discarded and
+ * an id is minted below. The value is written to a cell, so it is length- and
+ * pattern-checked here rather than trusted, same as every other field.
+ */
+function suppliedId_(body) {
+  const id = text_(body && body.id).toUpperCase();
+  return /^QV2-[0-9A-F]{8}$/.test(id) ? id : '';
 }
 
 /**
@@ -189,7 +209,7 @@ function doPost(e) {
       }
     }
 
-    const id = 'QV2-' + Utilities.getUuid().slice(0, 8).toUpperCase();
+    const id = suppliedId_(body) || 'QV2-' + Utilities.getUuid().slice(0, 8).toUpperCase();
     const row = [new Date(), id, lead.events.join(', '), lead.student, lead.school, lead.grade,
       lead.email, lead.phone, lead.discord, members.length + 1];
     for (let i = 0; i < MAX_MEMBERS; i++) {

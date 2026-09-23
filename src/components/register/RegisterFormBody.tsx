@@ -1,7 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { PageShell } from "@/components/site/PageShell";
-import { REGISTRATION_ENDPOINT, events, isTodo } from "@/data/quantum";
+import { events } from "@/data/quantum";
+import {
+  MAX_MEMBERS,
+  isRegistrationOpen,
+  submitRegistration,
+  type BackendReply,
+  type Participant,
+} from "@/lib/registrations";
 
 /**
  * The registration form.
@@ -16,12 +23,16 @@ import { REGISTRATION_ENDPOINT, events, isTodo } from "@/data/quantum";
  * aria-invalid, aria-describedby, focus on the first bad field, a live
  * region for the summary — stays explicit and testable.
  *
- * Submission deliberately has no fake success path. Until
- * REGISTRATION_ENDPOINT is set the form validates, keeps the visitor's input,
- * and says plainly that entries are not open yet. Once it is set, a
- * registration only counts as received when the sheet backend answers with
- * an ID. Accepting a registration that goes nowhere is worse than not
- * accepting one.
+ * Submission deliberately has no fake success path. Until a backend is
+ * configured — Firestore, or the Apps Script behind it — the form validates,
+ * keeps the visitor's input, and says plainly that entries are not open yet.
+ * Once one is, a registration only counts as received when that backend
+ * answers with an ID. Accepting a registration that goes nowhere is worse
+ * than not accepting one.
+ *
+ * Which backend that is, and everything about reaching it, lives in
+ * src/lib/registrations.ts. This file knows only that submitting returns a
+ * reply with an ID in it or does not.
  */
 
 type Fields = {
@@ -31,18 +42,6 @@ type Fields = {
   email: string;
   phone: string;
   discord: string;
-};
-
-/**
- * One of the other people on the team. The lead is entered above and is
- * participant one, so these start at two.
- */
-type Participant = {
-  name: string;
-  grade: string;
-  phone: string;
-  discord: string;
-  email: string;
 };
 
 /** `events` is not a Fields key — it is the checkbox group, which is a list. */
@@ -56,9 +55,6 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const DISCORD = /^\S{2,37}$/;
 
 const CLASSES = [9, 10, 11, 12];
-
-/** How many other members a team may list. The largest event is a team of 3. */
-const MAX_MEMBERS = 5;
 
 const BLANK: Participant = { name: "", grade: "", phone: "", discord: "", email: "" };
 
@@ -115,34 +111,10 @@ const MEMBER_LABEL: Record<keyof Participant, string> = {
 
 type Receipt = { id: string; duplicate: boolean };
 
-type BackendReply =
-  { ok: true; id: string; duplicate?: boolean } | { ok: false; error: string; field?: string };
-
-const SEND_TIMEOUT_MS = 20_000;
-
-/**
- * Apps Script cannot answer a CORS preflight, so the body goes as text/plain,
- * which keeps this a "simple" request. The script parses it as JSON.
- */
-async function sendRegistration(payload: unknown): Promise<BackendReply> {
-  const controller = new AbortController();
-  const timer = window.setTimeout(() => controller.abort(), SEND_TIMEOUT_MS);
-  try {
-    const res = await fetch(REGISTRATION_ENDPOINT, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(payload),
-      redirect: "follow",
-      signal: controller.signal,
-    });
-    if (!res.ok) return { ok: false, error: `http_${res.status}` };
-    return (await res.json()) as BackendReply;
-  } finally {
-    window.clearTimeout(timer);
-  }
-}
-
 function describeFailure(reply: Extract<BackendReply, { ok: false }>): string {
+  if (reply.error === "closed") {
+    return "Entries closed while this page was open. Nothing was submitted.";
+  }
   if (reply.error === "invalid") {
     return reply.field === "members"
       ? "One of the team member rows did not pass the server's checks. Check them and submit again."
@@ -152,7 +124,7 @@ function describeFailure(reply: Extract<BackendReply, { ok: false }>): string {
 }
 
 export function RegisterFormBody({ preselectedEvent }: { preselectedEvent?: string | undefined }) {
-  const registrationOpen = !isTodo(REGISTRATION_ENDPOINT);
+  const registrationOpen = isRegistrationOpen();
 
   const [values, setValues] = useState<Fields>({
     student: "",
@@ -270,7 +242,7 @@ export function RegisterFormBody({ preselectedEvent }: { preselectedEvent?: stri
       // ticked, so the same set always arrives as the same string and the
       // backend's one-entry-per-team check can compare them.
       const chosen = events.filter((ev) => picked.includes(ev.id)).map((ev) => ev.id);
-      sendRegistration({
+      submitRegistration({
         ...trimmed,
         type: "individual",
         events: chosen,

@@ -20,9 +20,15 @@ export function isTodo(value: string): boolean {
 }
 
 /**
- * The registration backend: a Google Apps Script web app bound to the
- * "Quantum V2.0 Registrations" sheet (source in backend/registrations.gs).
- * The form POSTs each entry here and the script appends one row.
+ * The Google Apps Script web app bound to the "Quantum V2.0 Registrations"
+ * sheet (source in backend/registrations.gs).
+ *
+ * No longer the only backend. When the Firebase environment variables are
+ * set, Firestore takes each entry and this endpoint receives a copy so the
+ * organisers' sheet keeps filling; when they are not, this is still the whole
+ * backend on its own. Either way nothing here decides that —
+ * src/lib/registrations.ts does, and `isRegistrationOpen()` is what the form
+ * asks. Leave it as the TODO and the site says entries are not open.
  */
 export const REGISTRATION_ENDPOINT =
   "https://script.google.com/macros/s/AKfycbwa6zpLvsYhGfnQOZTFf64d2wl6-oxAh8dMaLrprT8beOEHwBj1ynQ3cjKVwi8ZVVar/exec";

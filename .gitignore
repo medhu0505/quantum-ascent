@@ -40,7 +40,7 @@ package-lock.json
 .env.*
 !.env.example
 
-# Firebase
-.firebaserc
+# Firebase. .firebaserc is committed: it names the project, which is not a
+# secret and is already in the client bundle.
 firebase-debug.log
 firestore-debug.log

@@ -92,7 +92,7 @@ function Contact() {
             Read the FAQ
           </Link>
           <Link to="/register/form" className="btn btn-accent" data-magnetic>
-            Register your school
+            Register for the events
           </Link>
         </div>
       </section>

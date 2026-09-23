@@ -15,6 +15,7 @@ import { PhaseProvider } from "@/components/scene/PhaseTransition";
 import { SmoothScroll } from "@/components/scene/SmoothScroll";
 import { Cursor } from "@/components/scene/Cursor";
 import { RouteAnnouncer, SkipLink } from "@/components/site/Bits";
+import { MobileMenu } from "@/components/site/MobileMenu";
 import { SiteFooter } from "@/components/site/PageShell";
 import { crossroadsPlate, scenes } from "@/data/quantum";
 import { festJsonLd } from "@/lib/structured-data";
@@ -199,6 +200,7 @@ function RootComponent() {
           <SkipLink />
           <RouteAnnouncer />
           <Cursor />
+          <MobileMenu />
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
           <script

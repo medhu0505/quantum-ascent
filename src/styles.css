@@ -355,6 +355,9 @@
     opacity var(--dur-3) linear var(--dur-4);
   /* Lifts from the bottom edge, the way the descent moves. */
   clip-path: inset(0 0 0 0);
+  /* See the failsafe below: this is the only thing that gets a visitor into
+     the site when the script never runs. */
+  animation: preloader-failsafe var(--dur-5) var(--ease) 8s forwards;
 }
 
 .preloader[data-done] {
@@ -362,6 +365,29 @@
   opacity: 0;
   pointer-events: none;
   visibility: hidden;
+}
+
+/* The failsafe.
+ *
+ * Everything above depends on an attribute that JavaScript sets, over an
+ * opaque fixed layer at z-index 300 that covers the entire site. So when the
+ * script does not arrive — a chunk that 404s, a hydration that throws, a
+ * bundle still in flight on a bad connection — the curtain never lifts.
+ * Measured with scripting off: 0%, no data-done, and the page underneath
+ * unreachable. Not a rare state on school wifi, and there is no way out of
+ * it from the visitor's side but a reload that hits the same wall.
+ *
+ * This lifts it regardless, because CSS is already parsed by the time it
+ * matters. The 8s delay clears the 6s the script is allowed, so on any
+ * normal load the attribute has long since won and this animation finishes
+ * by applying an end state the element is already sitting in. */
+@keyframes preloader-failsafe {
+  to {
+    clip-path: inset(0 0 100% 0);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
 }
 
 /* The film's first frame, sunk right back so the curtain is not flat black
@@ -412,6 +438,23 @@
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--neon-cyan);
+}
+
+/* Only a phone gets told this, because only a phone is being warned about
+   something. Desktop is the version the thing was drawn for. */
+.preloader-note {
+  display: none;
+}
+
+@media (max-width: 48rem) {
+  .preloader-note {
+    display: block;
+    margin: var(--s-4) 0 0;
+    max-width: 22rem;
+    font-size: var(--text-xs);
+    line-height: 1.5;
+    color: var(--muted-foreground);
+  }
 }
 
 .preloader-track {
@@ -964,63 +1007,46 @@
 
   /* The board in the film is already a lit glass panel with a gradient
      across it and its own double neon frame, and it is the best-looking
-     thing on the page. Everything this used to add — a 30% colour wash, an
-     inset border competing with that frame, a blur over the type — was
-     covering it up and reading as a coloured rectangle taped to a
-     billboard. What is left is a breath of the section's colour, heaviest
-     where the board catches the most light, so the glass still reads as
-     glass and the panel still says which room it opens. */
+     thing on the page. Everything the panel used to add on top of it — a
+     colour wash, an inset border competing with that frame, a haze layer,
+     a brightness pulse — was a container drawn over the glass. A faint one
+     is still one: a rectangle in the section's accent, with edges, sitting
+     on a billboard that already has edges of its own.
+
+     So it paints nothing at all, the same as the screens in the Resources
+     and Register rooms. The film's hologram is the button; the label on it
+     is the only thing this adds. */
   .sign-face {
     min-height: 0;
     padding: 0;
     border-radius: 1px;
-    /* The card treatment's inset edge and halo belong to the stacked phone
-       layout. On a board they draw a hairline just inside the film's own
-       neon frame, which reads as a seam between the panel and the
-       billboard — the one thing this whole approach is trying to avoid. */
     box-shadow: none;
-    background: linear-gradient(
-      168deg,
-      color-mix(in oklab, var(--accent-hue) 14%, transparent),
-      color-mix(in oklab, var(--accent-hue) 4%, transparent) 58%,
-      transparent
-    );
-    animation: sign-breathe 5.5s var(--ease-out) infinite;
+    background: transparent;
+    animation: none;
   }
 
-  /* The light the panel throws onto the building around it. Screen blending
-     means it genuinely brightens the plate's pixels rather than laying a
-     coloured rectangle over them. */
-  .sign-face::before {
-    content: "";
-    position: absolute;
-    inset: -55%;
-    z-index: -1;
-    pointer-events: none;
-    background: radial-gradient(
-      50% 50% at 50% 50%,
-      color-mix(in oklab, var(--accent-hue) 55%, transparent),
-      transparent 70%
-    );
-    mix-blend-mode: screen;
-    opacity: 0.75;
-    transition: opacity var(--dur-2) var(--ease);
-  }
+  /* There used to be a cast-light layer here: a box inset -55% carrying a
+     radial gradient in the sign's accent, screen-blended so the board
+     appeared to light the building around it. It was meant to brighten the
+     plate's own pixels rather than lay a coloured rectangle over them, and
+     it did the second thing. The gradient runs to `transparent 70%`, which
+     over a box more than twice the panel's size never reaches transparent
+     before the box ends — so it painted its own rectangle, hard-edged,
+     hanging in the sky above the two blade signs where there is no building
+     for it to land on.
 
-  .sign:hover .sign-face::before,
-  .sign:focus-visible .sign-face::before {
-    opacity: 1;
-  }
+     The boards do not need it. The film's own neon frames light them, and
+     the labels carry their glow in their text shadow. */
 
-  /* Atmosphere. The plate has haze between the camera and the far signage;
-     a panel that ignores it sits in front of the picture instead of inside
-     it. Depth is set per sign from its position in the frame. */
+  /* This carried a haze gradient, to sit the panel inside the plate's own
+     depth rather than in front of it. The plate already has that haze — it
+     is in the photograph — so all this added was a second translucent sheet
+     over the glass, which is the box again by another name. Removed rather
+     than re-tuned, and display:none rather than deleted: the stacked card
+     layout paints scanlines through this same pseudo-element, and without
+     this they would come back on the boards. */
   .sign-face::after {
-    background: linear-gradient(
-      180deg,
-      oklch(0.62 0.05 265 / calc(0.16 * var(--sign-haze, 0))),
-      oklch(0.62 0.05 265 / calc(0.06 * var(--sign-haze, 0)))
-    );
+    display: none;
   }
 
   /* A sign is painted onto a billboard, so it does not move: no scale on
@@ -1033,15 +1059,40 @@
      the rule that kept a sign still was itself a copy of the rule that moved
      it, and the copy that came last won. The duplicate is gone; leaving the
      transform to `.sign` alone is what makes it impossible to come back. */
-  /* The board lights up, but not so hard that the glass turns into a flat
-     colour — the gradient in the film is what makes it read as a screen. */
-  .sign:hover,
-  .sign:focus-visible {
-    filter: brightness(1.18) saturate(1.08);
+  /* The stacked card layout fills its panel on hover, and that rule is not
+     scoped to it — so hovering a billboard painted an 88%-opaque block of
+     accent over the film, putting back on hover the exact box this layout
+     removes at rest. Measured: rgba(0,0,0,0) at rest, oklab(0.44 … / 0.885)
+     under the pointer. The board stays glass whatever the pointer is doing. */
+  .sign:hover .sign-face,
+  .sign:focus-visible .sign-face {
+    background: transparent;
   }
 
+  /* Same reason: the card layout dims itself on press. There is nothing to
+     dim here but the type. */
   .sign:active {
-    filter: brightness(1.1) saturate(1.05);
+    filter: none;
+  }
+
+  /* With nothing painted, brightness on the panel had nothing left to
+     brighten but the type — and it did that badly, washing a white label
+     toward flat white instead of lighting it. The label answers instead,
+     through its own glow, exactly as the screen labels do in the two desk
+     rooms. */
+  .sign:hover .sign-label,
+  .sign:focus-visible .sign-label {
+    text-shadow:
+      0 0 0.05em oklch(1 0 0 / 0.75),
+      0 0 0.55em color-mix(in oklab, var(--accent-hue) 95%, transparent),
+      0 0 1.6em color-mix(in oklab, var(--accent-hue) 60%, transparent);
+  }
+
+  .sign:active .sign-label {
+    text-shadow:
+      0 0 0.05em oklch(1 0 0 / 0.65),
+      0 0 0.5em color-mix(in oklab, var(--accent-hue) 90%, transparent),
+      0 0 1.45em color-mix(in oklab, var(--accent-hue) 52%, transparent);
   }
 
   /* Set to the board, not to the stage — cqi here is a share of the panel's
@@ -1112,21 +1163,10 @@
     display: none;
   }
 
-  /* The breathing stops while a sign is being used, so the thing under the
-     pointer holds still rather than pulsing under it. */
-  .sign:hover .sign-face,
-  .sign:focus-visible .sign-face {
-    animation: none;
-  }
-}
-
-@keyframes sign-breathe {
-  0%,
-  100% {
-    filter: brightness(1);
-  }
-  50% {
-    filter: brightness(1.09);
+  /* The label carries the transition, so the glow above comes up rather
+     than snapping on. */
+  .sign-label {
+    transition: text-shadow var(--dur-ui) var(--ease-out);
   }
 }
 
@@ -1154,38 +1194,6 @@
   }
 }
 
-
-/* A sign across the junction with a failing ballast. */
-.ambient-flicker {
-  position: absolute;
-  background: color-mix(in oklab, var(--neon-magenta) 60%, transparent);
-  mix-blend-mode: screen;
-  filter: blur(1.5px);
-  animation: flicker 7s steps(1, end) infinite;
-}
-
-@keyframes flicker {
-  0%,
-  40%,
-  44%,
-  100% {
-    opacity: 0.45;
-  }
-  41%,
-  43% {
-    opacity: 0.05;
-  }
-  42% {
-    opacity: 0.7;
-  }
-  70%,
-  72% {
-    opacity: 0.1;
-  }
-  71% {
-    opacity: 0.55;
-  }
-}
 
 /* Headlights crossing the junction, well behind the signage. */
 .ambient-pass {
@@ -2318,14 +2326,22 @@ button.screen:active {
   grid-template-rows: 1fr;
 }
 
+/* The padding used to live here, and padding is not content: min-height:0
+   zeroes what the grid item contributes from its children, not its own box,
+   so a collapsed panel stood 21.59px tall instead of 0 — measured, and
+   exactly the 1.35rem that was on its bottom edge. overflow:hidden clips to
+   the padding box, so the first line of every answer rendered inside that
+   strip. Every question on the page carried a severed line of its own answer
+   under it. The padding is on the paragraph now; the item's box collapses to
+   nothing. */
 .faq-panel-inner {
   overflow: hidden;
   min-height: 0;
-  padding: 0 var(--s-1) 1.35rem;
+  padding-inline: var(--s-1);
 }
 
 .faq-panel p {
-  margin: 0;
+  margin: 0 0 1.35rem;
   max-width: var(--measure);
   line-height: 1.7;
   color: var(--muted-foreground);
@@ -2755,6 +2771,16 @@ button.screen:active {
 
 /* ---- Footer --------------------------------------------------------- */
 
+/* An interior has no footer on a wide viewport: the room is the page, the
+   chrome floats over the photograph, and a footer under it would be a second
+   page stapled to the bottom of a picture. On a phone there is no photograph
+   and no room — see the phone block at the end of this file — so what is left
+   is a short column of cards and then nothing, and the way out of a page
+   should not be a scroll back to the top. */
+.interior-footer {
+  display: none;
+}
+
 .site-footer {
   padding: var(--s-7) var(--s-4) var(--s-7);
   border-top: 1px solid var(--border);
@@ -2805,8 +2831,20 @@ button.screen:active {
 }
 
 .footer-links a {
+  /* The line box alone was 21px tall, under the 24px WCAG 2.5.8 minimum, and
+     on a phone these are the only way out of a page. Padding makes the target
+     comfortable without moving the text: the gap above absorbs it. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
   color: var(--muted-foreground);
   transition: color var(--dur-ui) var(--ease-out);
+}
+
+/* The rows already carry their own height now, so the list does not need to
+   space them as well. */
+.footer-links {
+  gap: 0;
 }
 
 .footer-links a:hover,
@@ -2866,7 +2904,20 @@ button.screen:active {
 
 .crossroads-footer-nav {
   pointer-events: auto;
+  box-sizing: border-box;
   max-width: calc(100dvw - 2rem);
+  /* The pill is drawn here, not on the <ul> inside it. The <ul> is the
+     scroller: below about 430px the six labels do not fit, and a scroller
+     that carries its own background cannot fade its trailing edge without
+     fading the pill out from under itself. Split in two, the pill holds its
+     shape and the row of labels inside it can say "there is more this way".
+     Without that, the last label simply stopped at the pill's edge, which
+     reads as a clipped nav rather than a scrollable one. */
+  padding: var(--s-2) var(--s-5);
+  border-radius: 999px;
+  background: oklch(0.14 0.028 265 / 0.72);
+  box-shadow: inset 0 0 0 1px var(--border);
+  backdrop-filter: blur(14px) saturate(150%);
   /* Hidden — not merely faded — until the hub is actually the thing on
      screen: the descent is one long route, and this pill floats "on the
      road" specifically, not over the moon during the aerial beat or the
@@ -2901,12 +2952,8 @@ button.screen:active {
   align-items: center;
   gap: clamp(var(--s-4), 3vw, var(--s-6));
   margin: 0;
-  padding: var(--s-2) var(--s-5);
+  padding: 0;
   list-style: none;
-  border-radius: 999px;
-  background: oklch(0.14 0.028 265 / 0.72);
-  box-shadow: inset 0 0 0 1px var(--border);
-  backdrop-filter: blur(14px) saturate(150%);
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scrollbar-width: none;
@@ -2985,12 +3032,11 @@ button.screen:active {
   width: 100%;
 }
 
-@media (max-width: 30rem) {
-  .crossroads-footer-nav ul {
-    gap: var(--s-4);
-    padding: var(--s-2) var(--s-4);
-  }
-}
+/* The pill's own narrow-width tuning used to live here: tighter gaps so the
+   six labels fit, and a trailing fade below 372px where they cannot. Both
+   are gone with it — the pill is display:none below 48rem now, and the menu
+   button carries a phone's navigation, so nothing here was ever reached. The
+   pill only renders at widths that had room for it all along. */
 
 @media (prefers-reduced-motion: reduce) {
   .crossroads-footer-nav a,
@@ -3310,6 +3356,7 @@ button.screen:active {
   display: none;
 }
 
+
 /* ------------------------------------------------------------------ *
  * Reduced motion.
  *
@@ -3485,6 +3532,24 @@ button.screen:active {
  * screen you click is a screen you click whichever room it is in.
  * ------------------------------------------------------------------ */
 
+/* The room's header and the per-card blurbs. On a wide viewport the
+   photograph carries both — the neon on the wall names the room, the monitor
+   you are pointing at is self-evident — so these are here for screen readers
+   only. The phone layout below unhides them, because there it has no
+   photograph to carry anything. */
+.desk-head,
+.desk-screen-blurb {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 .desk {
   display: grid;
   place-items: center;
@@ -3582,32 +3647,6 @@ button.screen:active {
    labels sit under the picture as a plain row of links instead, and the
    monitors stop pretending to be buttons. */
 @media (max-width: 40rem) {
-  .desk {
-    align-content: center;
-    gap: var(--s-5);
-  }
-
-  .desk-screens {
-    position: static;
-    display: grid;
-    gap: var(--s-3);
-    margin-block-start: var(--s-5);
-  }
-
-  .desk-screens > li {
-    position: static;
-    width: auto !important;
-    height: auto !important;
-  }
-
-  .desk-screen {
-    position: static;
-    justify-items: start;
-    padding: var(--s-4) var(--s-5);
-    border: 1px solid color-mix(in oklab, var(--neon-cyan) 45%, transparent);
-    border-radius: var(--radius-lg);
-    background: color-mix(in oklab, var(--card) 80%, transparent);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3963,6 +4002,18 @@ button.screen:active {
 }
 
 /* The featured rail above the event screens. */
+/* Sits opposite the rail's arrows, in the space that was empty beside them.
+   Says how to drive the row, which on a phone is not otherwise discoverable:
+   the arrows are there, but the swipe is the thing a thumb reaches for. */
+.sq-hint {
+  margin: 0;
+  min-width: 0;
+  font-size: var(--text-xs);
+  line-height: 1.35;
+  color: var(--muted-foreground);
+  text-wrap: balance;
+}
+
 .rail {
   container-type: inline-size;
   margin-block-end: var(--s-9);
@@ -4041,6 +4092,18 @@ button.screen:active {
   .rail {
     --sq-aspect: 1;
   }
+
+  /* Even squared off, there is not enough room left for four columns to
+     shade into each other: the shares landed at 30, 22, 8, 22 and 22 pixels,
+     which reads as a ragged set of bars rather than cards waiting their
+     turn, and the 8px one was a link nobody could hit. One width for all of
+     them is both tidier and a real target.
+
+     The width has to beat an inline style, because the component computes
+     each card's width from shares of the room it assumes it has. */
+  .rail [role="tab"][aria-selected="false"] {
+    width: 2rem !important;
+  }
 }
 
 /* ---- The entry, painted on the open panel ------------------------- *
@@ -4104,10 +4167,401 @@ button.screen:active {
   }
 }
 
-/* Too narrow for it. The card is square here (see --sq-aspect above) and
-   mostly picture, so the copy goes back to the paragraph under the rail. */
+/* The card is square here (see --sq-aspect above), and the whole caption was
+   dropped on the grounds that it is "mostly picture". There is no picture:
+   there are no event photographs and there will not be any before the fest
+   runs, so the panel is a lit gradient. What a phone actually got was a blank
+   coloured square taking the top third of the page with the event's name
+   nowhere on it.
+   The name and the tagline go back on. The description does not — it would
+   not fit a square at this size, and it is already in the paragraph under the
+   rail, which is also what the live region reads out on a change. */
 @media (max-width: 40rem) {
-  .sq-caption {
+  .rail-blurb {
     display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * The phone's menu bar.
+ * ------------------------------------------------------------------ */
+
+/* Desktop has the pill on the road and does not need this at all. */
+.menu {
+  display: none;
+}
+
+.menu-button {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  /* Over the chips and the phase veil, under the skip link so a keyboard can
+     always reach that, and well under the preloader. */
+  z-index: 96;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: oklch(0.1 0.03 265 / 0.86);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--neon-cyan) 40%, transparent);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+}
+
+.menu-button:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 3px;
+}
+
+.menu-bars {
+  display: grid;
+  gap: 4px;
+  width: 1.05rem;
+}
+
+.menu-bars > span {
+  display: block;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--foreground);
+  transition:
+    transform var(--dur-ui) var(--ease-out),
+    opacity var(--dur-fast) linear;
+}
+
+/* Three lines into a cross: the outer two meet in the middle and turn, the
+   middle one goes. */
+.menu-button[aria-expanded="true"] .menu-bars > span:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.menu-button[aria-expanded="true"] .menu-bars > span:nth-child(2) {
+  opacity: 0;
+}
+
+.menu-button[aria-expanded="true"] .menu-bars > span:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+.menu-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 5rem var(--gutter) var(--s-7);
+  background:
+    linear-gradient(180deg, oklch(0.07 0.026 265 / 0.95), oklch(0.06 0.022 265 / 0.98)),
+    url("/media/crossroads.webp") center / cover no-repeat;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-1.5rem);
+  transition:
+    opacity var(--dur-ui) var(--ease-out),
+    transform var(--dur-3) var(--ease),
+    visibility 0s var(--dur-3);
+}
+
+.menu-panel[data-open] {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  transition:
+    opacity var(--dur-ui) var(--ease-out),
+    transform var(--dur-3) var(--ease);
+}
+
+.menu-panel ul {
+  display: grid;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  max-width: 32rem;
+  margin-inline: auto;
+  list-style: none;
+}
+
+/* Same build as a sign on the crossroads and as every other panel on a
+   phone: accent glass, a neon edge, a little bloom. */
+.menu-panel a {
+  display: grid;
+  gap: 0.15rem;
+  min-height: 3.75rem;
+  align-content: center;
+  padding: var(--s-4) var(--s-5);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 16%, oklch(0.15 0.03 265 / 0.86));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 52%, transparent),
+    0 0 22px color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 18%, transparent);
+  text-decoration: none;
+  color: var(--foreground);
+}
+
+.menu-panel a:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 3px;
+}
+
+.menu-label {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-shadow: 0 0 0.6em color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 60%, transparent);
+}
+
+.menu-note {
+  font-size: var(--text-xs);
+  line-height: 1.35;
+  color: oklch(0.99 0 0 / 0.7);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-panel {
+    transform: none;
+    transition:
+      opacity var(--dur-ui) linear,
+      visibility 0s var(--dur-ui);
+  }
+
+  .menu-panel[data-open] {
+    transform: none;
+  }
+
+  .menu-bars > span {
+    transition: none;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Phones: one world, one language.
+ *
+ * On a wide viewport a room is a photograph you stand in and the crossroads
+ * is somewhere else. On a phone neither of those survived: the photograph
+ * shrank to a letterbox and the rooms became flat near-black documents —
+ * a grey rule, a column of grey links, a title. The hero was the only screen
+ * with any of the fest on it, and everything you could reach from it looked
+ * like a different, sadder site.
+ *
+ * So below the hub's own breakpoint there are no interiors. Every page sits
+ * on the crossroads, and anything you can tap is built the way the signs on
+ * that crossroads are built: accent glass, a neon edge, a little bloom.
+ * ------------------------------------------------------------------ */
+
+@media (max-width: 48rem) {
+  /* The world, once, behind everything. Fixed rather than scrolled: these
+     pages run several screens long and a cover-sized backdrop stretched down
+     all of it turns the street into a smear. */
+  .page,
+  .desk {
+    background: transparent;
+  }
+
+  .page::before,
+  .desk::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(
+        180deg,
+        oklch(0.12 0.026 265 / 0.82) 0%,
+        oklch(0.11 0.024 265 / 0.93) 55%,
+        oklch(0.1 0.022 265 / 0.97) 100%
+      ),
+      url("/media/crossroads.webp") center / cover no-repeat;
+    pointer-events: none;
+  }
+
+  /* The room's photograph is the interior, and there is no interior here.
+     It was a 16:9 letterbox of a desk with the actual destinations listed
+     underneath it — the picture took the space and the links did the work. */
+  .desk-room {
+    display: none;
+  }
+
+  .desk {
+    min-height: 0;
+    padding: calc(var(--s-8) + var(--s-4)) var(--gutter) var(--s-9);
+    place-items: stretch;
+  }
+
+  .desk-frame {
+    margin-inline: auto;
+    max-width: 52rem;
+  }
+
+  /* Out of the photograph's coordinate space and into ordinary flow. This
+     used to live at 40rem while the rule hiding the photograph is at 48rem,
+     and between the two the links stayed absolutely positioned over a room
+     that was no longer there: measured 120x0 and 131x0 at 700px and 760px —
+     three destinations with no height, unreachable. One breakpoint now. */
+  .desk-screens {
+    position: static;
+    display: grid;
+    gap: var(--s-3);
+    margin-block-start: 0;
+  }
+
+  .desk-screens > li {
+    position: static;
+    /* Beats the percentage geometry the component sets inline, which is
+       measured off the photograph. */
+    width: auto !important;
+    height: auto !important;
+  }
+
+  .desk-head,
+  .desk-screen-blurb {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+  }
+
+  .desk-head {
+    margin-bottom: var(--section);
+  }
+
+  .desk-screen {
+    position: static;
+    display: grid;
+    gap: 0.2rem;
+    place-items: start;
+    text-align: left;
+  }
+
+  /* Sized against the card's own width by a container query, which on a
+     phone works out at the 0.7rem floor — eleven pixels of tracked-out caps
+     for the only thing on the card. */
+  .desk-screen-label {
+    font-size: var(--text-base);
+    letter-spacing: 0.12em;
+  }
+
+  .desk-screen-blurb {
+    font-size: var(--text-xs);
+    line-height: 1.35;
+    color: oklch(0.99 0 0 / 0.72);
+  }
+
+  /* One panel, three places: the room's destinations, the FAQ's questions,
+     and the form's events. Same build as a sign on the crossroads — accent
+     glass over the street, a neon edge, a bloom off it. */
+  .desk-screen,
+  .faq-item,
+  .event-pick {
+    border: 0;
+    border-radius: var(--radius-md);
+    background: color-mix(in oklab, var(--panel-accent) 15%, oklch(0.16 0.03 265 / 0.84));
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--panel-accent) 48%, transparent),
+      0 0 22px color-mix(in oklab, var(--panel-accent) 16%, transparent);
+  }
+
+  .desk-screen {
+    --panel-accent: var(--neon-cyan);
+    min-height: 3.5rem;
+    padding: var(--s-4) var(--s-5);
+  }
+
+  .faq {
+    display: grid;
+    gap: var(--s-2);
+    border-top: 0;
+  }
+
+  .faq-item {
+    --panel-accent: var(--neon-violet);
+    border-bottom: 0;
+    overflow: hidden;
+  }
+
+  .faq-trigger,
+  .faq-panel-inner {
+    padding-inline: var(--s-4);
+  }
+
+  .event-pick {
+    --panel-accent: var(--neon-cyan);
+    padding: var(--s-4);
+  }
+
+  /* A ticked event has to read as ticked across a row of six, from arm's
+     length, on a bright day. */
+  .event-pick:has(input:checked) {
+    background: color-mix(in oklab, var(--neon-cyan) 26%, oklch(0.16 0.03 265 / 0.84));
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklab, var(--neon-cyan) 85%, transparent),
+      0 0 26px color-mix(in oklab, var(--neon-cyan) 28%, transparent);
+  }
+
+  /* Seven destinations in one grey column ran most of a screen on its own,
+     and the way out of a page should not be a scroll. */
+  .footer-links {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--s-1) var(--s-4);
+  }
+
+  .site-footer {
+    background: oklch(0.08 0.024 265 / 0.94);
+  }
+
+  /* Darker ground, hotter neon. The palette was tuned on a desktop panel in
+     a room; a phone is held at arm's length, often outdoors, usually with
+     the brightness turned down, and the same values go muddy. Dropping the
+     ground and lifting the chroma is what keeps the neon reading as neon
+     rather than as grey-blue with a tint. Scoped here, so the desktop
+     palette is untouched. */
+  :root {
+    --ink: oklch(0.085 0.03 265);
+    --background: oklch(0.085 0.03 265);
+    --card: oklch(0.165 0.038 267);
+    --neon-cyan: oklch(0.85 0.155 215);
+    --neon-magenta: oklch(0.72 0.25 325);
+    --neon-violet: oklch(0.68 0.215 280);
+    --border: oklch(1 0 0 / 16%);
+  }
+
+  .page::before,
+  .desk::before {
+    background:
+      linear-gradient(
+        180deg,
+        oklch(0.085 0.03 265 / 0.8) 0%,
+        oklch(0.075 0.026 265 / 0.93) 55%,
+        oklch(0.07 0.024 265 / 0.97) 100%
+      ),
+      url("/media/crossroads.webp") center / cover no-repeat;
+  }
+
+  /* One navigation, not two. The pill carries the same six destinations the
+     menu does, and below this width it could not even hold their labels —
+     the row is 325px against a viewport that gives it 272 at 320px. */
+  .crossroads-footer {
+    display: none;
+  }
+
+  /* The Register chip sat exactly where the menu button goes, and Register
+     is the first thing in the menu. */
+  .chip-right {
+    display: none;
+  }
+
+  .menu {
+    display: block;
+  }
+
+  .interior-footer {
+    display: block;
   }
 }

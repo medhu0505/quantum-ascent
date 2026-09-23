@@ -19,15 +19,37 @@ value in `src/data/quantum.ts`, and each renders as a visible "to be confirmed"
 badge until it is replaced — a missing phone number should look missing rather
 than look like a phone number.
 
+Registrations are **live**. Firestore takes each entry and the organisers' sheet
+receives a copy; rules are deployed and the whole path was verified end to end
+against production on 22 Sep. Nothing in this table blocks a registration any
+more — what is left is copy a visitor reads.
+
 | Value | Where | What breaks until it is set |
 | --- | --- | --- |
-| Registrations backend | `.env` / `src/data/quantum.ts` | Either the Firebase variables below or `REGISTRATION_ENDPOINT` (see `backend/registrations.gs`). With neither, the form validates but cannot submit, and says so plainly. **This is the one that matters most.** |
-| `team` roster | `src/data/quantum.ts` | Meet the Team shows real roles with the names badged as pending. |
+| `team` roster | `src/data/quantum.ts` | Eight names. Meet the Team currently shows eight real roles with every name badged as pending, which is the most visibly unfinished thing on the site. |
 | `contact` | `src/data/quantum.ts` | Contact page and footer show badges instead of an email, phone and handle. |
 | `FEST_DATES` | `src/data/quantum.ts` | Not currently rendered; wire it in once dates are public. |
 | `BROCHURE_URL` | `src/data/quantum.ts` | Not currently rendered. |
 
 Event copy, FAQ answers and the About editorial are final — no placeholders there.
+
+Three things outside this file are also outstanding, and none of them are code:
+
+- **Two test rows** sit in the Registrations tab of the organisers' sheet, filed
+  under "Test Public School" and "Vercel Test School". Delete them before entries
+  open. They are not only cosmetic: the Apps Script's duplicate check reads that
+  tab, so a real entrant reusing one of those addresses for the same events would
+  be told they are already registered.
+- **App Check is not enabled**, deliberately. See the Firebase section. It is
+  waiting on a settled domain, because a reCAPTCHA key is bound to specific hosts
+  and binding one to the current `*.vercel.app` address means redoing it.
+- **No custom domain.** The site answers on `quantum-ascent.vercel.app`. If a real
+  one is coming, attach it before App Check rather than after.
+
+One thing that is working as designed and reads like a fault: the sheet grows a
+new tab per school as entries arrive, named after that school. The Registrations
+tab stays the record of truth; the per-school tabs are copies. Do not tidy them
+away.
 
 The school's name is settled: **Air Force Bal Bharati School**, set once in
 `school.name` and read from there everywhere.
@@ -58,7 +80,7 @@ What does the authorising is `firestore.rules`, and they have to be deployed
 before the form goes live:
 
 ```bash
-npx firebase deploy --only firestore:rules --project <project-id>
+npm run firebase:rules   # the project is named in .firebaserc
 npm run test:rules      # the rules, against the emulator
 ```
 
@@ -293,14 +315,8 @@ resolve link targets in the margin — people print the event list before the da
 npm run build          # clean
 npm run typecheck      # clean
 npm run test:rules     # 42 checks, against the Firestore emulator
-npm run lint           # see below
+npm run lint           # clean
 ```
-
-`npm run lint` is not clean and was not clean before this work: `src/data/quantum.ts`
-has CRLF line endings and Prettier wants LF, which is one error per line. Normalising
-it is a one-command fix that rewrites every line of the file, so it is left for a
-commit of its own rather than buried in an unrelated diff. No other file reports an
-error.
 
 `tests/firestore-rules.test.mjs` runs `firestore.rules` against the emulator: the
 happy path, the closed collection, the duplicate limit and four ways to try to

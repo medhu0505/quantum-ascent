@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { ExitToCrossroads, RegisterChip } from "@/components/site/Bits";
-import { CrossroadsFooter } from "@/components/site/PageShell";
+import { CrossroadsFooter, SiteFooter } from "@/components/site/PageShell";
 import { Beam, Reveal } from "@/components/scene/Reveal";
 import { RevealText } from "@/components/scene/RevealText";
 import type { Scene } from "@/data/quantum";
@@ -50,6 +50,11 @@ export function InteriorShell({
           {children}
         </div>
       </main>
+
+      {/* Phones only; see .interior-footer in styles.css. */}
+      <div className="interior-footer">
+        <SiteFooter />
+      </div>
     </>
   );
 }

@@ -128,7 +128,13 @@ export function EventsInterior() {
           defaultIndex={start}
           onIndexChange={onIndexChange}
           label="The six events"
+          hint="Swipe, or use the arrows, to switch events"
           height="clamp(180px, 30cqi, 320px)"
+          /* The tail cards are links. At the component's 8px default they
+             were 8px-wide click targets carrying no readable edge — a pair
+             of hairlines at the end of the row rather than cards waiting
+             their turn. */
+          slatWidth={26}
           accent="var(--neon-cyan)"
           accentForeground="#05070d"
         />
@@ -144,7 +150,7 @@ export function EventsInterior() {
         </p>
         <div className="page-actions">
           <Link to="/register/form" className="btn btn-accent" data-magnetic>
-            Register your school
+            Register for the events
           </Link>
           <Link to="/faq" className="btn btn-ghost" data-magnetic>
             Read the FAQ first

@@ -18,9 +18,6 @@ import { Route as ResourcesRouteImport } from './routes/resources'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as RegisterIndexRouteImport } from './routes/register/index'
 import { Route as RegisterFormRouteImport } from './routes/register/form'
-import { Route as RegisterFormIndexRouteImport } from './routes/register/form/index'
-import { Route as RegisterFormIndividualRouteImport } from './routes/register/form/individual'
-import { Route as RegisterFormSchoolRouteImport } from './routes/register/form/school'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -67,21 +64,6 @@ const RegisterFormRoute = RegisterFormRouteImport.update({
   path: '/register/form',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RegisterFormIndexRoute = RegisterFormIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => RegisterFormRoute,
-} as any)
-const RegisterFormIndividualRoute = RegisterFormIndividualRouteImport.update({
-  id: '/individual',
-  path: '/individual',
-  getParentRoute: () => RegisterFormRoute,
-} as any)
-const RegisterFormSchoolRoute = RegisterFormSchoolRouteImport.update({
-  id: '/school',
-  path: '/school',
-  getParentRoute: () => RegisterFormRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -91,11 +73,8 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/resources': typeof ResourcesRoute
   '/team': typeof TeamRoute
-  '/register/form': typeof RegisterFormRouteWithChildren
+  '/register/form': typeof RegisterFormRoute
   '/register/': typeof RegisterIndexRoute
-  '/register/form/individual': typeof RegisterFormIndividualRoute
-  '/register/form/school': typeof RegisterFormSchoolRoute
-  '/register/form/': typeof RegisterFormIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -105,10 +84,8 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/resources': typeof ResourcesRoute
   '/team': typeof TeamRoute
+  '/register/form': typeof RegisterFormRoute
   '/register': typeof RegisterIndexRoute
-  '/register/form/individual': typeof RegisterFormIndividualRoute
-  '/register/form/school': typeof RegisterFormSchoolRoute
-  '/register/form': typeof RegisterFormIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -119,11 +96,8 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/resources': typeof ResourcesRoute
   '/team': typeof TeamRoute
-  '/register/form': typeof RegisterFormRouteWithChildren
+  '/register/form': typeof RegisterFormRoute
   '/register/': typeof RegisterIndexRoute
-  '/register/form/individual': typeof RegisterFormIndividualRoute
-  '/register/form/school': typeof RegisterFormSchoolRoute
-  '/register/form/': typeof RegisterFormIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -137,9 +111,6 @@ export interface FileRouteTypes {
     | '/team'
     | '/register/form'
     | '/register/'
-    | '/register/form/individual'
-    | '/register/form/school'
-    | '/register/form/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -149,10 +120,8 @@ export interface FileRouteTypes {
     | '/faq'
     | '/resources'
     | '/team'
-    | '/register'
-    | '/register/form/individual'
-    | '/register/form/school'
     | '/register/form'
+    | '/register'
   id:
     | '__root__'
     | '/'
@@ -164,9 +133,6 @@ export interface FileRouteTypes {
     | '/team'
     | '/register/form'
     | '/register/'
-    | '/register/form/individual'
-    | '/register/form/school'
-    | '/register/form/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -177,7 +143,7 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   ResourcesRoute: typeof ResourcesRoute
   TeamRoute: typeof TeamRoute
-  RegisterFormRoute: typeof RegisterFormRouteWithChildren
+  RegisterFormRoute: typeof RegisterFormRoute
   RegisterIndexRoute: typeof RegisterIndexRoute
 }
 
@@ -246,45 +212,8 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterFormRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/register/form/': {
-      id: '/register/form/'
-      path: '/'
-      fullPath: '/register/form/'
-      preLoaderRoute: typeof RegisterFormIndexRouteImport
-      parentRoute: typeof RegisterFormRoute
-    }
-    '/register/form/individual': {
-      id: '/register/form/individual'
-      path: '/individual'
-      fullPath: '/register/form/individual'
-      preLoaderRoute: typeof RegisterFormIndividualRouteImport
-      parentRoute: typeof RegisterFormRoute
-    }
-    '/register/form/school': {
-      id: '/register/form/school'
-      path: '/school'
-      fullPath: '/register/form/school'
-      preLoaderRoute: typeof RegisterFormSchoolRouteImport
-      parentRoute: typeof RegisterFormRoute
-    }
   }
 }
-
-interface RegisterFormRouteChildren {
-  RegisterFormIndividualRoute: typeof RegisterFormIndividualRoute
-  RegisterFormSchoolRoute: typeof RegisterFormSchoolRoute
-  RegisterFormIndexRoute: typeof RegisterFormIndexRoute
-}
-
-const RegisterFormRouteChildren: RegisterFormRouteChildren = {
-  RegisterFormIndividualRoute: RegisterFormIndividualRoute,
-  RegisterFormSchoolRoute: RegisterFormSchoolRoute,
-  RegisterFormIndexRoute: RegisterFormIndexRoute,
-}
-
-const RegisterFormRouteWithChildren = RegisterFormRoute._addFileChildren(
-  RegisterFormRouteChildren,
-)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -294,7 +223,7 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   ResourcesRoute: ResourcesRoute,
   TeamRoute: TeamRoute,
-  RegisterFormRoute: RegisterFormRouteWithChildren,
+  RegisterFormRoute: RegisterFormRoute,
   RegisterIndexRoute: RegisterIndexRoute,
 }
 export const routeTree = rootRouteImport

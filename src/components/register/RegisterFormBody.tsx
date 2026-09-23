@@ -11,15 +11,15 @@ import {
 } from "@/lib/registrations";
 
 /**
- * The registration form body, shared by the individual and school routes.
+ * The registration form.
  *
- * `type` is fixed for the lifetime of the mount — set by which route
- * rendered this, not chosen inline — so it lives outside `Fields` entirely
- * rather than as a piece of state that could drift from the URL that got
- * someone here.
+ * There was a fork here — an individual/team form and a separate school
+ * one, chosen on a page before this — and it is gone. Every entry comes in
+ * the same way now: a team lead, the events they are entering, and the rest
+ * of the team under them. A coordinator submitting for a school fills in
+ * the same form, once per team, which is what they were doing anyway.
  *
- * Everything else is unchanged from the single-form version: plain
- * controlled state rather than a form library, so the error wiring —
+ * Plain controlled state rather than a form library, so the error wiring —
  * aria-invalid, aria-describedby, focus on the first bad field, a live
  * region for the summary — stays explicit and testable.
  *
@@ -97,14 +97,7 @@ function validateMembers(list: Participant[]): MemberErrors[] {
   });
 }
 
-const FIELD_ORDER: (keyof Fields)[] = [
-  "student",
-  "school",
-  "grade",
-  "email",
-  "phone",
-  "discord",
-];
+const FIELD_ORDER: (keyof Fields)[] = ["student", "school", "grade", "email", "phone", "discord"];
 
 const MEMBER_ORDER: (keyof Participant)[] = ["name", "grade", "phone", "discord", "email"];
 
@@ -130,15 +123,8 @@ function describeFailure(reply: Extract<BackendReply, { ok: false }>): string {
   return "The registration server could not save this entry. Your answers are still here, so try again in a minute.";
 }
 
-export function RegisterFormBody({
-  type,
-  preselectedEvent,
-}: {
-  type: "individual" | "school";
-  preselectedEvent?: string | undefined;
-}) {
+export function RegisterFormBody({ preselectedEvent }: { preselectedEvent?: string | undefined }) {
   const registrationOpen = isRegistrationOpen();
-  const isSchool = type === "school";
 
   const [values, setValues] = useState<Fields>({
     student: "",
@@ -153,9 +139,7 @@ export function RegisterFormBody({
    * `values` because that is trimmed as a map of strings on submit, and
    * because a set of chosen ids is not a form field's value.
    */
-  const [picked, setPicked] = useState<string[]>(
-    preselectedEvent ? [preselectedEvent] : [],
-  );
+  const [picked, setPicked] = useState<string[]>(preselectedEvent ? [preselectedEvent] : []);
   const [members, setMembers] = useState<Participant[]>([]);
   const [errors, setErrors] = useState<Errors>({});
   const [memberErrors, setMemberErrors] = useState<MemberErrors[]>([]);
@@ -258,7 +242,13 @@ export function RegisterFormBody({
       // ticked, so the same set always arrives as the same string and the
       // backend's one-entry-per-team check can compare them.
       const chosen = events.filter((ev) => picked.includes(ev.id)).map((ev) => ev.id);
-      submitRegistration({ ...trimmed, type, events: chosen, members: team, website })
+      submitRegistration({
+        ...trimmed,
+        type: "individual",
+        events: chosen,
+        members: team,
+        website,
+      })
         .then((reply) => {
           if (reply.ok) {
             setReceipt({ id: reply.id, duplicate: Boolean(reply.duplicate) });
@@ -290,9 +280,6 @@ export function RegisterFormBody({
     MEMBER_ORDER.filter((k) => row[k]).map((k) => ({ row: i, key: k, message: row[k] as string })),
   );
   const problems = errorList.length + memberErrorList.length;
-
-  const otherFormPath = isSchool ? "/register/form/individual" : "/register/form/school";
-  const otherFormLabel = isSchool ? "Register as an individual or team instead" : "Register as a school instead";
 
   if (receipt) {
     const chosenNames = events.filter((e) => picked.includes(e.id)).map((e) => e.name);
@@ -335,12 +322,8 @@ export function RegisterFormBody({
 
   return (
     <PageShell
-      title={isSchool ? "Register a school" : "Register"}
-      lede={
-        isSchool
-          ? "For the school coordinator submitting on the school's behalf. One form covers every event: enter the team lead's details, tick everything you are entering, and list the rest of the team."
-          : "For a student or team entering directly. One form covers every event: enter the team lead's details, tick everything you are entering, and list the rest of the team."
-      }
+      title="Register"
+      lede="One form covers every event. Enter the team lead's details, tick everything you are entering, and list the rest of the team under them. Entering more than one team? Fill this in once per team."
       registerChip={false}
     >
       {!registrationOpen ? (
@@ -381,7 +364,7 @@ export function RegisterFormBody({
 
         <Field
           id="student"
-          label={isSchool ? "Coordinator's full name" : "Team lead's full name"}
+          label="Team lead's full name"
           error={errors.student}
           value={values.student}
           onChange={set("student")}
@@ -644,9 +627,6 @@ export function RegisterFormBody({
           <SubmitButton registrationOpen={registrationOpen} sending={sending} />
           <Link to="/events" className="btn btn-ghost btn-block" data-magnetic>
             Read the event details first
-          </Link>
-          <Link to={otherFormPath} className="btn btn-ghost btn-block" data-magnetic>
-            {otherFormLabel}
           </Link>
         </div>
       </form>

@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { Value } from "@/components/site/Bits";
 import { PageShell } from "@/components/site/PageShell";
-import { about, events, festFacts, school } from "@/data/quantum";
+import { BROCHURE_URL, about, events, festFacts, isTodo, school } from "@/data/quantum";
 import { seo } from "@/lib/seo";
 
 export const Route = createFileRoute("/about")({
@@ -57,6 +58,18 @@ function About() {
           <Link to="/events" className="btn btn-ghost" data-magnetic>
             Read the full event details
           </Link>
+          {/* Only once there is something to download. A button pointing at
+              the placeholder string would be a link that 404s, which is worse
+              than no button — so until the URL is set this renders as the
+              same "to be confirmed" badge every other unset value gets, and
+              it becomes a real action the moment one exists. */}
+          {isTodo(BROCHURE_URL) ? (
+            <Value value={BROCHURE_URL} label="Brochure" />
+          ) : (
+            <a className="btn btn-ghost" href={BROCHURE_URL} download data-magnetic>
+              Download the brochure
+            </a>
+          )}
         </div>
       </section>
     </PageShell>

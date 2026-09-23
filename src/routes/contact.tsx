@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Instagram, Mail, Phone } from "lucide-react";
 import { PageShell } from "@/components/site/PageShell";
 import { Value } from "@/components/site/Bits";
-import { contact, isTodo, school } from "@/data/quantum";
+import { FEST_DATES, contact, isTodo, school } from "@/data/quantum";
 import { seo } from "@/lib/seo";
 
 export const Route = createFileRoute("/contact")({
@@ -73,6 +73,15 @@ function Contact() {
           <br />
           {school.city}
         </address>
+        {/* The dates were a constant nothing rendered — set in quantum.ts,
+            read only by the JSON-LD for search engines, and invisible to the
+            visitor standing in front of the page asking when this is. Badged
+            like every other unconfirmed value, so it looks missing until it
+            is set rather than quietly absent. */}
+        <p className="venue-when">
+          <span className="venue-when-label">When</span>
+          <Value value={FEST_DATES} label="Dates" />
+        </p>
         <p className="channel-note measure">
           Report to the main reception with your school ID and your confirmation email. Team codes
           are checked at the desk before any event starts.

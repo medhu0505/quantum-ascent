@@ -136,6 +136,40 @@ takes it rather than minting a second one, so a registration does not end up wit
 two different IDs in two places. Anything that is not the exact `QV2-XXXXXXXX`
 shape is discarded and an ID is minted as before.
 
+### The confirmation email
+
+Every accepted **new** entry is emailed to the address on the form, carrying the
+ID, the events, the lead's details and the rest of the team. It is sent from the
+Apps Script because that is the only part of the registration path running on a
+server the organisers own: the browser cannot send mail without shipping a
+provider's key in the bundle, and both the Firebase "Trigger Email" extension and
+Cloud Functions require the Blaze plan, which this project is deliberately not on.
+
+Three properties are deliberate:
+
+- **New rows only.** The duplicate branch returns before the send. A resubmit must
+  not produce a second copy, and since anyone can POST the endpoint repeatedly,
+  sending on duplicates would make it a way to flood someone else's inbox.
+- **Best-effort.** The quota is checked first and the whole send is wrapped. A row
+  already in the sheet *is* a registration, so a mail failure is logged to the
+  execution log and never returned to the entrant as an error — reporting one
+  would send them round again to make a duplicate.
+- **Both parts.** HTML and plain text. Every entrant-supplied value is escaped for
+  HTML, there are no external images, and the layout is a single table that has
+  been checked down to 320px wide.
+
+Consumer Gmail sends **100 recipients a day**. Past that the script logs loudly and
+the row is still safe, but that day's confirmations need sending by hand.
+
+The sender is the account that owns the script; Apps Script cannot send as an
+arbitrary address. `MAIL_FROM_NAME` sets the display name. Replies go to the owner
+until `MAIL_REPLY_TO` is set — do that when the fest has its own address, alongside
+`contact.email` in `src/data/quantum.ts`.
+
+`previewConfirmationEmail()` sends one specimen to whoever runs it from the editor.
+It is not reachable over the web, and it writes no row, so the template can be
+checked in a real client without putting a test entry in the organisers' sheet.
+
 To change the script, paste the new file into the sheet's Extensions > Apps Script
 editor. Then use Deploy > Manage deployments > Edit > New version. That keeps the
 same `/exec` URL. A *new* deployment gets a new URL, and `REGISTRATION_ENDPOINT`

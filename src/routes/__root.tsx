@@ -56,7 +56,7 @@ function NotFoundComponent() {
           </ul>
 
           <Link to="/" className="btn btn-ghost" data-magnetic>
-            Back to the crossroads
+            Back to Home
           </Link>
         </main>
       </div>

@@ -32,7 +32,7 @@ const ITEMS: Item[] = [
     accent: "violet",
   },
   { to: "/contact", label: "Contact", note: "Reach the organising team.", accent: "magenta" },
-  { to: "/", label: "Crossroads", note: "Back out to the street.", accent: "magenta" },
+  { to: "/", label: "Home", note: "Back out to the street.", accent: "magenta" },
 ];
 
 export function MobileMenu() {

@@ -33,7 +33,7 @@ export function ExitToCrossroads() {
   return (
     <Link to="/" className="chip chip-left" onClick={onPhase} data-magnetic>
       <span aria-hidden="true">←</span>
-      Back to the crossroads
+      Back to Home
     </Link>
   );
 }

@@ -117,6 +117,7 @@ export function EventsInterior() {
   return (
     <InteriorShell
       scene={scene}
+      leadBelow
       lead="Six events run across the day. Every one is scored the same way and carries the same weight, so cumulative points across all six decide the overall school champion."
     >
       <section className="rail" aria-labelledby="rail-head">

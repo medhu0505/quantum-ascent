@@ -42,6 +42,7 @@ const channels = [
 function Contact() {
   return (
     <PageShell
+      ledeBelow
       title="Contact"
       lede="Questions about entry, scheduling, or anything on the day go to the organising team. It is students who answer, so give us a little time outside school hours."
     >

@@ -20,10 +20,17 @@ import type { Scene } from "@/data/quantum";
 export function InteriorShell({
   scene,
   lead,
+  leadBelow = false,
   children,
 }: {
   scene: Scene;
   lead: string;
+  /**
+   * Put the lead under the content instead of above it. See PageShell's
+   * `ledeBelow` for why: the room header was costing half the first screen,
+   * and on Meet the Team it pushed the card deck clean off it.
+   */
+  leadBelow?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -45,9 +52,12 @@ export function InteriorShell({
           <Reveal as="header" className="room-header">
             <p className="eyebrow">Quantum V2.0</p>
             <RevealText as="h1" className="room-title" text={scene.label} />
-            <RevealText as="p" className="room-lead" text={lead} delay={0.12} />
+            {!leadBelow ? (
+              <RevealText as="p" className="room-lead" text={lead} delay={0.12} />
+            ) : null}
           </Reveal>
           {children}
+          {leadBelow ? <p className="room-lead room-lead-below">{lead}</p> : null}
         </div>
       </main>
 

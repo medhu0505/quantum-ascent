@@ -41,6 +41,7 @@ export function TeamInterior() {
   return (
     <InteriorShell
       scene={scene}
+      leadBelow
       lead="Quantum is student-run end to end. Students write the quiz, judge the prelims, cut the highlight reel, run the brackets and staff the help desk. Faculty coordinate and nothing more."
     >
       {pending > 0 ? (

@@ -1445,19 +1445,25 @@
   );
 }
 
+/* The top padding was 7rem, clearing fixed chrome that is 2.75rem tall and
+   sits 1rem down. The rest was air above a header that already had a margin
+   under it, and between them they spent half the first screen before the
+   room's own content began. */
 .room-body {
   position: relative;
   z-index: 2;
   margin-inline: auto;
   max-width: 76rem;
-  padding: calc(var(--s-9) + var(--s-4)) var(--gutter) var(--s-9);
+  padding: calc(var(--s-7) + var(--s-4)) var(--gutter) var(--s-9);
 }
 
 /* Deliberately narrower than the content beneath it: a header spanning the
    same width as the grid makes every screen the same rectangle. */
 .room-header {
   max-width: 44rem;
-  margin-bottom: var(--section);
+  /* A section's worth of gap belongs between sections, not between a title
+     and the thing it titles. */
+  margin-bottom: var(--s-6);
 }
 
 .room-title {
@@ -1470,9 +1476,22 @@
 }
 
 .room-lead {
-  margin: var(--s-5) 0 0;
+  margin: var(--s-4) 0 0;
   max-width: 42rem;
   font-size: var(--text-lg);
+  line-height: var(--leading-normal);
+  color: var(--muted-foreground);
+  text-wrap: pretty;
+}
+
+/* The same words, read after the thing they describe rather than in front
+   of it. Set back a step, because by the time you reach this you have
+   already seen what it is talking about. */
+.room-lead-below,
+.page-lede-below {
+  margin: var(--section) 0 0;
+  max-width: 42rem;
+  font-size: var(--text-base);
   line-height: var(--leading-normal);
   color: var(--muted-foreground);
   text-wrap: pretty;
@@ -1964,7 +1983,8 @@ button.screen:active {
 .page {
   position: relative;
   min-height: 70dvh;
-  padding: calc(var(--s-8) + var(--s-4)) var(--gutter) var(--s-9);
+  /* Clears the fixed chip band and no more; see .room-body. */
+  padding: calc(var(--s-7) + var(--s-4)) var(--gutter) var(--s-9);
   background:
     radial-gradient(80% 40% at 50% 0%, oklch(0.22 0.04 265 / 0.5), transparent 70%),
     var(--background);
@@ -1977,7 +1997,7 @@ button.screen:active {
 
 .page-header {
   max-width: 44rem;
-  margin-bottom: var(--section);
+  margin-bottom: var(--s-6);
 }
 
 .page-title {
@@ -1992,7 +2012,7 @@ button.screen:active {
 .page-lede {
   margin: var(--s-4) 0 0;
   max-width: 46rem;
-  font-size: var(--text-lg);
+  font-size: var(--text-base);
   line-height: 1.55;
   color: var(--foreground);
   text-wrap: pretty;

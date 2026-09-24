@@ -45,6 +45,7 @@ function Faq() {
 
   return (
     <PageShell
+      ledeBelow
       title="FAQ"
       lede="The questions we get most. If yours is not here, the organising team is on the Contact page."
     >

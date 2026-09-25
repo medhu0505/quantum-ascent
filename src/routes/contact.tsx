@@ -18,7 +18,7 @@ export const Route = createFileRoute("/contact")({
 const channels = [
   {
     label: "Email",
-    who: contact.role,
+    who: `${contact.name}, ${contact.role.toLowerCase()}`,
     icon: Mail,
     value: contact.email,
     href: (v: string) => `mailto:${v}`,
@@ -26,7 +26,7 @@ const channels = [
   },
   {
     label: "Phone",
-    who: contact.role,
+    who: `${contact.name}, ${contact.role.toLowerCase()}`,
     icon: Phone,
     value: contact.phone,
     href: (v: string) => `tel:${v.replace(/\s/g, "")}`,

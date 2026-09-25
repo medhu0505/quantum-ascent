@@ -113,7 +113,9 @@ export function SiteFooter() {
 
           <div>
             <p className="footer-heading">Contact</p>
-            <p className="footer-line">{contact.role}</p>
+            <p className="footer-line">
+              {contact.name} · {contact.role}
+            </p>
             <p className="footer-line">
               {isTodo(contact.email) ? (
                 <Value value={contact.email} label="Email" />

@@ -498,6 +498,7 @@ export const about = {
 
 export const contact = {
   /** Who answers the email and the phone below — shown with them. */
+  name: "Anjali Rawlley",
   role: "Teacher in charge",
   email: "anjalirawlley@gmail.com",
   /** Shown as written; the tel: link strips the spaces. */

@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { usePhaseLink } from "@/components/scene/PhaseTransition";
-import { crossroadsPlate, scenes, type Scene } from "@/data/quantum";
+import { crossroadsPlate, isTodo, scenes, type Scene } from "@/data/quantum";
 
 /**
  * The crossroads hub.
@@ -127,6 +127,32 @@ function Sign({ scene }: { scene: Scene }) {
     };
   }, [scene.sign.clip]);
 
+  /*
+   * Three kinds of board. One that opens a room, through the router and the
+   * phase-through. One that opens something outside the site — the brochure
+   * PDF — which is a plain anchor, because a router Link cannot leave. And
+   * one whose address has not been supplied yet, which is not a link at all:
+   * a board on the crossroads that 404s is worse than a board that says the
+   * thing is not ready.
+   */
+  const external = scene.href !== undefined;
+  const pending = external && isTodo(scene.href!);
+
+  const face = (
+    <span className="sign-face">
+      <span className="sign-inner">
+        <span className="sign-label">{scene.label}</span>
+        <span className="sign-blurb">{pending ? "To be confirmed." : scene.blurb}</span>
+      </span>
+    </span>
+  );
+
+  const shared = {
+    className: "sign",
+    "data-vertical": scene.sign.vertical ? "true" : undefined,
+    "data-compact": scene.sign.compact ? "true" : undefined,
+  } as const;
+
   return (
     <li
       ref={ref}
@@ -142,22 +168,19 @@ function Sign({ scene }: { scene: Scene }) {
         } as React.CSSProperties
       }
     >
-      <Link
-        to={scene.to}
-        className="sign"
-        data-vertical={scene.sign.vertical ? "true" : undefined}
-        data-compact={scene.sign.compact ? "true" : undefined}
-        preload="intent"
-        onClick={phase}
-        data-cursor-label="Enter"
-      >
-        <span className="sign-face">
-          <span className="sign-inner">
-            <span className="sign-label">{scene.label}</span>
-            <span className="sign-blurb">{scene.blurb}</span>
-          </span>
+      {pending ? (
+        <span {...shared} data-pending="true" aria-disabled="true">
+          {face}
         </span>
-      </Link>
+      ) : external ? (
+        <a {...shared} href={scene.href} target="_blank" rel="noreferrer" data-cursor-label="Open">
+          {face}
+        </a>
+      ) : (
+        <Link {...shared} to={scene.to} preload="intent" onClick={phase} data-cursor-label="Enter">
+          {face}
+        </Link>
+      )}
     </li>
   );
 }

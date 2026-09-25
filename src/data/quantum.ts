@@ -250,7 +250,15 @@ export type Scene = {
   label: string;
   /** One line under the label, on the sign and in the mobile list. */
   blurb: string;
+  /** In-app destination. Ignored when `href` is set. */
   to: string;
+  /**
+   * An address outside the router — a PDF, another site. A board with one of
+   * these is an anchor rather than a Link, and when the address is still a
+   * TODO it is not a link at all: see Hub.tsx. `to` stays as the fallback
+   * the board would have used.
+   */
+  href?: string;
   accent: Accent;
   sign: SignGeometry;
   /**
@@ -350,9 +358,20 @@ export const scenes: Scene[] = [
     room: "An archive room with a wall of labelled links.",
   },
   {
-    id: "faq",
-    label: "FAQ",
-    blurb: "The questions we get asked.",
+    /*
+     * This board was the FAQ. The FAQ is still one tap away — it is in the
+     * menu, in the footer, and it is one of the three screens in the
+     * Resources room — and a brochure is the thing people actually ask for
+     * when they are deciding whether to enter.
+     *
+     * Its address is BROCHURE_URL, which is still a placeholder. Until it is
+     * a real one the board renders as a board and not as a link, rather than
+     * putting a 404 on the crossroads.
+     */
+    id: "brochure",
+    label: "Brochure",
+    blurb: "The fest in one PDF.",
+    href: BROCHURE_URL,
     to: "/faq",
     accent: "violet",
     sign: {
@@ -368,7 +387,7 @@ export const scenes: Scene[] = [
       ],
       vertical: true,
     },
-    room: "A wall of the questions we are asked most, answered.",
+    room: "The fest brochure, as a PDF.",
   },
 ];
 

@@ -1309,6 +1309,25 @@
   animation: phase-plate-out var(--dur-scene) var(--ease-in) forwards;
 }
 
+/* Stepping back out to the crossroads. The plate resolves from blown-out
+   and blurred down onto its own pixels, so the camera settles into the
+   frame instead of rushing past it again — and since what is underneath is
+   the same plate, the fade at the end lands on identical pixels. */
+.phase-veil[data-dir="out"] img {
+  animation-name: phase-plate-in;
+}
+
+@keyframes phase-plate-in {
+  from {
+    transform: scale(2.35);
+    filter: blur(14px) brightness(1.35);
+  }
+  to {
+    transform: scale(1);
+    filter: blur(0) brightness(1);
+  }
+}
+
 @keyframes phase-plate-out {
   from {
     transform: scale(1);
@@ -3475,7 +3494,12 @@ button.screen:active {
     animation: none !important;
   }
 
-  .phase-veil img {
+  /* Both listed: the directional rule further up is a class plus an
+     attribute plus a type selector, which out-specifies a bare
+     `.phase-veil img`, so without naming it here it would put the plate's
+     animation back for anyone who asked for less motion. */
+  .phase-veil img,
+  .phase-veil[data-dir="out"] img {
     animation: none;
   }
 

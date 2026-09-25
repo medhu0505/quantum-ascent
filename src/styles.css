@@ -1158,9 +1158,16 @@
     display: none;
   }
 
-  /* The tall blade sign runs its label vertically and drops the blurb. Sized
-     against block-size (cqb), not inline-size: vertical-rl text stacks
-     characters down the panel's height, so height is what has to fit it. */
+  /* The tall blade sign runs its label vertically and drops the blurb.
+     Sized against cqi, the inline axis — and on this element the inline axis
+     is vertical, because the label is writing-mode: vertical-rl and
+     container query units resolve in the writing mode of the element using
+     them, not of the container. The rule here asked for cqb on the reasoning
+     that "height is what has to fit it", which is true, but in vertical text
+     height is the inline axis and cqb is the blade's width: 53px, so 11cqb
+     came out at 5.86px and fell through to the clamp's floor. Both blades
+     sat at 9.6px at every viewport and the word filled under a third of the
+     board. cqi on the same element is 19.71px. */
   .sign[data-vertical="true"] .sign-inner {
     flex-direction: row;
     padding: 8% 4%;
@@ -1168,7 +1175,9 @@
 
   .sign[data-vertical="true"] .sign-label {
     writing-mode: vertical-rl;
-    font-size: clamp(0.6rem, 11cqb, 1.35rem);
+    /* The ceiling went up with it: 1.35rem would have capped the blades
+       again from about 1500px wide, which is the width they are read at. */
+    font-size: clamp(0.75rem, 11.5cqi, 2rem);
     letter-spacing: 0.08em;
   }
 

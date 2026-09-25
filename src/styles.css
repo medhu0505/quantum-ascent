@@ -2472,6 +2472,31 @@ button.screen:active {
   color: var(--muted-foreground);
 }
 
+/* Whose number this is, beside the kind of number it is. Quieter than the
+   label so "Email" still reads first. */
+.channel-who {
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--muted-foreground);
+}
+
+.footer-line a {
+  /* The line box is 21px, under the 24px WCAG 2.5.8 minimum for a target.
+     Block padding makes the hit area without moving the text. */
+  display: inline-block;
+  padding-block: 0.3rem;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, currentColor 35%, transparent);
+  text-underline-offset: 0.2em;
+}
+
+.footer-line a:hover,
+.footer-line a:focus-visible {
+  text-decoration-color: currentColor;
+}
+
 .channel-value {
   margin: var(--s-2) 0 var(--s-3);
   font-size: var(--text-base);
@@ -2480,6 +2505,9 @@ button.screen:active {
 }
 
 .channel-value a {
+  /* 23px tall on its own, a pixel under the minimum target. */
+  display: inline-block;
+  padding-block: 0.25rem;
   color: var(--neon-cyan);
   text-decoration: underline;
   text-underline-offset: 3px;

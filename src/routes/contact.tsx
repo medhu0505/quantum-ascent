@@ -18,6 +18,7 @@ export const Route = createFileRoute("/contact")({
 const channels = [
   {
     label: "Email",
+    who: contact.role,
     icon: Mail,
     value: contact.email,
     href: (v: string) => `mailto:${v}`,
@@ -25,6 +26,7 @@ const channels = [
   },
   {
     label: "Phone",
+    who: contact.role,
     icon: Phone,
     value: contact.phone,
     href: (v: string) => `tel:${v.replace(/\s/g, "")}`,
@@ -32,6 +34,7 @@ const channels = [
   },
   {
     label: "Instagram",
+    who: undefined,
     icon: Instagram,
     value: contact.instagram,
     href: (v: string) => `https://instagram.com/${v.replace(/^@/, "")}`,
@@ -44,14 +47,17 @@ function Contact() {
     <PageShell
       ledeBelow
       title="Contact"
-      lede="Questions about entry, scheduling, or anything on the day go to the organising team. It is students who answer, so give us a little time outside school hours."
+      lede="Questions about entry, scheduling, or anything on the day go to the teacher in charge. Please allow a little time for a reply outside school hours."
     >
       <ul className="channels">
         {channels.map((channel) => (
           <li key={channel.label}>
             <div className="channel-head">
               <channel.icon className="channel-icon" aria-hidden="true" strokeWidth={1.75} />
-              <p className="channel-label">{channel.label}</p>
+              <p className="channel-label">
+                {channel.label}
+                {channel.who ? <span className="channel-who"> · {channel.who}</span> : null}
+              </p>
             </div>
             <p className="channel-value">
               {isTodo(channel.value) ? (

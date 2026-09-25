@@ -497,8 +497,11 @@ export const about = {
  * ------------------------------------------------------------------ */
 
 export const contact = {
-  email: `${TODO} — official fest email`,
-  phone: `${TODO} — coordinator phone`,
+  /** Who answers the email and the phone below — shown with them. */
+  role: "Teacher in charge",
+  email: "anjalirawlley@gmail.com",
+  /** Shown as written; the tel: link strips the spaces. */
+  phone: "+91 98713 79429",
   instagram: `${TODO} — fest Instagram handle`,
   school: school.name,
   address: school.city,

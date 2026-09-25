@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { contact, fest, school } from "@/data/quantum";
+import { contact, fest, isTodo, school } from "@/data/quantum";
 import { ExitToCrossroads, RegisterChip, Value } from "@/components/site/Bits";
 import { Beam, Reveal } from "@/components/scene/Reveal";
 import { RevealText } from "@/components/scene/RevealText";
@@ -113,11 +113,20 @@ export function SiteFooter() {
 
           <div>
             <p className="footer-heading">Contact</p>
+            <p className="footer-line">{contact.role}</p>
             <p className="footer-line">
-              <Value value={contact.email} label="Email" />
+              {isTodo(contact.email) ? (
+                <Value value={contact.email} label="Email" />
+              ) : (
+                <a href={`mailto:${contact.email}`}>{contact.email}</a>
+              )}
             </p>
             <p className="footer-line">
-              <Value value={contact.phone} label="Phone" />
+              {isTodo(contact.phone) ? (
+                <Value value={contact.phone} label="Phone" />
+              ) : (
+                <a href={`tel:${contact.phone.replace(/\s/g, "")}`}>{contact.phone}</a>
+              )}
             </p>
           </div>
         </div>

@@ -23,7 +23,7 @@ import { crossroadsPlate } from "@/data/quantum";
  * the whole thing into a 180ms fade (see styles.css).
  */
 
-type Phase = { x: number; y: number; key: number } | null;
+type Phase = { x: number; y: number; key: number; dir: "in" | "out" } | null;
 
 type PhaseContextValue = {
   /** Navigate to `to`, flying the plate toward the element that was clicked. */
@@ -33,7 +33,7 @@ type PhaseContextValue = {
 const PhaseContext = createContext<PhaseContextValue | null>(null);
 
 /** Matches --dur-scene in styles.css. */
-const PHASE_MS = 620;
+const PHASE_MS = 340;
 
 export function PhaseProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -41,18 +41,35 @@ export function PhaseProvider({ children }: { children: ReactNode }) {
 
   const phaseTo = useCallback(
     (to: string, origin: HTMLElement | null) => {
-      // Centre of the clicked sign, as a percentage of the viewport. That
-      // becomes the transform-origin, so the plate flies toward the sign the
-      // visitor actually chose rather than always toward the middle.
+      /*
+       * Which way through the billboard.
+       *
+       * Going into a room, the plate rushes past the camera: it is the
+       * crossroads you are leaving, and it blows out as you pass through the
+       * sign. Coming back, the same animation played the same way round said
+       * you were passing through a second billboard into somewhere new,
+       * when what actually happens is that you step back out and the
+       * crossroads settles in front of you. Same move, run backwards.
+       */
+      const dir = to === "/" ? "out" : "in";
+
+      /*
+       * Centre of the clicked sign, as a percentage of the viewport, so the
+       * plate flies toward the board the visitor actually chose rather than
+       * always toward the middle. Only on the way in: on the way out the
+       * thing clicked is the exit chip in the top-left corner, and scaling
+       * down about that point reads as the crossroads receding into a
+       * corner. Pulling back to the whole frame is a centre move.
+       */
       let x = 50;
       let y = 50;
-      if (origin) {
+      if (origin && dir === "in") {
         const r = origin.getBoundingClientRect();
         x = ((r.left + r.width / 2) / window.innerWidth) * 100;
         y = ((r.top + r.height / 2) / window.innerHeight) * 100;
       }
       const cover = () => {
-        setPhase({ x, y, key: Date.now() });
+        setPhase({ x, y, key: Date.now(), dir });
         // Two frames, so the veil has actually painted before the outgoing
         // route is torn down. Navigating in the same tick left a gap where
         // the crossroads had gone and the next page had not arrived yet —
@@ -82,6 +99,7 @@ export function PhaseProvider({ children }: { children: ReactNode }) {
         <div
           key={phase.key}
           className="phase-veil"
+          data-dir={phase.dir}
           aria-hidden="true"
           style={
             {

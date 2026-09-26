@@ -250,7 +250,15 @@ export type Scene = {
   label: string;
   /** One line under the label, on the sign and in the mobile list. */
   blurb: string;
+  /** In-app destination. Ignored when `href` is set. */
   to: string;
+  /**
+   * An address outside the router — a PDF, another site. A board with one of
+   * these is an anchor rather than a Link, and when the address is still a
+   * TODO it is not a link at all: see Hub.tsx. `to` stays as the fallback
+   * the board would have used.
+   */
+  href?: string;
   accent: Accent;
   sign: SignGeometry;
   /**
@@ -350,9 +358,20 @@ export const scenes: Scene[] = [
     room: "An archive room with a wall of labelled links.",
   },
   {
-    id: "faq",
-    label: "FAQ",
-    blurb: "The questions we get asked.",
+    /*
+     * This board was the FAQ. The FAQ is still one tap away — it is in the
+     * menu, in the footer, and it is one of the three screens in the
+     * Resources room — and a brochure is the thing people actually ask for
+     * when they are deciding whether to enter.
+     *
+     * Its address is BROCHURE_URL, which is still a placeholder. Until it is
+     * a real one the board renders as a board and not as a link, rather than
+     * putting a 404 on the crossroads.
+     */
+    id: "brochure",
+    label: "Brochure",
+    blurb: "The fest in one PDF.",
+    href: BROCHURE_URL,
     to: "/faq",
     accent: "violet",
     sign: {
@@ -368,7 +387,7 @@ export const scenes: Scene[] = [
       ],
       vertical: true,
     },
-    room: "A wall of the questions we are asked most, answered.",
+    room: "The fest brochure, as a PDF.",
   },
 ];
 
@@ -419,34 +438,36 @@ export const team: TeamMember[] = [
  * FAQ
  * ------------------------------------------------------------------ */
 
+/** The FAQ page's own title and the line under it. */
+export const faqPage = {
+  title: "Frequently Asked Questions",
+  tagline: "Key details on eligibility, registrations, tournament structure, and platform rules.",
+} as const;
+
 export const faqs = [
   {
-    q: "Who can take part in Quantum V2.0?",
-    a: "Quantum is an inter-school fest. Students in classes 9 to 12 at any participating school may register, and a school may send more than one team to the same event.",
+    q: "Who is eligible to participate in Quantum V2.0?",
+    a: "Participation is open to students from recognized schools across Grades 8 through 12. Individual events have specific grade brackets and squad limits—refer to the Events page for each category's exact roster size.",
   },
   {
-    q: "Can I enter more than one event?",
-    a: "Yes. Enter as many as you can physically attend, but check the schedule first — rounds for different events can run at the same time, and we cannot hold a round for a late team.",
+    q: "Can individual students register, or must entries go through schools?",
+    a: "All registrations must be officially submitted via the school registration form. The designated Teacher-in-Charge or Student Club President should finalize and submit the consolidated roster to ensure scores are credited toward the Overall Championship.",
   },
   {
-    q: "Is there a registration fee?",
-    a: "Registration is handled through the official form. Fee details, if any, are listed on the form and confirmed again in your acceptance email.",
+    q: "Is there any registration fee?",
+    a: "No. Entry to Quantum V2.0 is completely free for all invited schools and confirmed delegations.",
   },
   {
-    q: "What should we bring on the day?",
-    a: "Your school ID, your confirmation email, and whatever your event needs: cameras and memory cards for Film Making and Ad Shoot, your own peripherals for Online Gaming, a laptop for Pitch.",
+    q: "Where will prompts, bracket updates, and announcements be shared?",
+    a: "All real-time match fixtures, problem statements, rule clarifications, and server links are distributed through the official Quantum Discord server and emailed directly to registered team points of contact.",
   },
   {
-    q: "What is the Surprise event?",
-    a: "It stays sealed on purpose. The brief, the team size and the rules are announced on the morning of the fest, and it carries the same points weight as every other event.",
+    q: "What equipment or software do participants need to prepare?",
+    a: "For online preliminary rounds, participants must have a stable internet connection, a desktop or laptop, and the necessary tools (IDE, design software, or specific game clients) pre-installed. Specific hardware and software requirements are listed under individual event briefs.",
   },
   {
-    q: "How are winners decided?",
-    a: "Every event is scored by an independent panel against published criteria. Event winners take individual trophies, and cumulative points across all six events decide the overall school champion.",
-  },
-  {
-    q: "What happens after I register?",
-    a: "You get a confirmation email with your team code, the reporting time for each event you entered, and the campus map. Bring the team code — it is how we check you in.",
+    q: "How are ties and disputes resolved?",
+    a: "All entries and submissions undergo blinded evaluation under structured judging rubrics. In the event of a points tie or technical dispute, the decision of the AFBBS Organising Committee and judging panel is absolute and final.",
   },
 ];
 
@@ -463,14 +484,19 @@ export const festFacts = [
 ] as const;
 
 export const about = {
-  lede: "Quantum is the inter-school tech and culture fest run by the students of Air Force Bal Bharati School. V2.0 is the second edition, and it is bigger in the only way that matters: more schools in the building, competing on the same day for the same trophy.",
-  body: [
-    "The format is deliberately simple. Six events run across one day — Quiz, Film Making, Ad Shoot, Online Gaming, Pitch, and one that stays sealed until the morning. Every event is scored the same way and carries the same weight, so a school that is strong in one discipline cannot coast. The cumulative score across all six decides the overall champion.",
-    "Everything you see on the day is student-run. Students write the quiz, judge the prelims, cut the highlight reel, manage the brackets, staff the help desk and run the tech. Faculty are there as coordinators and nothing more. That is the point of the fest: not a showcase put on for students, but one put on by them.",
-    "We built it for people who want to make something under pressure. Thirty-six hours to shoot a film. Sixty seconds to sell a product you were handed on the spot. Five minutes to defend a business case to a panel that will interrupt you. None of it rewards preparation alone.",
-  ],
-  /** Pulled out as the page's closing line. */
-  kicker: "Bring a team, pick your events, and come find out what you can do with a deadline.",
+  title: "About Quantum V2.0",
+  tagline: "The intersection of intellect, code, and digital warfare.",
+  intro: {
+    heading: "The Descent into Excellence",
+    body: [
+      "Organised by the Computer Club of Air Force Bal Bharati School, Quantum is an inter-school technology symposium designed to test the limits of modern digital literacy and technical problem-solving. From high-stakes competitive programming and full-stack web development to cryptic hunts, audio-visual production, and gaming, Quantum gathers school teams to compete on a singular proving ground.",
+      "Following its debut edition, Quantum V2.0 raises the benchmark with more rigorous prompts, refined tournament brackets, and a cyber-kinetic competitive atmosphere.",
+    ],
+  },
+  scoring: {
+    heading: "The Championship & Scoring",
+    line: "Six standalone events. One ultimate championship.",
+  },
 } as const;
 
 /* ------------------------------------------------------------------ *
@@ -478,8 +504,12 @@ export const about = {
  * ------------------------------------------------------------------ */
 
 export const contact = {
-  email: `${TODO} — official fest email`,
-  phone: `${TODO} — coordinator phone`,
+  /** Who answers the email and the phone below — shown with them. */
+  name: "Anjali Rawlley",
+  role: "Teacher in charge",
+  email: "anjalirawlley@gmail.com",
+  /** Shown as written; the tel: link strips the spaces. */
+  phone: "+91 98713 79429",
   instagram: `${TODO} — fest Instagram handle`,
   school: school.name,
   address: school.city,

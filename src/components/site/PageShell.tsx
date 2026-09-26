@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { contact, fest, school } from "@/data/quantum";
+import { contact, fest, isTodo, school } from "@/data/quantum";
 import { ExitToCrossroads, RegisterChip, Value } from "@/components/site/Bits";
 import { Beam, Reveal } from "@/components/scene/Reveal";
 import { RevealText } from "@/components/scene/RevealText";
@@ -18,11 +18,28 @@ import { RevealText } from "@/components/scene/RevealText";
 export function PageShell({
   title,
   lede,
+  ledeBelow = false,
   children,
   registerChip = true,
 }: {
   title: string;
   lede?: string | undefined;
+  /**
+   * Put the lede under the content instead of above it.
+   *
+   * The header used to cost about half the first screen everywhere —
+   * measured: the thing a visitor came for started at 36% to 51% of the
+   * fold, and on Meet the Team it started at 105%, entirely off it. An
+   * eyebrow, a display-size title and a four-line paragraph is a lot to read
+   * before you are allowed to see the six events.
+   *
+   * Where the lede is scene-setting rather than instruction, it reads just
+   * as well after the thing it describes, and the thing itself gets the top
+   * of the screen. Where it is instruction — the register form — it stays
+   * where it is, because telling someone how to fill a form in after they
+   * have filled it in is worse than a tall header.
+   */
+  ledeBelow?: boolean;
   children: ReactNode;
   /** Off on the register form itself — the chip would point at the page
    *  already open. */
@@ -41,9 +58,12 @@ export function PageShell({
           <Reveal as="header" className="page-header">
             <p className="eyebrow">{fest.fullName}</p>
             <RevealText as="h1" className="page-title" text={title} />
-            {lede ? <RevealText as="p" className="page-lede" text={lede} delay={0.12} /> : null}
+            {lede && !ledeBelow ? (
+              <RevealText as="p" className="page-lede" text={lede} delay={0.12} />
+            ) : null}
           </Reveal>
           {children}
+          {lede && ledeBelow ? <p className="page-lede page-lede-below">{lede}</p> : null}
         </div>
       </main>
 
@@ -94,10 +114,21 @@ export function SiteFooter() {
           <div>
             <p className="footer-heading">Contact</p>
             <p className="footer-line">
-              <Value value={contact.email} label="Email" />
+              {contact.name} · {contact.role}
             </p>
             <p className="footer-line">
-              <Value value={contact.phone} label="Phone" />
+              {isTodo(contact.email) ? (
+                <Value value={contact.email} label="Email" />
+              ) : (
+                <a href={`mailto:${contact.email}`}>{contact.email}</a>
+              )}
+            </p>
+            <p className="footer-line">
+              {isTodo(contact.phone) ? (
+                <Value value={contact.phone} label="Phone" />
+              ) : (
+                <a href={`tel:${contact.phone.replace(/\s/g, "")}`}>{contact.phone}</a>
+              )}
             </p>
           </div>
         </div>

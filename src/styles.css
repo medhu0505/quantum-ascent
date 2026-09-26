@@ -197,7 +197,13 @@
   /* Kept for existing rules; both resolve into the scale above. */
   --dur-fast: var(--dur-1);
   --dur-ui: var(--dur-2);
-  --dur-scene: var(--dur-4);
+  /* The phase-through. Was --dur-4 (640ms), which meant every room opened
+     behind a curtain that took longer than the route it was covering:
+     measured 721ms and 878ms from click to the veil clearing. It is a cut
+     between two frames of the same film, not a scene change, and it does
+     not need two thirds of a second. Keep it in step with PHASE_MS in
+     PhaseTransition.tsx. */
+  --dur-scene: 340ms;
   --ease-out: var(--ease);
 
   /* Stage: every scene is authored against the film's 1280x720 frame. */
@@ -830,6 +836,13 @@
   background: color-mix(in oklab, var(--accent-hue) 36%, oklch(0.16 0.03 265 / 0.82));
 }
 
+/* The brochure board before there is a brochure. It keeps its place on the
+   crossroads and its label, and loses everything that says "press me". */
+.sign[data-pending] {
+  cursor: default;
+  opacity: 0.72;
+}
+
 .sign:focus-visible {
   outline: 2px solid oklch(0.99 0 0);
   outline-offset: 4px;
@@ -1145,9 +1158,16 @@
     display: none;
   }
 
-  /* The tall blade sign runs its label vertically and drops the blurb. Sized
-     against block-size (cqb), not inline-size: vertical-rl text stacks
-     characters down the panel's height, so height is what has to fit it. */
+  /* The tall blade sign runs its label vertically and drops the blurb.
+     Sized against cqi, the inline axis — and on this element the inline axis
+     is vertical, because the label is writing-mode: vertical-rl and
+     container query units resolve in the writing mode of the element using
+     them, not of the container. The rule here asked for cqb on the reasoning
+     that "height is what has to fit it", which is true, but in vertical text
+     height is the inline axis and cqb is the blade's width: 53px, so 11cqb
+     came out at 5.86px and fell through to the clamp's floor. Both blades
+     sat at 9.6px at every viewport and the word filled under a third of the
+     board. cqi on the same element is 19.71px. */
   .sign[data-vertical="true"] .sign-inner {
     flex-direction: row;
     padding: 8% 4%;
@@ -1155,7 +1175,9 @@
 
   .sign[data-vertical="true"] .sign-label {
     writing-mode: vertical-rl;
-    font-size: clamp(0.6rem, 11cqb, 1.35rem);
+    /* The ceiling went up with it: 1.35rem would have capped the blades
+       again from about 1500px wide, which is the width they are read at. */
+    font-size: clamp(0.75rem, 11.5cqi, 2rem);
     letter-spacing: 0.08em;
   }
 
@@ -1285,6 +1307,25 @@
   object-fit: cover;
   transform-origin: var(--phase-x, 50%) var(--phase-y, 50%);
   animation: phase-plate-out var(--dur-scene) var(--ease-in) forwards;
+}
+
+/* Stepping back out to the crossroads. The plate resolves from blown-out
+   and blurred down onto its own pixels, so the camera settles into the
+   frame instead of rushing past it again — and since what is underneath is
+   the same plate, the fade at the end lands on identical pixels. */
+.phase-veil[data-dir="out"] img {
+  animation-name: phase-plate-in;
+}
+
+@keyframes phase-plate-in {
+  from {
+    transform: scale(2.35);
+    filter: blur(14px) brightness(1.35);
+  }
+  to {
+    transform: scale(1);
+    filter: blur(0) brightness(1);
+  }
 }
 
 @keyframes phase-plate-out {
@@ -1445,19 +1486,25 @@
   );
 }
 
+/* The top padding was 7rem, clearing fixed chrome that is 2.75rem tall and
+   sits 1rem down. The rest was air above a header that already had a margin
+   under it, and between them they spent half the first screen before the
+   room's own content began. */
 .room-body {
   position: relative;
   z-index: 2;
   margin-inline: auto;
   max-width: 76rem;
-  padding: calc(var(--s-9) + var(--s-4)) var(--gutter) var(--s-9);
+  padding: calc(var(--s-7) + var(--s-4)) var(--gutter) var(--s-9);
 }
 
 /* Deliberately narrower than the content beneath it: a header spanning the
    same width as the grid makes every screen the same rectangle. */
 .room-header {
   max-width: 44rem;
-  margin-bottom: var(--section);
+  /* A section's worth of gap belongs between sections, not between a title
+     and the thing it titles. */
+  margin-bottom: var(--s-6);
 }
 
 .room-title {
@@ -1470,9 +1517,22 @@
 }
 
 .room-lead {
-  margin: var(--s-5) 0 0;
+  margin: var(--s-4) 0 0;
   max-width: 42rem;
   font-size: var(--text-lg);
+  line-height: var(--leading-normal);
+  color: var(--muted-foreground);
+  text-wrap: pretty;
+}
+
+/* The same words, read after the thing they describe rather than in front
+   of it. Set back a step, because by the time you reach this you have
+   already seen what it is talking about. */
+.room-lead-below,
+.page-lede-below {
+  margin: var(--section) 0 0;
+  max-width: 42rem;
+  font-size: var(--text-base);
   line-height: var(--leading-normal);
   color: var(--muted-foreground);
   text-wrap: pretty;
@@ -1701,9 +1761,23 @@ button.screen:active {
   font-size: var(--text-xs);
   font-weight: 600;
   color: var(--foreground);
-  background: oklch(0.14 0.028 265 / 0.84);
-  box-shadow: inset 0 0 0 1px var(--border);
-  backdrop-filter: blur(10px);
+  /* Same glass as the pill: these sit in the same band at the top of a room
+     and two different materials an inch apart read as a mistake. */
+  background:
+    linear-gradient(
+      180deg,
+      oklch(1 0 0 / 0.12) 0%,
+      oklch(1 0 0 / 0.035) 38%,
+      transparent 62%
+    ),
+    oklch(0.15 0.03 265 / 0.58);
+  box-shadow:
+    inset 0 1px 0 0 oklch(1 0 0 / 0.24),
+    inset 0 0 0 1px oklch(1 0 0 / 0.1),
+    inset 0 -12px 24px -14px oklch(1 0 0 / 0.16),
+    0 10px 30px -14px oklch(0.02 0 0 / 0.75);
+  -webkit-backdrop-filter: blur(22px) saturate(185%) brightness(1.06);
+  backdrop-filter: blur(22px) saturate(185%) brightness(1.06);
   transition:
     background var(--dur-ui) var(--ease-out),
     transform var(--dur-fast) var(--ease-out);
@@ -1964,7 +2038,8 @@ button.screen:active {
 .page {
   position: relative;
   min-height: 70dvh;
-  padding: calc(var(--s-8) + var(--s-4)) var(--gutter) var(--s-9);
+  /* Clears the fixed chip band and no more; see .room-body. */
+  padding: calc(var(--s-7) + var(--s-4)) var(--gutter) var(--s-9);
   background:
     radial-gradient(80% 40% at 50% 0%, oklch(0.22 0.04 265 / 0.5), transparent 70%),
     var(--background);
@@ -1977,7 +2052,7 @@ button.screen:active {
 
 .page-header {
   max-width: 44rem;
-  margin-bottom: var(--section);
+  margin-bottom: var(--s-6);
 }
 
 .page-title {
@@ -1992,7 +2067,7 @@ button.screen:active {
 .page-lede {
   margin: var(--s-4) 0 0;
   max-width: 46rem;
-  font-size: var(--text-lg);
+  font-size: var(--text-base);
   line-height: 1.55;
   color: var(--foreground);
   text-wrap: pretty;
@@ -2156,6 +2231,13 @@ button.screen:active {
 
 .about-events {
   margin-top: calc(var(--section) * 1.25);
+}
+
+/* The pull-quote treatment, used as the line under a heading rather than as
+   a closing statement, so it keeps the look and loses the section-sized gap
+   above it. */
+.about-scoring-line {
+  margin: 0 0 var(--s-6);
 }
 
 .about-list {
@@ -2397,6 +2479,31 @@ button.screen:active {
   color: var(--muted-foreground);
 }
 
+/* Whose number this is, beside the kind of number it is. Quieter than the
+   label so "Email" still reads first. */
+.channel-who {
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--muted-foreground);
+}
+
+.footer-line a {
+  /* The line box is 21px, under the 24px WCAG 2.5.8 minimum for a target.
+     Block padding makes the hit area without moving the text. */
+  display: inline-block;
+  padding-block: 0.3rem;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, currentColor 35%, transparent);
+  text-underline-offset: 0.2em;
+}
+
+.footer-line a:hover,
+.footer-line a:focus-visible {
+  text-decoration-color: currentColor;
+}
+
 .channel-value {
   margin: var(--s-2) 0 var(--s-3);
   font-size: var(--text-base);
@@ -2405,6 +2512,9 @@ button.screen:active {
 }
 
 .channel-value a {
+  /* 23px tall on its own, a pixel under the minimum target. */
+  display: inline-block;
+  padding-block: 0.25rem;
   color: var(--neon-cyan);
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -2420,6 +2530,28 @@ button.screen:active {
 
 .venue + .venue {
   margin-top: var(--s-7);
+}
+
+/* The "When" line under the address. Same weight as the address it sits
+   with, with the label set back so the value is what the eye lands on. */
+.venue-when {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  margin: 0 0 var(--s-4);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.venue-when-label {
+  flex: none;
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--muted-foreground);
 }
 
 .venue-address {
@@ -2915,9 +3047,27 @@ button.screen:active {
      reads as a clipped nav rather than a scrollable one. */
   padding: var(--s-2) var(--s-5);
   border-radius: 999px;
-  background: oklch(0.14 0.028 265 / 0.72);
-  box-shadow: inset 0 0 0 1px var(--border);
-  backdrop-filter: blur(14px) saturate(150%);
+  /* Glass, in four parts: a sheen falling off the top edge, a thinner tint
+     than before so the street actually comes through, a bright rim where
+     the light catches the lip, and light pooling along the base the way it
+     does in a curved piece. The flat 72% fill this replaces read as a dark
+     rectangle with rounded ends — the blur was doing all the work and
+     nothing was reflecting. */
+  background:
+    linear-gradient(
+      180deg,
+      oklch(1 0 0 / 0.12) 0%,
+      oklch(1 0 0 / 0.035) 38%,
+      transparent 62%
+    ),
+    oklch(0.15 0.03 265 / 0.52);
+  box-shadow:
+    inset 0 1px 0 0 oklch(1 0 0 / 0.24),
+    inset 0 0 0 1px oklch(1 0 0 / 0.1),
+    inset 0 -12px 24px -14px oklch(1 0 0 / 0.16),
+    0 10px 30px -14px oklch(0.02 0 0 / 0.75);
+  -webkit-backdrop-filter: blur(22px) saturate(185%) brightness(1.06);
+  backdrop-filter: blur(22px) saturate(185%) brightness(1.06);
   /* Hidden — not merely faded — until the hub is actually the thing on
      screen: the descent is one long route, and this pill floats "on the
      road" specifically, not over the moon during the aerial beat or the
@@ -3382,7 +3532,12 @@ button.screen:active {
     animation: none !important;
   }
 
-  .phase-veil img {
+  /* Both listed: the directional rule further up is a class plus an
+     attribute plus a type selector, which out-specifies a bare
+     `.phase-veil img`, so without naming it here it would put the plate's
+     animation back for anyone who asked for less motion. */
+  .phase-veil img,
+  .phase-veil[data-dir="out"] img {
     animation: none;
   }
 

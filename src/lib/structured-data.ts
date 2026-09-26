@@ -33,7 +33,7 @@ export function festJsonLd() {
     "@type": "Event",
     name: fest.fullName,
     alternateName: `${fest.name} ${fest.edition}`,
-    description: about.lede,
+    description: about.intro.body[0],
     eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     ...(datesKnown ? { startDate: FEST_DATES } : {}),

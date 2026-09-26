@@ -27,9 +27,9 @@ more — what is left is copy a visitor reads.
 | Value | Where | What breaks until it is set |
 | --- | --- | --- |
 | `team` roster | `src/data/quantum.ts` | Eight names. Meet the Team currently shows eight real roles with every name badged as pending, which is the most visibly unfinished thing on the site. |
-| `contact` | `src/data/quantum.ts` | Contact page and footer show badges instead of an email, phone and handle. |
-| `FEST_DATES` | `src/data/quantum.ts` | Not currently rendered; wire it in once dates are public. |
-| `BROCHURE_URL` | `src/data/quantum.ts` | Not currently rendered. |
+| `contact.instagram` | `src/data/quantum.ts` | Contact page shows a badge instead of the handle. Email and phone are set: the teacher in charge's. |
+| `FEST_DATES` | `src/data/quantum.ts` | Contact shows a badge under the venue address where the dates belong, and the JSON-LD omits `startDate`. |
+| `BROCHURE_URL` | `src/data/quantum.ts` | About shows a badge instead of a download button. The button appears, pointing at this URL, as soon as it is a real one. |
 
 Event copy, FAQ answers and the About editorial are final — no placeholders there.
 

@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Instagram, Mail, Phone } from "lucide-react";
 import { PageShell } from "@/components/site/PageShell";
 import { Value } from "@/components/site/Bits";
-import { contact, isTodo, school } from "@/data/quantum";
+import { FEST_DATES, contact, isTodo, school } from "@/data/quantum";
 import { seo } from "@/lib/seo";
 
 export const Route = createFileRoute("/contact")({
@@ -18,6 +18,7 @@ export const Route = createFileRoute("/contact")({
 const channels = [
   {
     label: "Email",
+    who: `${contact.name}, ${contact.role.toLowerCase()}`,
     icon: Mail,
     value: contact.email,
     href: (v: string) => `mailto:${v}`,
@@ -25,6 +26,7 @@ const channels = [
   },
   {
     label: "Phone",
+    who: `${contact.name}, ${contact.role.toLowerCase()}`,
     icon: Phone,
     value: contact.phone,
     href: (v: string) => `tel:${v.replace(/\s/g, "")}`,
@@ -32,6 +34,7 @@ const channels = [
   },
   {
     label: "Instagram",
+    who: undefined,
     icon: Instagram,
     value: contact.instagram,
     href: (v: string) => `https://instagram.com/${v.replace(/^@/, "")}`,
@@ -42,15 +45,19 @@ const channels = [
 function Contact() {
   return (
     <PageShell
+      ledeBelow
       title="Contact"
-      lede="Questions about entry, scheduling, or anything on the day go to the organising team. It is students who answer, so give us a little time outside school hours."
+      lede="Questions about entry, scheduling, or anything on the day go to the teacher in charge. Please allow a little time for a reply outside school hours."
     >
       <ul className="channels">
         {channels.map((channel) => (
           <li key={channel.label}>
             <div className="channel-head">
               <channel.icon className="channel-icon" aria-hidden="true" strokeWidth={1.75} />
-              <p className="channel-label">{channel.label}</p>
+              <p className="channel-label">
+                {channel.label}
+                {channel.who ? <span className="channel-who"> · {channel.who}</span> : null}
+              </p>
             </div>
             <p className="channel-value">
               {isTodo(channel.value) ? (
@@ -73,6 +80,15 @@ function Contact() {
           <br />
           {school.city}
         </address>
+        {/* The dates were a constant nothing rendered — set in quantum.ts,
+            read only by the JSON-LD for search engines, and invisible to the
+            visitor standing in front of the page asking when this is. Badged
+            like every other unconfirmed value, so it looks missing until it
+            is set rather than quietly absent. */}
+        <p className="venue-when">
+          <span className="venue-when-label">When</span>
+          <Value value={FEST_DATES} label="Dates" />
+        </p>
         <p className="channel-note measure">
           Report to the main reception with your school ID and your confirmation email. Team codes
           are checked at the desk before any event starts.
@@ -84,8 +100,8 @@ function Contact() {
           Before you write
         </h2>
         <p className="channel-note measure">
-          Most questions we get are already answered on the FAQ — who can enter, whether you can do
-          more than one event, fees, and what to bring.
+          Most questions we get are already answered on the FAQ — who can enter, how entries are
+          submitted, fees, and what you need to prepare.
         </p>
         <div className="page-actions">
           <Link to="/faq" className="btn btn-ghost" data-magnetic>

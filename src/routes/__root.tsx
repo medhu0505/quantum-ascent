@@ -12,7 +12,6 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { PhaseProvider } from "@/components/scene/PhaseTransition";
-import { SmoothScroll } from "@/components/scene/SmoothScroll";
 import { Cursor } from "@/components/scene/Cursor";
 import { RouteAnnouncer, SkipLink } from "@/components/site/Bits";
 import { MobileMenu } from "@/components/site/MobileMenu";
@@ -195,20 +194,18 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SmoothScroll>
-        <PhaseProvider>
-          <SkipLink />
-          <RouteAnnouncer />
-          <Cursor />
-          <MobileMenu />
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(festJsonLd()) }}
-          />
-        </PhaseProvider>
-      </SmoothScroll>
+      <PhaseProvider>
+        <SkipLink />
+        <RouteAnnouncer />
+        <Cursor />
+        <MobileMenu />
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(festJsonLd()) }}
+        />
+      </PhaseProvider>
     </QueryClientProvider>
   );
 }

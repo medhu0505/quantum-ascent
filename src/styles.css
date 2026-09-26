@@ -216,29 +216,6 @@
     border-color: var(--color-border);
   }
 
-  html {
-    scroll-behavior: smooth;
-  }
-
-  /* Lenis drives scroll itself; native smooth behaviour fights it, and the
-     stops it manages need the document to be free to grow. */
-  html.lenis,
-  html.lenis body {
-    height: auto;
-  }
-
-  html.lenis {
-    scroll-behavior: auto !important;
-  }
-
-  .lenis.lenis-smooth [data-lenis-prevent] {
-    overscroll-behavior: contain;
-  }
-
-  .lenis.lenis-stopped {
-    overflow: hidden;
-  }
-
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -3563,10 +3540,6 @@ button.screen:active {
  * ------------------------------------------------------------------ */
 
 @media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
   .ambient {
     display: none;
   }

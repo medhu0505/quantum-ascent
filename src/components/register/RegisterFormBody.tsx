@@ -63,8 +63,23 @@ function used(m: Participant): boolean {
   return Object.values(m).some((v) => v.trim() !== "");
 }
 
-function phoneShort(value: string): boolean {
-  return value.replace(/\D/g, "").length < 10;
+/**
+ * An Indian phone number as ten digits, or null if it is not one.
+ *
+ * Every entrant is at a school in India, so nobody should need to know or type
+ * a country code. People type one anyway, out of habit, so "+91 98713 79429",
+ * "91-9871379429", "09871379429" and "9871379429" all come out as the same ten
+ * digits. A leading 91 or 0 is only removed when it is what makes the number
+ * longer than ten — a real ten-digit number that happens to start 91 is kept.
+ *
+ * Exactly ten, not "at least ten": an eleventh digit is a typo, and a typo in
+ * the one number the organisers call on the day is worth catching here.
+ */
+function indianPhone(value: string): string | null {
+  let digits = value.replace(/\D/g, "");
+  if (digits.length === 12 && digits.startsWith("91")) digits = digits.slice(2);
+  else if (digits.length === 11 && digits.startsWith("0")) digits = digits.slice(1);
+  return digits.length === 10 ? digits : null;
 }
 
 function validate(values: Fields, picked: string[]): Errors {
@@ -75,8 +90,7 @@ function validate(values: Fields, picked: string[]): Errors {
   if (!values.email.trim()) errors.email = "Enter an email we can send the confirmation to.";
   else if (!EMAIL.test(values.email.trim())) errors.email = "That email address is not valid.";
   if (!values.phone.trim()) errors.phone = "Enter a phone number we can reach on the day.";
-  else if (phoneShort(values.phone))
-    errors.phone = "Enter a full phone number, including the area or country code.";
+  else if (!indianPhone(values.phone)) errors.phone = "Enter a 10-digit phone number.";
   if (values.discord.trim() && !DISCORD.test(values.discord.trim()))
     errors.discord = "A Discord handle has no spaces in it — check this one.";
   if (picked.length === 0) errors.events = "Choose at least one event to enter.";
@@ -90,7 +104,7 @@ function validateMembers(list: Participant[]): MemberErrors[] {
     if (!used(m)) return e;
     if (!m.name.trim()) e.name = "Enter this member's name, or clear the row.";
     if (m.email.trim() && !EMAIL.test(m.email.trim())) e.email = "That email address is not valid.";
-    if (m.phone.trim() && phoneShort(m.phone)) e.phone = "Enter a full phone number.";
+    if (m.phone.trim() && !indianPhone(m.phone)) e.phone = "Enter a 10-digit phone number.";
     if (m.discord.trim() && !DISCORD.test(m.discord.trim()))
       e.discord = "A Discord handle has no spaces in it — check this one.";
     return e;
@@ -235,9 +249,13 @@ export function RegisterFormBody({ preselectedEvent }: { preselectedEvent?: stri
       const trimmed = Object.fromEntries(
         Object.entries(values).map(([k, v]) => [k, v.trim()]),
       ) as Fields;
+      // Stored as the bare ten digits whatever was typed, so the sheet the
+      // organisers dial from reads one way, not five.
+      trimmed.phone = indianPhone(trimmed.phone) ?? trimmed.phone;
       const team = members
         .filter(used)
-        .map((m) => Object.fromEntries(MEMBER_ORDER.map((k) => [k, m[k].trim()])) as Participant);
+        .map((m) => Object.fromEntries(MEMBER_ORDER.map((k) => [k, m[k].trim()])) as Participant)
+        .map((m) => (m.phone ? { ...m, phone: indianPhone(m.phone) ?? m.phone } : m));
       // Sent in the order the events are listed, not the order they were
       // ticked, so the same set always arrives as the same string and the
       // backend's one-entry-per-team check can compare them.
@@ -424,7 +442,7 @@ export function RegisterFormBody({ preselectedEvent }: { preselectedEvent?: stri
             id="phone"
             label="Phone"
             type="tel"
-            hint="Reachable on the day of the fest."
+            hint="10 digits, reachable on the day. No +91 needed."
             error={errors.phone}
             value={values.phone}
             onChange={set("phone")}

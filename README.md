@@ -35,21 +35,55 @@ Event copy, FAQ answers and the About editorial are final — no placeholders th
 
 Three things outside this file are also outstanding, and none of them are code:
 
-- **Two test rows** sit in the Registrations tab of the organisers' sheet, filed
-  under "Test Public School" and "Vercel Test School". Delete them before entries
-  open. They are not only cosmetic: the Apps Script's duplicate check reads that
-  tab, so a real entrant reusing one of those addresses for the same events would
-  be told they are already registered.
+- **Every row in the sheet is a test entry** and has to go before entries open —
+  from the sheet *and* from Firestore's `registrations` collection, because both
+  run a duplicate check. A real entrant whose email and events match a leftover
+  test entry in either place is told they are already registered. Some test rows
+  use a real address, so this is not hypothetical. Deleting from the sheet asks
+  for confirmation and mails a deletion alert; both are expected, see below.
 - **App Check is not enabled**, deliberately. See the Firebase section. It is
   waiting on a settled domain, because a reCAPTCHA key is bound to specific hosts
   and binding one to the current `*.vercel.app` address means redoing it.
 - **No custom domain.** The site answers on `quantum-ascent.vercel.app`. If a real
   one is coming, attach it before App Check rather than after.
 
-One thing that is working as designed and reads like a fault: the sheet grows a
-new tab per school as entries arrive, named after that school. The Registrations
-tab stays the record of truth; the per-school tabs are copies. Do not tidy them
-away.
+### How the sheet is laid out
+
+Seven tabs, in this order, and the file opens on the first:
+
+- **Registrations** — every entry, one row each. The record of truth, and the
+  only tab the duplicate check reads.
+- **Quiz, Film Making, Ad Shoot, Surprise, Online Gaming, Pitch** — one per
+  event, each a complete list for whoever is running that event. An entry in
+  three events appears on three tabs. That is deliberate, not a duplicate.
+
+Anything after those seven is left over — Google's default `Sheet1`, and two
+per-school tabs from before the layout changed. Nothing writes to them. They can
+be deleted.
+
+Running `setup` from the Apps Script editor recreates the six event tabs if one
+goes missing, copies in any entry they lack, and restores the order. It only ever
+appends and moves; it never clears a tab, so it is safe to run at any time.
+
+### Guardrails
+
+Every tab is protected. **Registrations** refuses edits from anyone the script
+does not name, so a collaborator with Editor access cannot change or delete an
+entry. The event tabs ask "are you sure" before any edit, because organisers work
+in them and a tab nobody can write in gets copied out and worked on elsewhere.
+New tabs are protected as they are created.
+
+Any deleted row, column or tab mails the sheet's owner within seconds, with the
+entry count before and after.
+
+What this cannot do is stop the **owner**. Google gives a file's owner authority
+over every protection in it; the owner gets the prompt and the alert, not a
+lock. That is fine, because the sheet is not the only copy: every entry is in
+Firestore first, under rules that refuse delete to every client. The one thing
+that lives only in the sheet is whatever organisers add to it by hand —
+attendance, payment, notes — so that is what the protections are really for.
+
+To undo a deletion: File > Version history > See version history.
 
 The school's name is settled: **Air Force Bal Bharati School**, set once in
 `school.name` and read from there everywhere.

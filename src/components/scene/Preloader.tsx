@@ -1,3 +1,4 @@
+import { Laptop } from "lucide-react";
 import { useEffect, useState } from "react";
 import { descentFilm, fest, school } from "@/data/quantum";
 
@@ -40,7 +41,16 @@ export function Preloader() {
       return;
     }
 
-    const MIN_MS = 900; // Long enough to read; short enough not to be a toll.
+    /*
+     * A phone is held for three seconds on purpose, so the note telling it
+     * to come back on a laptop is actually read rather than flashed. Same
+     * breakpoint as the note's own CSS: the wait and the message always
+     * appear together, and a desktop never gets either. It is a minimum,
+     * not an addition — a film still buffering at three seconds is waited
+     * for exactly as before, up to MAX_MS.
+     */
+    const phone = window.matchMedia("(max-width: 48rem)").matches;
+    const MIN_MS = phone ? 3000 : 900; // Long enough to read; short enough not to be a toll.
     const MAX_MS = 6000; // Never hold the site hostage to a slow network.
 
     let interval = 0;
@@ -80,7 +90,12 @@ export function Preloader() {
 
       // Time floor keeps the counter moving even before the video reports
       // anything, so the number never looks frozen.
-      const shown = Math.min(1, Math.max(ratio, elapsed / MAX_MS));
+      const loaded = Math.min(1, Math.max(ratio, elapsed / MAX_MS));
+
+      // On a phone the count is paced across the three seconds rather than
+      // racing to 100 as soon as the film is in and then sitting there for
+      // two seconds, which would read as stuck rather than as intended.
+      const shown = phone ? Math.min(loaded, elapsed / MIN_MS) : loaded;
       setProgress(shown);
 
       if (shown >= 0.99 && elapsed > MIN_MS) finish();
@@ -118,7 +133,10 @@ export function Preloader() {
             scrubbed by a 620vh scroll and the crossroads is a 1920-wide
             plate; a phone gets a real version of both, but not the one this
             was drawn for. */}
-        <p className="preloader-note">For the best experience, visit on a laptop.</p>
+        <p className="preloader-note">
+          <Laptop className="preloader-note-icon" aria-hidden="true" strokeWidth={1.75} />
+          <span>For best results, visit on a laptop/PC.</span>
+        </p>
       </div>
       <img className="preloader-poster" src={descentFilm.poster} alt="" aria-hidden="true" />
     </div>

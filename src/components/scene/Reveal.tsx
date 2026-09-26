@@ -78,23 +78,53 @@ export function Reveal({
  * as an honest reading-progress indicator.
  */
 export function Beam() {
-  const [progress, setProgress] = useState(0);
+  const fillRef = useRef<HTMLSpanElement | null>(null);
 
   useEffect(() => {
+    const fill = fillRef.current;
+    if (!fill) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    /*
+     * Drawn when the page scrolls or changes size, and at most once a frame.
+     * It used to re-render through React state on every frame for the life
+     * of the page, reading the document's height each time, whether or not
+     * anything had moved. The height is measured only when the page resizes
+     * and the fill is written straight onto the node.
+     */
+    let max = 0;
     let raf = 0;
-    const tick = () => {
-      raf = requestAnimationFrame(tick);
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(max > 8 ? Math.min(1, Math.max(0, window.scrollY / max)) : 1);
+    const draw = () => {
+      raf = 0;
+      const p = max > 8 ? Math.min(1, Math.max(0, window.scrollY / max)) : 1;
+      fill.style.transform = `scaleY(${p})`;
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(draw);
+    };
+    const measure = () => {
+      max = document.documentElement.scrollHeight - window.innerHeight;
+      schedule();
+    };
+
+    // The body grows as a room's content loads in and FAQ answers open.
+    const resize = new ResizeObserver(measure);
+    resize.observe(document.body);
+    window.addEventListener("resize", measure);
+    window.addEventListener("scroll", schedule, { passive: true });
+    measure();
+
+    return () => {
+      cancelAnimationFrame(raf);
+      resize.disconnect();
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("scroll", schedule);
+    };
   }, []);
 
   return (
     <div className="beam" aria-hidden="true">
-      <span className="beam-fill" style={{ transform: `scaleY(${progress})` }} />
+      <span ref={fillRef} className="beam-fill" style={{ transform: "scaleY(0)" }} />
     </div>
   );
 }

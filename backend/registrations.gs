@@ -244,25 +244,37 @@ function eventTeam_(id) {
   return (EVENT_INFO[id] && EVENT_INFO[id].team) || '';
 }
 
-/** One label/value pair. An empty value renders nothing at all. */
+/**
+ * One label/value pair.
+ *
+ * An empty optional field prints "N/A" rather than dropping its row. A row
+ * that vanishes leaves the entrant unable to tell whether they left the field
+ * blank or the form lost it, and makes two confirmations of the same entry
+ * shape differently for no reason a reader can see.
+ */
 function mailRow_(label, value) {
-  if (!value) return '';
+  const blank = !value;
   return '<tr>' +
     '<td style="padding:11px 0;border-bottom:1px solid #e8eaf1;font:400 13px/1.45 ' + SANS +
       ';color:#5c6275;vertical-align:top;width:34%">' + html_(label) + '</td>' +
-    '<td style="padding:11px 0 11px 18px;border-bottom:1px solid #e8eaf1;font:600 14px/1.5 ' + SANS +
-      ';color:#11131c;vertical-align:top">' + html_(value) + '</td>' +
+    '<td style="padding:11px 0 11px 18px;border-bottom:1px solid #e8eaf1;font:' +
+      (blank ? '400' : '600') + ' 14px/1.5 ' + SANS + ';color:' + (blank ? '#8b90a3' : '#11131c') +
+      ';vertical-align:top">' + (blank ? 'N/A' : html_(value)) + '</td>' +
   '</tr>';
 }
 
-/** "Class 11 · 9876543210 · someone@example.com", skipping what is blank. */
+/**
+ * "Class 11 · 9876543210 · someone@example.com", skipping what is blank —
+ * every field under a member's name is optional, so a name on its own is a
+ * complete entry rather than a missing one, and says so.
+ */
 function memberLine_(m) {
   const bits = [];
   if (m.grade) bits.push('Class ' + m.grade);
   if (m.phone) bits.push(m.phone);
   if (m.discord) bits.push(m.discord);
   if (m.email) bits.push(m.email);
-  return bits.join(' · ');
+  return bits.length ? bits.join(' · ') : 'No other details given';
 }
 
 function confirmationSubject_(id) {
@@ -288,13 +300,12 @@ function confirmationText_(lead, members, id, when) {
   });
   L.push('');
   L.push('YOUR DETAILS');
-  L.push('  Entered as   ' + (lead.type === 'school' ? 'School entry' : 'Individual or team'));
   L.push('  Team lead    ' + lead.student);
   L.push('  School       ' + lead.school);
   L.push('  Class        ' + lead.grade);
   L.push('  Email        ' + lead.email);
   L.push('  Phone        ' + lead.phone);
-  if (lead.discord) L.push('  Discord      ' + lead.discord);
+  L.push('  Discord      ' + (lead.discord || 'N/A'));
   L.push('  Team size    ' + (members.length + 1));
   L.push('  Submitted    ' + when);
   if (members.length) {
@@ -392,8 +403,9 @@ html_(HOST_SCHOOL) + '</div></td></tr>',
 html_(id) + '</div></td></tr></table></td></tr>',
 
 section('Events entered', eventRows),
+// No "Entered as" row: individual-vs-school is how the organisers file an
+// entry, not anything the entrant chose a word for or needs read back.
 section('Your details', [
-  mailRow_('Entered as', lead.type === 'school' ? 'School entry' : 'Individual or team'),
   mailRow_('Team lead', lead.student),
   mailRow_('School', lead.school),
   mailRow_('Class', lead.grade),

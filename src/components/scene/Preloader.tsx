@@ -42,15 +42,16 @@ export function Preloader() {
     }
 
     /*
-     * A phone is held for three seconds on purpose, so the note telling it
+     * A phone is held for five seconds on purpose, so the note telling it
      * to come back on a laptop is actually read rather than flashed. Same
      * breakpoint as the note's own CSS: the wait and the message always
      * appear together, and a desktop never gets either. It is a minimum,
-     * not an addition — a film still buffering at three seconds is waited
-     * for exactly as before, up to MAX_MS.
+     * not an addition — a film still buffering at five seconds is waited
+     * for exactly as before, up to MAX_MS. Keep it below MAX_MS: at or past
+     * it, the hard stop would end the hold before the minimum could.
      */
     const phone = window.matchMedia("(max-width: 48rem)").matches;
-    const MIN_MS = phone ? 3000 : 900; // Long enough to read; short enough not to be a toll.
+    const MIN_MS = phone ? 5000 : 900; // Long enough to read; short enough not to be a toll.
     const MAX_MS = 6000; // Never hold the site hostage to a slow network.
 
     let interval = 0;
@@ -92,9 +93,9 @@ export function Preloader() {
       // anything, so the number never looks frozen.
       const loaded = Math.min(1, Math.max(ratio, elapsed / MAX_MS));
 
-      // On a phone the count is paced across the three seconds rather than
+      // On a phone the count is paced across the five seconds rather than
       // racing to 100 as soon as the film is in and then sitting there for
-      // two seconds, which would read as stuck rather than as intended.
+      // the rest of them, which would read as stuck rather than as intended.
       const shown = phone ? Math.min(loaded, elapsed / MIN_MS) : loaded;
       setProgress(shown);
 

@@ -1,14 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Value } from "@/components/site/Bits";
 import { PageShell } from "@/components/site/PageShell";
-import { BROCHURE_URL, about, events, festFacts, isTodo, school } from "@/data/quantum";
+import { BROCHURE_URL, about, events, festFacts, isTodo } from "@/data/quantum";
 import { seo } from "@/lib/seo";
 
 export const Route = createFileRoute("/about")({
   head: () =>
     seo({
       title: "About",
-      description: `Quantum is the student-run inter-school tech and culture fest at ${school.name}. Six events, one day, cumulative scoring across all of them.`,
+      // The first sentence of the page's own opening paragraph.
+      description: `${about.intro.body[0].split(". ")[0]}.`,
       path: "/about",
     }),
   component: About,
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/about")({
 
 function About() {
   return (
-    <PageShell title="About Quantum" lede={about.lede}>
+    <PageShell title={about.title} lede={about.tagline}>
       <dl className="facts">
         {festFacts.map((fact) => (
           <div key={fact.label}>
@@ -29,18 +30,22 @@ function About() {
         ))}
       </dl>
 
-      <div className="prose-quantum measure">
-        {about.body.map((paragraph) => (
-          <p key={paragraph.slice(0, 40)}>{paragraph}</p>
-        ))}
-      </div>
-
-      <p className="pull-quote">{about.kicker}</p>
-
-      <section className="about-events" aria-labelledby="the-six">
-        <h2 id="the-six" className="page-subhead">
-          The six events
+      <section aria-labelledby="about-intro">
+        <h2 id="about-intro" className="page-subhead">
+          {about.intro.heading}
         </h2>
+        <div className="prose-quantum measure">
+          {about.intro.body.map((paragraph) => (
+            <p key={paragraph.slice(0, 40)}>{paragraph}</p>
+          ))}
+        </div>
+      </section>
+
+      <section className="about-events" aria-labelledby="about-scoring">
+        <h2 id="about-scoring" className="page-subhead">
+          {about.scoring.heading}
+        </h2>
+        <p className="pull-quote about-scoring-line">{about.scoring.line}</p>
         <ul className="about-list">
           {events.map((event) => (
             <li key={event.id} data-accent={event.accent}>

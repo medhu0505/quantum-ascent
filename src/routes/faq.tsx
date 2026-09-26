@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageShell } from "@/components/site/PageShell";
-import { faqs } from "@/data/quantum";
+import { faqPage, faqs } from "@/data/quantum";
 import { seo } from "@/lib/seo";
 
 /**
@@ -15,8 +15,7 @@ export const Route = createFileRoute("/faq")({
   head: () =>
     seo({
       title: "FAQ",
-      description:
-        "Who can enter Quantum V2.0, whether you can do more than one event, fees, what to bring, and how winners are decided.",
+      description: faqPage.tagline,
       path: "/faq",
     }),
   component: Faq,
@@ -44,11 +43,7 @@ function Faq() {
   };
 
   return (
-    <PageShell
-      ledeBelow
-      title="FAQ"
-      lede="The questions we get most. If yours is not here, the organising team is on the Contact page."
-    >
+    <PageShell title={faqPage.title} lede={faqPage.tagline}>
       <ul className="faq">
         {faqs.map((item, i) => {
           const isOpen = open.has(i);

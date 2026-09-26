@@ -2233,6 +2233,13 @@ button.screen:active {
   margin-top: calc(var(--section) * 1.25);
 }
 
+/* The pull-quote treatment, used as the line under a heading rather than as
+   a closing statement, so it keeps the look and loses the section-sized gap
+   above it. */
+.about-scoring-line {
+  margin: 0 0 var(--s-6);
+}
+
 .about-list {
   margin: 0 0 var(--s-6);
   padding: 0;

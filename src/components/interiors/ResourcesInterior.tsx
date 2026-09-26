@@ -25,7 +25,7 @@ const SCREENS = [
   {
     to: "/faq",
     label: "FAQ",
-    blurb: `${faqs.length} answers on entry, fees, scheduling and what to bring.`,
+    blurb: `${faqs.length} answers on eligibility, registration, fees and rules.`,
     left: 20.5,
     top: 34.6,
     width: 19.1,

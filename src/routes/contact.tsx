@@ -100,8 +100,8 @@ function Contact() {
           Before you write
         </h2>
         <p className="channel-note measure">
-          Most questions we get are already answered on the FAQ — who can enter, whether you can do
-          more than one event, fees, and what to bring.
+          Most questions we get are already answered on the FAQ — who can enter, how entries are
+          submitted, fees, and what you need to prepare.
         </p>
         <div className="page-actions">
           <Link to="/faq" className="btn btn-ghost" data-magnetic>

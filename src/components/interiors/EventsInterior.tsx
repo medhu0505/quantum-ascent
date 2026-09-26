@@ -118,7 +118,7 @@ export function EventsInterior() {
     <InteriorShell
       scene={scene}
       leadBelow
-      lead="Six events run across the day. Every one is scored the same way and carries the same weight, so cumulative points across all six decide the overall school champion."
+      lead="Six events run across two days, one online and one offline. Every one is scored the same way and carries the same weight, so cumulative points across all six decide the overall school champion."
     >
       <section className="rail" aria-labelledby="rail-head">
         <h2 id="rail-head" className="page-subhead">

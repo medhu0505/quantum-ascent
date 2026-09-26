@@ -475,13 +475,16 @@ export const faqs = [
  * About — final editorial copy.
  * ------------------------------------------------------------------ */
 
-/** Facts worth stating flat, above the prose. */
-export const festFacts = [
+/**
+ * Facts worth stating flat, above the prose. A note is the one line of detail
+ * a bare number cannot carry on its own.
+ */
+export const festFacts: readonly { value: string; label: string; note?: string }[] = [
   { value: String(events.length), label: "events" },
-  { value: "1", label: "day" },
+  { value: "2", label: "days", note: "1 online · 1 offline" },
   { value: "9–12", label: "classes" },
   { value: "100%", label: "student-run" },
-] as const;
+];
 
 export const about = {
   title: "About Quantum V2.0",

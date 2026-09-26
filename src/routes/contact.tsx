@@ -30,7 +30,7 @@ const channels = [
     icon: Phone,
     value: contact.phone,
     href: (v: string) => `tel:${v.replace(/\s/g, "")}`,
-    note: "For the day itself — running late, finding the venue, or anything urgent once the fest has started.",
+    note: "For the fest days themselves: running late or finding the venue on the offline day, or anything urgent once the fest has started.",
   },
   {
     label: "Instagram",
@@ -47,7 +47,7 @@ function Contact() {
     <PageShell
       ledeBelow
       title="Contact"
-      lede="Questions about entry, scheduling, or anything on the day go to the teacher in charge. Please allow a little time for a reply outside school hours."
+      lede="Questions about entry, scheduling, or anything on either fest day go to the teacher in charge. Please allow a little time for a reply outside school hours."
     >
       <ul className="channels">
         {channels.map((channel) => (

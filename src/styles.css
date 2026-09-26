@@ -2203,6 +2203,15 @@ button.screen:active {
   color: var(--muted-foreground);
 }
 
+/* The detail under a fact, such as how the two days split. Sentence case and
+   brighter than the label, since it is the part being read rather than
+   scanned. */
+.facts-note {
+  font-size: var(--text-xs);
+  line-height: 1.35;
+  color: oklch(0.9 0.02 265 / 0.85);
+}
+
 /* The closing line of the argument, set apart so it lands. */
 .pull-quote {
   position: relative;

@@ -89,7 +89,7 @@ function validate(values: Fields, picked: string[]): Errors {
   if (!values.grade) errors.grade = "Choose the team lead's class.";
   if (!values.email.trim()) errors.email = "Enter an email we can send the confirmation to.";
   else if (!EMAIL.test(values.email.trim())) errors.email = "That email address is not valid.";
-  if (!values.phone.trim()) errors.phone = "Enter a phone number we can reach on the day.";
+  if (!values.phone.trim()) errors.phone = "Enter a phone number we can reach during the fest.";
   else if (!indianPhone(values.phone)) errors.phone = "Enter a 10-digit phone number.";
   if (values.discord.trim() && !DISCORD.test(values.discord.trim()))
     errors.discord = "A Discord handle has no spaces in it — check this one.";
@@ -442,7 +442,7 @@ export function RegisterFormBody({ preselectedEvent }: { preselectedEvent?: stri
             id="phone"
             label="Phone"
             type="tel"
-            hint="10 digits, reachable on the day. No +91 needed."
+            hint="10 digits, reachable on both fest days. No +91 needed."
             error={errors.phone}
             value={values.phone}
             onChange={set("phone")}

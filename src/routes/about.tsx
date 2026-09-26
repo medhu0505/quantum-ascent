@@ -25,6 +25,7 @@ function About() {
             <dd>
               <span className="facts-value">{fact.value}</span>
               <span className="facts-label">{fact.label}</span>
+              {fact.note ? <span className="facts-note">{fact.note}</span> : null}
             </dd>
           </div>
         ))}

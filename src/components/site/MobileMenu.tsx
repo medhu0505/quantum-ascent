@@ -1,5 +1,6 @@
 import { Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { BROCHURE_URL, isTodo } from "@/data/quantum";
 
 /**
  * The phone's navigation.
@@ -18,7 +19,8 @@ import { useEffect, useRef, useState } from "react";
  * belongs and there is room for it.
  */
 
-type Item = { to: string; label: string; note: string; accent?: string };
+/** `to` is a route; `href` is somewhere outside the router, like the PDF. */
+type Item = { to?: string; href?: string; label: string; note: string; accent?: string };
 
 const ITEMS: Item[] = [
   { to: "/register/form", label: "Register", note: "One form, every event.", accent: "cyan" },
@@ -31,6 +33,7 @@ const ITEMS: Item[] = [
     note: "What Quantum is, and how it is scored.",
     accent: "violet",
   },
+  { href: BROCHURE_URL, label: "Brochure", note: "The fest in one PDF.", accent: "violet" },
   { to: "/contact", label: "Contact", note: "Reach the organising team.", accent: "magenta" },
   { to: "/", label: "Home", note: "Back out to the street.", accent: "magenta" },
 ];
@@ -93,11 +96,30 @@ export function MobileMenu() {
       >
         <ul>
           {ITEMS.map((item) => (
-            <li key={item.to} data-accent={item.accent}>
-              <Link to={item.to} onClick={() => setOpen(false)}>
-                <span className="menu-label">{item.label}</span>
-                <span className="menu-note">{item.note}</span>
-              </Link>
+            <li key={item.to ?? item.href} data-accent={item.accent}>
+              {item.href !== undefined ? (
+                isTodo(item.href) ? (
+                  <span className="menu-pending" aria-disabled="true">
+                    <span className="menu-label">{item.label}</span>
+                    <span className="menu-note">To be confirmed.</span>
+                  </span>
+                ) : (
+                  <a
+                    href={item.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => setOpen(false)}
+                  >
+                    <span className="menu-label">{item.label}</span>
+                    <span className="menu-note">{item.note}</span>
+                  </a>
+                )
+              ) : (
+                <Link to={item.to!} onClick={() => setOpen(false)}>
+                  <span className="menu-label">{item.label}</span>
+                  <span className="menu-note">{item.note}</span>
+                </Link>
+              )}
             </li>
           ))}
         </ul>

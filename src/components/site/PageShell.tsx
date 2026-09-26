@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { contact, fest, isTodo, school } from "@/data/quantum";
+import { BROCHURE_URL, contact, fest, isTodo, school } from "@/data/quantum";
 import { ExitToCrossroads, RegisterChip, Value } from "@/components/site/Bits";
 import { Beam, Reveal } from "@/components/scene/Reveal";
 import { RevealText } from "@/components/scene/RevealText";
@@ -191,6 +191,21 @@ export function CrossroadsFooter({
           </li>
           <li>
             <Link to="/about">About</Link>
+          </li>
+          <li>
+            {/* The PDF, not a page: a plain anchor into a new tab. Until
+                BROCHURE_URL is a real address it is a label and not a link,
+                the same as the brochure board on the crossroads — a pill
+                entry that 404s is worse than one that says it is coming. */}
+            {isTodo(BROCHURE_URL) ? (
+              <span className="nav-pending" aria-disabled="true" title="Brochure coming soon">
+                Brochure
+              </span>
+            ) : (
+              <a href={BROCHURE_URL} target="_blank" rel="noreferrer">
+                Brochure
+              </a>
+            )}
           </li>
           <li>
             <Link to="/contact">Contact</Link>

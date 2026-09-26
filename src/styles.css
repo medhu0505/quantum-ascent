@@ -3162,6 +3162,21 @@ button.screen:active {
   transition: color var(--dur-ui) var(--ease-out);
 }
 
+/* The brochure before there is a brochure: the same type as its
+   neighbours, so the row does not jump when it becomes a link, set back so
+   it does not invite a click. */
+.crossroads-footer-nav .nav-pending {
+  display: inline-block;
+  padding-block: 0.2rem;
+  font-family: var(--font-display, inherit);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--foreground);
+  opacity: 0.45;
+  cursor: default;
+}
+
 .crossroads-footer-nav a:hover,
 .crossroads-footer-nav a:focus-visible {
   color: transparent;
@@ -4473,7 +4488,8 @@ button.screen:active {
 
 /* Same build as a sign on the crossroads and as every other panel on a
    phone: accent glass, a neon edge, a little bloom. */
-.menu-panel a {
+.menu-panel a,
+.menu-panel .menu-pending {
   display: grid;
   gap: 0.15rem;
   min-height: 3.75rem;
@@ -4486,6 +4502,11 @@ button.screen:active {
     0 0 22px color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 18%, transparent);
   text-decoration: none;
   color: var(--foreground);
+}
+
+.menu-panel .menu-pending {
+  opacity: 0.55;
+  cursor: default;
 }
 
 .menu-panel a:focus-visible {

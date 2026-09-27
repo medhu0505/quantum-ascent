@@ -1,6 +1,7 @@
-import { Link, useRouter } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { usePhaseLink } from "@/components/scene/PhaseTransition";
+import { usePreloadWhenIdle } from "@/lib/preload";
 import { isTodo } from "@/data/quantum";
 
 /**
@@ -28,8 +29,11 @@ export function SkipLink() {
 }
 
 /** Fixed return-to-hub control, present in every interior. */
+const HOME = ["/"] as const;
+
 export function ExitToCrossroads() {
   const onPhase = usePhaseLink("/");
+  usePreloadWhenIdle(HOME);
   return (
     <Link to="/" className="chip chip-left" onClick={onPhase} data-magnetic>
       <span aria-hidden="true">←</span>
@@ -62,27 +66,33 @@ export function RegisterChip() {
  * put focus back at the top of the document so the next Tab starts there.
  */
 export function RouteAnnouncer() {
-  const router = useRouter();
   const [message, setMessage] = useState("");
-  const first = useRef(true);
+  /*
+   * Keyed to the page actually on screen, not to the router's "resolved"
+   * event. That event also fires whenever a preload finishes, and every link
+   * preloads its page when it is hovered or focused: each Tab onto a link
+   * re-announced the page and threw focus back to the top of it, so a
+   * keyboard could never get past the first link.
+   */
+  const pathname = useRouterState({ select: (state) => state.resolvedLocation?.pathname });
+  const previous = useRef(pathname);
 
   useEffect(() => {
-    return router.subscribe("onResolved", () => {
-      if (first.current) {
-        first.current = false;
-        return;
+    const before = previous.current;
+    previous.current = pathname;
+    // The page the visitor lands on is not a navigation.
+    if (!before || !pathname || before === pathname) return;
+    // The title is set by each route's head(); read it after it lands.
+    const frame = window.requestAnimationFrame(() => {
+      setMessage(document.title);
+      const main = document.getElementById("main");
+      if (main) {
+        main.setAttribute("tabindex", "-1");
+        main.focus({ preventScroll: true });
       }
-      // The title is set by each route's head(); read it after it lands.
-      window.requestAnimationFrame(() => {
-        setMessage(document.title);
-        const main = document.getElementById("main");
-        if (main) {
-          main.setAttribute("tabindex", "-1");
-          main.focus({ preventScroll: true });
-        }
-      });
     });
-  }, [router]);
+    return () => window.cancelAnimationFrame(frame);
+  }, [pathname]);
 
   return (
     <p aria-live="polite" aria-atomic="true" className="sr-only">

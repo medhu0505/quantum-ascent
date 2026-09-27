@@ -1,4 +1,4 @@
-import { Link, useRouter, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { BROCHURE_URL, isTodo } from "@/data/quantum";
 
@@ -40,22 +40,27 @@ const ITEMS: Item[] = [
 
 export function MobileMenu() {
   const [open, setOpen] = useState(false);
-  const router = useRouter();
   // The page on screen, which during a navigation is still the one being
   // left: the location itself changes the moment the link is tapped.
+  const onScreen = useRouterState({ select: (state) => state.resolvedLocation?.href });
   const pathname = useRouterState({
     select: (state) => (state.resolvedLocation ?? state.location).pathname,
   });
   const button = useRef<HTMLButtonElement | null>(null);
   const wasOpen = useRef(false);
 
-  /* The menu closes when the router has the new page on screen, not when the
-     link is tapped. Closing on the tap took the menu away while the next page
-     was still loading, so on a slow connection the visitor was left looking
-     at the page they had just asked to leave, for over a second on 3G, and
-     read it as the tap having done nothing. Closing on the router's own event
-     also covers the back button. */
-  useEffect(() => router.subscribe("onResolved", () => setOpen(false)), [router]);
+  /* The menu closes when the page on screen changes, not when the link is
+     tapped. Closing on the tap took the menu away while the next page was
+     still loading, so on a slow connection the visitor was left looking at
+     the page they had just asked to leave, for over a second on 3G, and read
+     it as the tap having done nothing. It also covers the back button.
+
+     Not the router's "resolved" event: that fires whenever a preload
+     finishes too, and touching an item preloads its page. With the page
+     already cached, the preload finished between the finger landing and the
+     click, the menu closed under the finger, and the click went through to
+     whatever was underneath. */
+  useEffect(() => setOpen(false), [onScreen]);
 
   /* A tap on the page already showing has no navigation to wait for, so it
      goes to the top of that page and closes. Left to the router it would

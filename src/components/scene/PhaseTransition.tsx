@@ -1,65 +1,76 @@
 import { useRouter } from "@tanstack/react-router";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
-import { crossroadsPlate } from "@/data/quantum";
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
 
 /**
  * The phase-through.
  *
- * Clicking a signboard freezes the outgoing plate over the whole viewport and
- * flies it toward the sign that was clicked while it blurs out, so the cut
- * reads as passing through the billboard rather than as a page swap. The new
- * route renders underneath and the veil uncovers it.
+ * Clicking a signboard flies the crossroads toward the board that was clicked
+ * while it blurs out, and the room comes up through the blur, so the cut
+ * reads as passing through the billboard rather than as a page swap. Coming
+ * back runs it the other way: the crossroads settles out of the blur onto
+ * its own pixels.
  *
- * It is a single fixed <img> and two CSS keyframes: no per-transition video,
- * no second copy of the scene, nothing to keep in sync. Reduced motion turns
- * the whole thing into a 180ms fade (see styles.css).
+ * It runs as a view transition. The browser takes a picture of the page as
+ * it stands at the click, billboard labels, pill and the glow on the chosen
+ * board included, plays the zoom on that picture, and brings the next page
+ * up only once that page has really rendered. The version before flew a
+ * separate photograph of the empty plate instead, and every seam came from
+ * that photograph: it was decoded on the click, which put black frames on
+ * screen; the labels vanished the instant it covered them; the zoom stalled
+ * while the next page rendered; and it ran on a fixed timer, so a slow page
+ * arrived after it had lifted.
+ *
+ * A browser without view transitions navigates plainly and the room's own
+ * entrance plays. Reduced motion gets a short crossfade.
  */
 
-type Phase = { x: number; y: number; key: number; dir: "in" | "out" } | null;
-
 type PhaseContextValue = {
-  /** Navigate to `to`, flying the plate toward the element that was clicked. */
+  /** Navigate to `to`, flying the page toward the element that was clicked. */
   phaseTo: (to: string, origin: HTMLElement | null) => void;
 };
 
 const PhaseContext = createContext<PhaseContextValue | null>(null);
 
-/** Matches --dur-scene in styles.css. */
-const PHASE_MS = 340;
+/**
+ * The longest the picture of the old page is held while the next one
+ * renders. Past this the flourish is not worth a frozen screen, so the page
+ * goes through without it.
+ */
+const HOLD_MS = 3000;
+
+/** Only the latest transition may tidy up after itself. */
+let latest = 0;
 
 export function PhaseProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const [phase, setPhase] = useState<Phase>(null);
 
   const phaseTo = useCallback(
     (to: string, origin: HTMLElement | null) => {
+      if (typeof document.startViewTransition !== "function") {
+        void router.navigate({ to });
+        return;
+      }
+
       /*
        * Which way through the billboard.
        *
-       * Going into a room, the plate rushes past the camera: it is the
-       * crossroads you are leaving, and it blows out as you pass through the
-       * sign. Coming back, the same animation played the same way round said
-       * you were passing through a second billboard into somewhere new,
-       * when what actually happens is that you step back out and the
-       * crossroads settles in front of you. Same move, run backwards.
+       * Going into a room, the crossroads rushes past the camera: it is the
+       * place you are leaving, and it blows out as you pass through the
+       * sign. Coming back, the same move played the same way round said you
+       * were passing through a second billboard into somewhere new, when
+       * what actually happens is that you step back out and the crossroads
+       * settles in front of you. Same move, run backwards.
        */
       const dir = to === "/" ? "out" : "in";
+      const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
       /*
        * Centre of the clicked sign, as a percentage of the viewport, so the
-       * plate flies toward the board the visitor actually chose rather than
+       * page flies toward the board the visitor actually chose rather than
        * always toward the middle. Only on the way in: on the way out the
        * thing clicked is the exit chip in the top-left corner, and scaling
-       * down about that point reads as the crossroads receding into a
-       * corner. Pulling back to the whole frame is a centre move.
+       * about that point reads as the crossroads receding into a corner.
+       * Pulling back to the whole frame is a centre move.
        */
       let x = 50;
       let y = 50;
@@ -68,51 +79,55 @@ export function PhaseProvider({ children }: { children: ReactNode }) {
         x = ((r.left + r.width / 2) / window.innerWidth) * 100;
         y = ((r.top + r.height / 2) / window.innerHeight) * 100;
       }
-      const cover = () => {
-        setPhase({ x, y, key: Date.now(), dir });
-        // Two frames, so the veil has actually painted before the outgoing
-        // route is torn down. Navigating in the same tick left a gap where
-        // the crossroads had gone and the next page had not arrived yet —
-        // a blank screen in the middle of the transition.
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => void router.navigate({ to }));
-        });
-      };
 
-      cover();
+      const root = document.documentElement;
+      root.style.setProperty("--phase-x", `${x}%`);
+      root.style.setProperty("--phase-y", `${y}%`);
+      root.dataset["phase"] = still ? "fade" : dir;
+      const id = ++latest;
+
+      /*
+       * The next page is ready to be pictured once the router reports it
+       * rendered. That is also when the router resets the scroll and when the
+       * crossroads puts itself back at the hub; the earlier "resolved" event
+       * comes before both, and would picture the new page at the old page's
+       * scroll position.
+       */
+      const rendered = new Promise<void>((resolve) => {
+        const done = () => {
+          off();
+          window.clearTimeout(timer);
+          resolve();
+        };
+        const off = router.subscribe("onRendered", done);
+        const timer = window.setTimeout(done, HOLD_MS);
+      });
+
+      const transition = document.startViewTransition(async () => {
+        router.navigate({ to }).catch(() => {
+          /* The router renders its own error page. */
+        });
+        await rendered;
+      });
+
+      // A transition can be skipped (another click, a hidden tab). That is
+      // not an error worth reporting; the navigation happens regardless.
+      transition.ready.catch(() => {});
+      transition.finished
+        .catch(() => {})
+        .finally(() => {
+          if (id !== latest) return;
+          delete root.dataset["phase"];
+          root.style.removeProperty("--phase-x");
+          root.style.removeProperty("--phase-y");
+        });
     },
     [router],
   );
 
-  useEffect(() => {
-    if (!phase) return;
-    const id = window.setTimeout(() => setPhase(null), PHASE_MS);
-    return () => window.clearTimeout(id);
-  }, [phase]);
-
   const value = useMemo(() => ({ phaseTo }), [phaseTo]);
 
-  return (
-    <PhaseContext.Provider value={value}>
-      {children}
-      {phase ? (
-        <div
-          key={phase.key}
-          className="phase-veil"
-          data-dir={phase.dir}
-          aria-hidden="true"
-          style={
-            {
-              "--phase-x": `${phase.x}%`,
-              "--phase-y": `${phase.y}%`,
-            } as React.CSSProperties
-          }
-        >
-          <img src={crossroadsPlate.webp} alt="" decoding="sync" />
-        </div>
-      ) : null}
-    </PhaseContext.Provider>
-  );
+  return <PhaseContext.Provider value={value}>{children}</PhaseContext.Provider>;
 }
 
 /**

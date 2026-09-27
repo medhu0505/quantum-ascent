@@ -209,8 +209,13 @@ export function Descent() {
     };
   }, [scrubbing, router]);
 
-  /* ---- Scroll scrub ------------------------------------------------ */
-  useEffect(() => {
+  /* ---- Scroll scrub ------------------------------------------------ *
+   * Set up before paint, and the first frame drawn before paint too. Coming
+   * back to the crossroads, a first paint left to the loop showed the film's
+   * opening aerial with the hub's labels floating over it, for the one frame
+   * before the loop put the plate back.
+   */
+  useIsomorphicLayoutEffect(() => {
     if (!scrubbing) {
       setRevealed(true);
       // The loop writes opacity and transform straight onto these nodes. If it
@@ -369,7 +374,7 @@ export function Descent() {
     // Until metadata arrives every target was computed against the fallback
     // duration, so look again once the real one is known.
     video.addEventListener("loadedmetadata", wake);
-    wake();
+    frame(performance.now());
 
     return () => {
       cancelAnimationFrame(raf);

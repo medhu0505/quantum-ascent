@@ -501,6 +501,9 @@
   inset: 0;
   z-index: 200;
   pointer-events: none;
+  /* Pictured on its own in the phase-through, so the pointer stays put and
+     sharp instead of zooming off with the page it is resting on. */
+  view-transition-name: cursor;
 }
 
 /* Hide the system cursor only once ours is definitely running. */
@@ -1294,44 +1297,45 @@
  * so the cut reads as passing through the signboard rather than a page swap.
  * ------------------------------------------------------------------ */
 
-.phase-veil {
-  position: fixed;
-  inset: 0;
-  z-index: 90;
-  pointer-events: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  background: var(--ink);
-  animation: phase-veil-out var(--dur-scene) var(--ease-in) forwards;
+/* Run as a view transition: the browser pictures the page as it stood at the
+   click, and the zoom plays on that picture while the next page is already
+   rendered underneath. See PhaseTransition.tsx.
+
+   The browser's own crossfade adds the two pictures together, which suits a
+   plain fade and not these: here the next page comes up over a blown-out
+   frame, and adding light to it would burn it white. */
+html[data-phase="in"]::view-transition-old(root),
+html[data-phase="in"]::view-transition-new(root),
+html[data-phase="out"]::view-transition-old(root),
+html[data-phase="out"]::view-transition-new(root) {
+  mix-blend-mode: normal;
 }
 
-.phase-veil img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+/* Into a room: the crossroads flies toward the board that was clicked and
+   blows out, and the room comes up through the blur. */
+html[data-phase="in"]::view-transition-old(root) {
   transform-origin: var(--phase-x, 50%) var(--phase-y, 50%);
-  animation: phase-plate-out var(--dur-scene) var(--ease-in) forwards;
+  animation: phase-plate-out var(--dur-scene) var(--ease-in) both;
 }
 
-/* Stepping back out to the crossroads. The plate resolves from blown-out
-   and blurred down onto its own pixels, so the camera settles into the
-   frame instead of rushing past it again — and since what is underneath is
-   the same plate, the fade at the end lands on identical pixels. */
-.phase-veil[data-dir="out"] img {
-  animation-name: phase-plate-in;
+html[data-phase="in"]::view-transition-new(root) {
+  animation: phase-arrive var(--dur-scene) var(--ease-in) both;
 }
 
-@keyframes phase-plate-in {
-  from {
-    transform: scale(2.35);
-    filter: blur(14px) brightness(1.35);
-  }
-  to {
-    transform: scale(1);
-    filter: blur(0) brightness(1);
-  }
+/* Back out: the room gives way to the crossroads blown out and blurred, and
+   the crossroads settles onto its own pixels. It decelerates into place, so
+   the last frame of the move is the page itself, standing still. */
+html[data-phase="out"]::view-transition-old(root) {
+  animation: none;
+}
+
+html[data-phase="out"]::view-transition-new(root) {
+  animation: phase-return var(--dur-scene) var(--ease-out) both;
+}
+
+/* Reduced motion: the browser's own crossfade, kept short. */
+html[data-phase="fade"]::view-transition-group(root) {
+  animation-duration: 180ms;
 }
 
 @keyframes phase-plate-out {
@@ -1345,13 +1349,29 @@
   }
 }
 
-@keyframes phase-veil-out {
+@keyframes phase-arrive {
   0%,
   62% {
-    opacity: 1;
+    opacity: 0;
   }
   100% {
+    opacity: 1;
+  }
+}
+
+@keyframes phase-return {
+  from {
     opacity: 0;
+    transform: scale(2.35);
+    filter: blur(14px) brightness(1.35);
+  }
+  30% {
+    opacity: 1;
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0) brightness(1);
   }
 }
 
@@ -3500,19 +3520,6 @@ button.screen:active {
     animation: none !important;
   }
 
-  /* Both listed: the directional rule further up is a class plus an
-     attribute plus a type selector, which out-specifies a bare
-     `.phase-veil img`, so without naming it here it would put the plate's
-     animation back for anyone who asked for less motion. */
-  .phase-veil img,
-  .phase-veil[data-dir="out"] img {
-    animation: none;
-  }
-
-  .phase-veil {
-    animation: phase-veil-out 180ms linear forwards;
-  }
-
   .phase-enter {
     animation: phase-fade-in 180ms linear both;
   }
@@ -3566,7 +3573,6 @@ button.screen:active {
   .room-window,
   .room-rim,
   .ambient,
-  .phase-veil,
   .skip-link,
   .chip,
   .site-header,
@@ -4333,6 +4339,9 @@ button.screen:active {
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--neon-cyan) 40%, transparent);
   backdrop-filter: blur(10px);
   cursor: pointer;
+  /* The same button on every page, so it holds its place through the
+     phase-through rather than flying off with the page behind it. */
+  view-transition-name: menu-button;
 }
 
 .menu-button:focus-visible {

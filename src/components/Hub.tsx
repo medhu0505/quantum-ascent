@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { usePhaseLink } from "@/components/scene/PhaseTransition";
+import { usePreloadWhenIdle } from "@/lib/preload";
 import { crossroadsPlate, isTodo, scenes, type Scene } from "@/data/quantum";
 
 /**
@@ -185,7 +186,11 @@ function Sign({ scene }: { scene: Scene }) {
   );
 }
 
+/** Every room a board opens; a board that leaves the site has nothing to load. */
+const ROOMS = scenes.filter((scene) => scene.href === undefined).map((scene) => scene.to);
+
 export function HubSigns({ inert }: { inert?: boolean }) {
+  usePreloadWhenIdle(ROOMS);
   return (
     <nav aria-label="Quantum V2.0 sections" inert={inert || undefined}>
       <ul className="hub-signs">

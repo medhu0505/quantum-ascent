@@ -107,7 +107,7 @@ function Contact() {
           <Link to="/faq" className="btn btn-ghost" data-magnetic>
             Read the FAQ
           </Link>
-          <Link to="/register/form" className="btn btn-accent" data-magnetic>
+          <Link to="/register" className="btn btn-accent" data-magnetic>
             Register for the events
           </Link>
         </div>

@@ -262,11 +262,12 @@ export type Scene = {
   accent: Accent;
   sign: SignGeometry;
   /**
-   * Interior window view. Only the four rooms have one; a sign that points
-   * at an ordinary page (the FAQ) has no interior to look into.
+   * Interior window view. Only the rooms have one: Events, Team and
+   * Resources. A sign that leads straight to a page, like Register, or out
+   * to a file, like the brochure, has no interior to look into.
    */
   view?: string;
-  /** What the room is, for the interior's accessible description. */
+  /** What the room or page is, for descriptions of it. */
   room: string;
 };
 
@@ -310,8 +311,7 @@ export const scenes: Scene[] = [
         [0.0, 100.0],
       ],
     },
-    view: "/media/view-register.webp",
-    room: "A gaming desk facing three monitors, the city outside the window behind it.",
+    room: "The entry form, one for every event.",
   },
   {
     id: "team",

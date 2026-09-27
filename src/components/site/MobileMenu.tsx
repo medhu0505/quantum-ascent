@@ -23,7 +23,7 @@ import { BROCHURE_URL, isTodo } from "@/data/quantum";
 type Item = { to?: string; href?: string; label: string; note: string; accent?: string };
 
 const ITEMS: Item[] = [
-  { to: "/register/form", label: "Register", note: "One form, every event.", accent: "cyan" },
+  { to: "/register", label: "Register", note: "One form, every event.", accent: "cyan" },
   { to: "/events", label: "Events", note: "The six, and how each one runs.", accent: "cyan" },
   { to: "/team", label: "Meet the Team", note: "The students running it.", accent: "cyan" },
   { to: "/faq", label: "FAQ", note: "The questions we get asked.", accent: "violet" },

@@ -90,11 +90,11 @@ export function EventsInterior() {
           </div>
         ),
         action: `Register for ${event.name}`,
-        href: `/register/form?event=${event.id}`,
+        href: `/register?event=${event.id}`,
         onAction: (e) => {
           if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
           e.preventDefault();
-          void navigate({ to: "/register/form", search: { event: event.id } });
+          void navigate({ to: "/register", search: { event: event.id } });
         },
       })),
     [navigate],
@@ -150,7 +150,7 @@ export function EventsInterior() {
           rounds do not clash before you commit.
         </p>
         <div className="page-actions">
-          <Link to="/register/form" className="btn btn-accent" data-magnetic>
+          <Link to="/register" className="btn btn-accent" data-magnetic>
             Register for the events
           </Link>
           <Link to="/faq" className="btn btn-ghost" data-magnetic>

@@ -46,7 +46,7 @@ export function ExitToCrossroads() {
  */
 export function RegisterChip() {
   return (
-    <Link to="/register/form" className="chip chip-right chip-accent" data-magnetic>
+    <Link to="/register" className="chip chip-right chip-accent" data-magnetic>
       Register
       <span aria-hidden="true">→</span>
     </Link>

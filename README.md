@@ -218,8 +218,7 @@ match Firestore's.
 ```
 /                  Scroll-scrubbed descent, ending at the crossroads hub
 /events            Events interior — six screens, one per event
-/register          Register interior — one terminal
-/register/form     The registration form
+/register          The registration form (/register/form forwards here)
 /team              Meet the Team interior
 /resources         Resources interior — FAQ, About, Contact
 /faq /about /contact

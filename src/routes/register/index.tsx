@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { MobileRegister } from "@/components/mobile/MobileRegister";
 import { RegisterFormBody } from "@/components/register/RegisterFormBody";
 import { validateRegisterSearch } from "@/components/register/search";
+import { useLayout } from "@/lib/motion";
 import { seo } from "@/lib/seo";
 
 /**
@@ -30,5 +32,9 @@ export const Route = createFileRoute("/register/")({
 
 function RouteComponent() {
   const { event } = Route.useSearch();
-  return <RegisterFormBody preselectedEvent={event} />;
+  return useLayout() === "desk" ? (
+    <RegisterFormBody preselectedEvent={event} />
+  ) : (
+    <MobileRegister preselectedEvent={event} />
+  );
 }

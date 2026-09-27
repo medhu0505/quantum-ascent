@@ -31,10 +31,13 @@ export function usePrefersReducedMotion(): boolean {
 }
 
 /**
- * True when the viewport can host the 16:9 billboard stage. Mirrors the
- * breakpoint in styles.css; below it the hub renders as stacked cards.
+ * True when the viewport can host the 16:9 billboard stage: wide, landscape,
+ * and tall enough to read. The height is what keeps a phone turned on its side
+ * out: it is wide and landscape, and about 400px tall, which is no room for a
+ * pinned film and six billboards.
  */
-const STAGE_QUERY = "(min-width: 48rem) and (min-aspect-ratio: 5 / 4)";
+export const STAGE_QUERY =
+  "(min-width: 48rem) and (min-height: 32rem) and (min-aspect-ratio: 5 / 4)";
 
 export function useStageLayout(): boolean {
   return useSyncExternalStore(
@@ -42,6 +45,25 @@ export function useStageLayout(): boolean {
     () => window.matchMedia(STAGE_QUERY).matches,
     () => false,
   );
+}
+
+/**
+ * Which of the two sites to show.
+ *
+ * The desktop site is built around the pinned film and the billboards, which
+ * need a wide, landscape screen. Anything else, a phone, a tablet held
+ * upright or a browser window narrowed on a laptop, gets the phone app
+ * instead, and a resize or a rotation switches between them live.
+ *
+ * The server cannot see the screen, so it renders the phone app, which is
+ * what most visitors hold. A script in the document marks a desktop screen
+ * before first paint and the stylesheet keeps the phone app hidden there
+ * until the desktop site has taken over.
+ */
+export type Layout = "desk" | "phone";
+
+export function useLayout(): Layout {
+  return useStageLayout() ? "desk" : "phone";
 }
 
 export function clamp(value: number, min: number, max: number): number {

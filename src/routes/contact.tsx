@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Instagram, Mail, Phone } from "lucide-react";
+import { MobileResources } from "@/components/mobile/MobileResources";
 import { PageShell } from "@/components/site/PageShell";
 import { Value } from "@/components/site/Bits";
 import { FEST_DATES, contact, isTodo, school } from "@/data/quantum";
+import { useLayout } from "@/lib/motion";
 import { seo } from "@/lib/seo";
 
 export const Route = createFileRoute("/contact")({
@@ -12,8 +14,12 @@ export const Route = createFileRoute("/contact")({
       description: `Reach the Quantum V2.0 organising team at ${school.name}, ${school.city}.`,
       path: "/contact",
     }),
-  component: Contact,
+  component: ContactRoute,
 });
+
+function ContactRoute() {
+  return useLayout() === "desk" ? <Contact /> : <MobileResources tab="contact" />;
+}
 
 const channels = [
   {

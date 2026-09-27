@@ -4313,170 +4313,6 @@ button.screen:active {
 }
 
 /* ------------------------------------------------------------------ *
- * The phone's menu bar.
- * ------------------------------------------------------------------ */
-
-/* Desktop has the pill on the road and does not need this at all. */
-.menu {
-  display: none;
-}
-
-.menu-button {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  /* Over the chips and the phase veil, under the skip link so a keyboard can
-     always reach that, and well under the preloader. */
-  z-index: 96;
-  display: grid;
-  place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: oklch(0.1 0.03 265 / 0.86);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--neon-cyan) 40%, transparent);
-  backdrop-filter: blur(10px);
-  cursor: pointer;
-  /* The same button on every page, so it holds its place through the
-     phase-through rather than flying off with the page behind it. */
-  view-transition-name: menu-button;
-}
-
-.menu-button:focus-visible {
-  outline: 2px solid var(--neon-cyan);
-  outline-offset: 3px;
-}
-
-.menu-bars {
-  display: grid;
-  gap: 4px;
-  width: 1.05rem;
-}
-
-.menu-bars > span {
-  display: block;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--foreground);
-  transition:
-    transform var(--dur-ui) var(--ease-out),
-    opacity var(--dur-fast) linear;
-}
-
-/* Three lines into a cross: the outer two meet in the middle and turn, the
-   middle one goes. */
-.menu-button[aria-expanded="true"] .menu-bars > span:nth-child(1) {
-  transform: translateY(6px) rotate(45deg);
-}
-
-.menu-button[aria-expanded="true"] .menu-bars > span:nth-child(2) {
-  opacity: 0;
-}
-
-.menu-button[aria-expanded="true"] .menu-bars > span:nth-child(3) {
-  transform: translateY(-6px) rotate(-45deg);
-}
-
-.menu-panel {
-  position: fixed;
-  inset: 0;
-  z-index: 95;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 5rem var(--gutter) var(--s-7);
-  background:
-    linear-gradient(180deg, oklch(0.07 0.026 265 / 0.95), oklch(0.06 0.022 265 / 0.98)),
-    url("/media/crossroads.webp") center / cover no-repeat;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-1.5rem);
-  transition:
-    opacity var(--dur-ui) var(--ease-out),
-    transform var(--dur-3) var(--ease),
-    visibility 0s var(--dur-3);
-}
-
-.menu-panel[data-open] {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-  transition:
-    opacity var(--dur-ui) var(--ease-out),
-    transform var(--dur-3) var(--ease);
-}
-
-.menu-panel ul {
-  display: grid;
-  gap: var(--s-2);
-  margin: 0;
-  padding: 0;
-  max-width: 32rem;
-  margin-inline: auto;
-  list-style: none;
-}
-
-/* Same build as a sign on the crossroads and as every other panel on a
-   phone: accent glass, a neon edge, a little bloom. */
-.menu-panel a,
-.menu-panel .menu-pending {
-  display: grid;
-  gap: 0.15rem;
-  min-height: 3.75rem;
-  align-content: center;
-  padding: var(--s-4) var(--s-5);
-  border-radius: var(--radius-md);
-  background: color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 16%, oklch(0.15 0.03 265 / 0.86));
-  box-shadow:
-    inset 0 0 0 1px color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 52%, transparent),
-    0 0 22px color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 18%, transparent);
-  text-decoration: none;
-  color: var(--foreground);
-}
-
-.menu-panel .menu-pending {
-  opacity: 0.55;
-  cursor: default;
-}
-
-.menu-panel a:focus-visible {
-  outline: 2px solid var(--foreground);
-  outline-offset: 3px;
-}
-
-.menu-label {
-  font-family: var(--font-display);
-  font-size: var(--text-lg);
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  text-shadow: 0 0 0.6em color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 60%, transparent);
-}
-
-.menu-note {
-  font-size: var(--text-xs);
-  line-height: 1.35;
-  color: oklch(0.99 0 0 / 0.7);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .menu-panel {
-    transform: none;
-    transition:
-      opacity var(--dur-ui) linear,
-      visibility 0s var(--dur-ui);
-  }
-
-  .menu-panel[data-open] {
-    transform: none;
-  }
-
-  .menu-bars > span {
-    transition: none;
-  }
-}
-
-/* ------------------------------------------------------------------ *
  * Phones: one world, one language.
  *
  * On a wide viewport a room is a photograph you stand in and the crossroads
@@ -4696,11 +4532,1759 @@ button.screen:active {
     display: none;
   }
 
-  .menu {
-    display: block;
-  }
-
   .interior-footer {
     display: block;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * The phone app.
+ *
+ * Everything that is not a wide, landscape screen gets this instead of the
+ * desktop site: phones, tablets held upright, a laptop window narrowed. It is
+ * the same street, told for a thumb. See src/components/mobile.
+ *
+ * The server renders it for everyone, since it cannot see the screen; the
+ * script at the top of the document marks a desktop before first paint, and
+ * this guard keeps the phone app out of sight there until the desktop site
+ * has taken over.
+ * ------------------------------------------------------------------ */
+
+html[data-layout="desk"] .m-app {
+  display: none;
+}
+
+html[data-layout="phone"],
+html[data-layout="phone"] body {
+  background-color: oklch(0.085 0.03 265);
+}
+
+.m-app {
+  --m-bg: oklch(0.12 0.026 265);
+  --m-fg: oklch(0.965 0.008 265);
+  --m-muted: oklch(0.755 0.028 265);
+  --m-ink: oklch(0.13 0.026 265);
+  --m-cyan: oklch(0.84 0.13 215);
+  --m-magenta: oklch(0.75 0.2 325);
+  --m-violet: oklch(0.7 0.17 280);
+  --m-red: oklch(0.62 0.22 25);
+  --m-acc: var(--m-cyan);
+  --m-gradient: linear-gradient(
+    100deg,
+    oklch(0.84 0.13 215),
+    oklch(0.7 0.17 280),
+    oklch(0.75 0.2 325)
+  );
+  --m-input:
+    linear-gradient(180deg, oklch(1 0 0 / 0.05), transparent 55%), oklch(0.2 0.035 267 / 0.9);
+  --m-glass:
+    linear-gradient(180deg, oklch(1 0 0 / 0.12) 0%, oklch(1 0 0 / 0.035) 38%, transparent 62%),
+    oklch(0.15 0.03 265 / 0.58);
+  --m-glass-edge:
+    inset 0 1px 0 0 oklch(1 0 0 / 0.24), inset 0 0 0 1px oklch(1 0 0 / 0.1),
+    0 10px 30px -14px oklch(0.02 0 0 / 0.75);
+  /* The app is drawn for a phone. On a tablet held upright it keeps a phone's
+     measure in the middle of the screen rather than stretching every card
+     across it. */
+  --m-max: 34rem;
+
+  position: relative;
+  min-height: 100dvh;
+  max-width: var(--m-max);
+  margin-inline: auto;
+  background: var(--m-bg);
+  color: var(--m-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+
+.m-app [data-accent="cyan"] {
+  --m-acc: var(--m-cyan);
+}
+
+.m-app [data-accent="magenta"] {
+  --m-acc: var(--m-magenta);
+}
+
+.m-app [data-accent="violet"] {
+  --m-acc: var(--m-violet);
+}
+
+.m-app a:not([class]) {
+  color: var(--m-cyan);
+  text-decoration: none;
+}
+
+.m-app :focus-visible {
+  outline: 2px solid var(--m-cyan);
+  outline-offset: 2px;
+}
+
+.m-app [tabindex="-1"]:focus {
+  outline: none;
+}
+
+.m-main {
+  display: block;
+  padding-bottom: 112px;
+  outline: none;
+}
+
+.m-app[data-screen="register"] .m-main {
+  padding-bottom: 0;
+}
+
+.m-muted {
+  color: var(--m-muted);
+}
+
+.m-small {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.m-pad {
+  padding: 8px 16px 0;
+}
+
+.m-eyebrow {
+  margin: 0;
+  font: 600 11px/1 var(--font-display);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--m-cyan);
+}
+
+.m-eyebrow-magenta {
+  color: var(--m-magenta);
+}
+
+.m-gradient-text {
+  background: var(--m-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Screen scanlines, the texture of the screens in the film. */
+.m-lines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, oklch(1 0 0 / 0.04) 0 1px, transparent 1px 3px);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.m-h2 {
+  margin: 0;
+  font: 700 18px/1.2 var(--font-display);
+  letter-spacing: 0;
+}
+
+.m-h2-lg {
+  font-size: 22px;
+}
+
+.m-h3 {
+  margin: 26px 4px 10px;
+  font: 700 17px/1.2 var(--font-display);
+}
+
+.m-h4 {
+  margin: 18px 0 10px;
+  font: 700 15px/1.2 var(--font-display);
+}
+
+/* ---- The frame: pill, title bar, dock ------------------------------- */
+
+.m-top {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  z-index: 20;
+  display: flex;
+  width: min(100%, var(--m-max));
+  padding-inline: 12px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  view-transition-name: m-top;
+}
+
+.m-pill {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font: 600 13px/1 var(--font-display);
+  color: var(--m-fg);
+  text-decoration: none;
+  background: var(--m-glass);
+  box-shadow: var(--m-glass-edge);
+  -webkit-backdrop-filter: blur(22px) saturate(185%);
+  backdrop-filter: blur(22px) saturate(185%);
+  transition: transform 120ms;
+}
+
+.m-pill:active {
+  transform: scale(0.98);
+}
+
+.m-pill-live {
+  gap: 10px;
+  min-height: 40px;
+  padding: 8px 14px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.m-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--m-red);
+}
+
+.m-pill-live[data-open] .m-live-dot {
+  background: var(--m-cyan);
+  animation: m-pulse 1.8s ease-out infinite;
+}
+
+@keyframes m-pulse {
+  0% {
+    box-shadow: 0 0 0 0 oklch(0.84 0.13 215 / 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 8px oklch(0.84 0.13 215 / 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 oklch(0.84 0.13 215 / 0);
+  }
+}
+
+.m-titlebar {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  z-index: 19;
+  width: min(100%, var(--m-max));
+  height: 68px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(180deg, oklch(0.12 0.026 265 / 0.94), oklch(0.12 0.026 265 / 0.78));
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: inset 0 -1px 0 oklch(1 0 0 / 0.08);
+  transition: opacity 240ms;
+  view-transition-name: m-titlebar;
+}
+
+.m-titlebar span {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 16px/1 var(--font-display);
+  letter-spacing: 0.01em;
+  transform: translateY(8px);
+  transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.m-titlebar[data-on] {
+  opacity: 1;
+}
+
+.m-titlebar[data-on] span {
+  transform: none;
+}
+
+.m-dock {
+  position: fixed;
+  bottom: 14px;
+  left: 50%;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: center;
+  gap: 2px;
+  width: calc(min(100%, var(--m-max)) - 24px);
+  padding: 6px;
+  border-radius: 999px;
+  transform: translateX(-50%);
+  background:
+    linear-gradient(180deg, oklch(1 0 0 / 0.12) 0%, oklch(1 0 0 / 0.035) 38%, transparent 62%),
+    oklch(0.15 0.03 265 / 0.72);
+  box-shadow:
+    inset 0 1px 0 0 oklch(1 0 0 / 0.24),
+    inset 0 0 0 1px oklch(1 0 0 / 0.1),
+    inset 0 -12px 24px -14px oklch(1 0 0 / 0.16),
+    0 10px 30px -14px oklch(0.02 0 0 / 0.75);
+  -webkit-backdrop-filter: blur(22px) saturate(185%) brightness(1.06);
+  backdrop-filter: blur(22px) saturate(185%) brightness(1.06);
+  view-transition-name: m-dock;
+}
+
+.m-dock-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 48px;
+  padding: 0 2px;
+  border-radius: 999px;
+  font: 600 12px/1 var(--font-display);
+  color: var(--m-muted);
+  text-decoration: none;
+  transition:
+    color 240ms,
+    background 240ms;
+}
+
+.m-dock-item:active {
+  transform: scale(0.96);
+}
+
+.m-dock-item[aria-current="page"] {
+  color: var(--m-fg);
+  background: oklch(1 0 0 / 0.08);
+}
+
+/* Register stands out from the other four until it is the page you are on. */
+.m-dock-item[data-register]:not([aria-current]) {
+  color: var(--m-ink);
+  background: var(--m-cyan);
+  box-shadow: 0 0 24px color-mix(in oklab, var(--m-cyan) 38%, transparent);
+}
+
+.m-dock-bar {
+  width: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--m-acc);
+  box-shadow: 0 0 8px var(--m-acc);
+  transition: width 240ms;
+}
+
+.m-dock-item[aria-current="page"] .m-dock-bar {
+  width: 16px;
+}
+
+/* ---- Screen headers ---------------------------------------------------- */
+
+.m-head {
+  position: relative;
+  height: 210px;
+  overflow: hidden;
+}
+
+.m-head-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.7;
+}
+
+.m-head-fade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, oklch(0.12 0.026 265 / 0.3), oklch(0.12 0.026 265) 96%);
+}
+
+.m-head-text {
+  position: absolute;
+  right: 20px;
+  bottom: 10px;
+  left: 20px;
+}
+
+.m-head[data-accent="violet"] .m-eyebrow {
+  color: var(--m-violet);
+}
+
+.m-head-title {
+  margin: 10px 0 0;
+  font: 700 44px/1.05 var(--font-display);
+  letter-spacing: -0.025em;
+}
+
+.m-app[data-screen="events"] .m-head-title {
+  font-size: 48px;
+}
+
+/* ---- Street ------------------------------------------------------------ */
+
+.m-hero {
+  position: relative;
+  height: 470px;
+  overflow: hidden;
+}
+
+.m-hero-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 40%;
+}
+
+.m-hero-fade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    oklch(0.12 0.026 265 / 0.55) 0%,
+    transparent 22%,
+    transparent 45%,
+    oklch(0.12 0.026 265 / 0.85) 78%,
+    oklch(0.12 0.026 265) 100%
+  );
+}
+
+.m-hero-text {
+  position: absolute;
+  right: 20px;
+  bottom: 18px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.m-hero-title {
+  margin: 0;
+  font: 700 clamp(48px, 16.5vw, 64px) / 0.95 var(--font-display);
+  letter-spacing: -0.025em;
+  text-transform: uppercase;
+  filter: drop-shadow(0 0 24px oklch(0.84 0.13 215 / 0.35));
+}
+
+.m-hero-school {
+  margin: 2px 0 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--m-muted);
+}
+
+.m-kicker {
+  margin: 0 4px 12px;
+  font: 600 11px/1 var(--font-display);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--m-muted);
+}
+
+.m-street-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.m-street {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6px;
+  min-height: 124px;
+  padding: 16px;
+  border-radius: 4px;
+  overflow: hidden;
+  text-align: left;
+  text-decoration: none;
+  color: oklch(0.99 0 0);
+  background: color-mix(in oklab, var(--m-acc) 24%, oklch(0.16 0.03 265 / 0.82));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--m-acc) 62%, transparent),
+    0 0 26px color-mix(in oklab, var(--m-acc) 28%, transparent);
+  transition: transform 120ms;
+}
+
+.m-street:active {
+  transform: scale(0.98);
+}
+
+.m-street[data-wide] {
+  grid-column: 1 / -1;
+  min-height: 132px;
+  padding: 18px;
+}
+
+.m-street:nth-child(n + 4) {
+  min-height: 108px;
+}
+
+.m-street[data-pending] {
+  opacity: 0.72;
+}
+
+.m-street-lines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, oklch(1 0 0 / 0.08) 0 1px, transparent 1px 3px);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.m-street-sweep {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, oklch(1 0 0 / 0.08), transparent);
+  animation: m-sweep 5s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes m-sweep {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+.m-street-count {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font: 600 11px/1 var(--font-display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: oklch(0.99 0 0 / 0.84);
+}
+
+.m-street-label {
+  position: relative;
+  font: 700 20px/1.05 var(--font-display);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  text-shadow: 0 0 14px color-mix(in oklab, var(--m-acc) 85%, transparent);
+}
+
+.m-street[data-wide] .m-street-label {
+  font-size: 30px;
+}
+
+.m-street-blurb {
+  position: relative;
+  font-size: 13px;
+  line-height: 1.3;
+  color: oklch(0.99 0 0 / 0.84);
+}
+
+.m-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 32px 4px 0;
+  padding-top: 18px;
+  border-top: 1px solid oklch(1 0 0 / 0.1);
+  font-size: 13px;
+}
+
+.m-foot p {
+  margin: 0;
+}
+
+.m-foot-mark {
+  font: 700 17px/1.2 var(--font-display);
+}
+
+/* Text links, but still thumb targets: 24px tall rather than the 18px of
+   the line they sit in. */
+.m-foot a,
+.m-contact-line a {
+  display: inline-block;
+  padding-block: 3px;
+}
+
+/* ---- Events ------------------------------------------------------------ */
+
+.m-rail-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 14px 20px 12px;
+}
+
+.m-counter {
+  font: 600 12px/1 var(--font-display);
+  letter-spacing: 0.08em;
+  color: var(--m-muted);
+}
+
+.m-rail {
+  display: flex;
+  gap: 12px;
+  padding: 0 20px 4px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 20px;
+  scrollbar-width: none;
+  cursor: grab;
+}
+
+.m-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.m-rail[data-dragging] {
+  scroll-snap-type: none;
+  cursor: grabbing;
+  user-select: none;
+}
+
+.m-event-card {
+  --m-art: radial-gradient(
+      120% 140% at 22% 12%,
+      color-mix(in oklab, oklch(0.84 0.13 215) 52%, transparent),
+      transparent 68%
+    ),
+    linear-gradient(155deg, oklch(0.28 0.06 215), oklch(0.16 0.03 250));
+
+  position: relative;
+  display: flex;
+  flex: 0 0 calc(100% - 44px);
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 8px;
+  height: 300px;
+  padding: 20px;
+  border: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  text-align: left;
+  color: #fff;
+  cursor: inherit;
+  scroll-snap-align: start;
+  background: var(--m-art);
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.12);
+  transition: box-shadow 240ms;
+}
+
+.m-event-card[data-accent="magenta"] {
+  --m-art: radial-gradient(
+      120% 140% at 22% 12%,
+      color-mix(in oklab, oklch(0.75 0.2 325) 52%, transparent),
+      transparent 68%
+    ),
+    linear-gradient(155deg, oklch(0.28 0.08 325), oklch(0.16 0.03 290));
+}
+
+.m-event-card[data-accent="violet"] {
+  --m-art: radial-gradient(
+      120% 140% at 22% 12%,
+      color-mix(in oklab, oklch(0.7 0.17 280) 52%, transparent),
+      transparent 68%
+    ),
+    linear-gradient(155deg, oklch(0.28 0.07 280), oklch(0.16 0.03 265));
+}
+
+.m-event-card[aria-current] {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--m-acc) 70%, transparent),
+    0 0 30px color-mix(in oklab, var(--m-acc) 28%, transparent);
+}
+
+.m-event-card .m-lines {
+  background: repeating-linear-gradient(0deg, oklch(1 0 0 / 0.05) 0 1px, transparent 1px 3px);
+}
+
+.m-event-num {
+  position: absolute;
+  top: 18px;
+  left: 20px;
+  font: 600 12px/1 var(--font-display);
+  letter-spacing: 0.16em;
+  color: oklch(1 0 0 / 0.7);
+}
+
+.m-event-team {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font: 600 11px/1.2 var(--font-display);
+  color: var(--m-fg);
+  background: oklch(0.1 0.03 265 / 0.5);
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.14);
+}
+
+.m-event-name {
+  position: relative;
+  font: 700 34px/1.05 var(--font-display);
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 14px rgb(0 0 0 / 0.55);
+}
+
+.m-event-tag {
+  position: relative;
+  font: 600 12px/1.3 var(--font-display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--m-acc) 62%, #fff);
+  text-shadow: 0 1px 10px rgb(0 0 0 / 0.6);
+}
+
+.m-event-desc {
+  position: relative;
+  font-size: 14px;
+  line-height: 1.5;
+  color: oklch(1 0 0 / 0.86);
+  text-wrap: pretty;
+}
+
+.m-dots {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0 0;
+}
+
+/* The bar is drawn small, as designed; the button round it is a full-size
+   target for a thumb. */
+.m-dot {
+  position: relative;
+  width: 26px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.m-dot::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 4px;
+  border-radius: 2px;
+  background: oklch(1 0 0 / 0.22);
+  transform: translate(-50%, -50%);
+  transition:
+    width 240ms,
+    background 240ms;
+}
+
+.m-dot[aria-current]::before {
+  width: 22px;
+  background: var(--m-acc);
+}
+
+.m-panel {
+  margin: 16px 16px 0;
+  padding: 18px;
+  border-radius: 6px;
+  background: oklch(0.205 0.034 267 / 0.7);
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.1);
+}
+
+.m-entry {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+  font-size: 15px;
+}
+
+.m-entry-key {
+  font: 600 11px/1 var(--font-display);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--m-acc);
+}
+
+.m-steps-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.m-steps-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 10px 0;
+  border-top: 1px solid oklch(1 0 0 / 0.1);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.m-steps-num {
+  flex: none;
+  font: 700 13px/1 var(--font-display);
+  color: var(--m-acc);
+}
+
+.m-event-panel .m-btn {
+  margin-top: 16px;
+}
+
+.m-after {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 28px;
+  padding: 0 20px;
+}
+
+.m-body {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.m-after .m-small {
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ---- Buttons ------------------------------------------------------------ */
+
+.m-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 4px;
+  font: 600 15px/1.2 var(--font-display);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 120ms;
+}
+
+.m-btn:active {
+  transform: scale(0.985);
+}
+
+.m-btn-accent {
+  color: var(--m-ink);
+  background: var(--m-acc);
+  box-shadow: 0 6px 26px -6px var(--m-acc);
+}
+
+.m-btn-ghost {
+  color: var(--m-fg);
+  background: oklch(0.22 0.035 267 / 0.7);
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 14%);
+}
+
+.m-btn[disabled] {
+  opacity: 0.45;
+  cursor: default;
+  transform: none;
+}
+
+/* ---- Team -------------------------------------------------------------- */
+
+.m-notice-row {
+  margin: 14px 4px 0;
+}
+
+.m-deck {
+  margin-top: 18px;
+  overflow: hidden;
+}
+
+.m-crew {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.m-crew li {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 8px 14px 0;
+  border-top: 1px solid oklch(1 0 0 / 0.1);
+}
+
+.m-crew-avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: oklch(0.2 0.03 265);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--m-acc) 28%, transparent);
+}
+
+/* A head and shoulders, drawn in two circles. */
+.m-crew-avatar span {
+  width: 17px;
+  height: 17px;
+  margin-top: -8px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--m-acc) 45%, transparent);
+  box-shadow: 0 11px 0 -2px color-mix(in oklab, var(--m-acc) 45%, transparent);
+  opacity: 0.5;
+}
+
+.m-crew-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.m-crew-role {
+  font: 700 15px/1.15 var(--font-display);
+}
+
+.m-crew-name {
+  font-size: 13px;
+  color: var(--m-muted);
+}
+
+/* In a list of eight the badge is a quiet line, not eight alarms. */
+.m-crew-name .todo {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--m-muted);
+}
+
+.m-crew-name .todo > span {
+  color: color-mix(in oklab, var(--m-red) 35%, var(--m-fg));
+}
+
+.m-closing {
+  margin-top: 28px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ---- Resources ------------------------------------------------------------ */
+
+.m-resources {
+  padding: 14px 16px 0;
+}
+
+.m-tabs {
+  position: sticky;
+  top: 76px;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 4px;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, oklch(1 0 0 / 0.12) 0%, oklch(1 0 0 / 0.035) 38%, transparent 62%),
+    oklch(0.15 0.03 265 / 0.78);
+  box-shadow:
+    inset 0 1px 0 0 oklch(1 0 0 / 0.24),
+    inset 0 0 0 1px oklch(1 0 0 / 0.1);
+  -webkit-backdrop-filter: blur(22px) saturate(185%);
+  backdrop-filter: blur(22px) saturate(185%);
+}
+
+.m-tab {
+  display: grid;
+  place-items: center;
+  min-height: 40px;
+  border-radius: 999px;
+  font: 600 14px/1 var(--font-display);
+  color: var(--m-fg);
+  text-decoration: none;
+  transition: background 240ms;
+}
+
+.m-tab[aria-current="page"] {
+  color: var(--m-ink);
+  background: var(--m-violet);
+}
+
+.m-tab-head {
+  margin: 22px 4px 6px;
+  font-size: 20px;
+}
+
+.m-tab-lede {
+  margin: 0 4px 16px;
+  font-size: 14px;
+}
+
+.m-faq {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.m-faq-item {
+  border-radius: 4px;
+  background: oklch(0.205 0.034 267 / 0.5);
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.1);
+  transition: background 240ms;
+}
+
+.m-faq-item[data-open] {
+  background: color-mix(in oklab, var(--m-violet) 15%, oklch(0.16 0.03 265 / 0.84));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--m-violet) 48%, transparent),
+    0 0 22px color-mix(in oklab, var(--m-violet) 16%, transparent);
+}
+
+.m-faq-q {
+  margin: 0;
+}
+
+.m-faq-q button {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: 600 15px/1.35 var(--font-display);
+  color: var(--m-fg);
+  cursor: pointer;
+}
+
+.m-faq-sign {
+  flex: none;
+  font: 700 18px/1 var(--font-display);
+  color: var(--m-violet);
+}
+
+.m-faq-a {
+  margin: 0;
+  padding: 0 16px 16px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--m-muted);
+  text-wrap: pretty;
+}
+
+.m-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  margin: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  background: oklch(1 0 0 / 0.1);
+}
+
+.m-facts > div {
+  background: oklch(0.155 0.03 265);
+}
+
+.m-facts dd {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 16px;
+}
+
+.m-fact-value {
+  font: 700 34px/1 var(--font-display);
+  letter-spacing: -0.025em;
+}
+
+.m-fact-label {
+  font: 600 11px/1.2 var(--font-display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.m-fact-note {
+  font-size: 12px;
+  color: var(--m-muted);
+}
+
+.m-prose {
+  margin: 0 4px 14px;
+  font-size: 15px;
+  line-height: 1.75;
+  text-wrap: pretty;
+}
+
+.m-brochure {
+  margin: 20px 4px 0;
+}
+
+.m-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--m-violet) 16%, oklch(0.15 0.03 265 / 0.86));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--m-violet) 52%, transparent),
+    0 0 22px color-mix(in oklab, var(--m-violet) 18%, transparent);
+}
+
+.m-contact-who {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+}
+
+.m-contact-name {
+  font: 700 20px/1.2 var(--font-display);
+}
+
+.m-contact-role {
+  font-size: 13px;
+  color: oklch(0.99 0 0 / 0.7);
+}
+
+.m-contact-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.m-contact-line {
+  margin: 0;
+  font-size: 13px;
+  color: oklch(0.99 0 0 / 0.7);
+  overflow-wrap: anywhere;
+}
+
+.m-details {
+  display: flex;
+  flex-direction: column;
+  margin: 18px 4px 0;
+}
+
+.m-details > div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 0;
+  border-top: 1px solid oklch(1 0 0 / 0.1);
+}
+
+.m-details dt {
+  font: 600 11px/1.2 var(--font-display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--m-muted);
+}
+
+.m-details dd {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* ---- Register ------------------------------------------------------------ */
+
+.m-register {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  padding: 64px 20px 0;
+  background: radial-gradient(
+    90% 40% at 50% 0%,
+    color-mix(in oklab, var(--m-magenta) 16%, transparent),
+    transparent 70%
+  );
+}
+
+.m-reg-title {
+  margin: 10px 0 0;
+  font: 700 40px/1.05 var(--font-display);
+  letter-spacing: -0.025em;
+}
+
+.m-reg-lede {
+  margin: 10px 0 0;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.m-stepper {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin: 20px 0 22px;
+  padding: 0;
+  list-style: none;
+}
+
+.m-stepper li > * {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: 100%;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: 600 11px/1.2 var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--m-muted);
+}
+
+.m-stepper button {
+  cursor: pointer;
+}
+
+.m-stepper-bar {
+  height: 3px;
+  border-radius: 2px;
+  background: oklch(1 0 0 / 0.14);
+  transition: background 240ms;
+}
+
+.m-stepper li[data-state="done"] .m-stepper-bar,
+.m-stepper li[data-state="now"] .m-stepper-bar {
+  background: var(--m-magenta);
+}
+
+.m-stepper li[data-state="now"] .m-stepper-bar {
+  box-shadow: 0 0 10px var(--m-magenta);
+}
+
+.m-stepper li[data-state="now"] > * {
+  color: var(--m-fg);
+}
+
+.m-note {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 20px;
+  padding: 14px;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--m-muted);
+  background: oklch(0.2 0.035 267 / 0.8);
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 14%);
+}
+
+.m-note strong {
+  color: var(--m-fg);
+}
+
+.m-alert {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border-radius: 4px;
+  font: 600 14px/1.45 var(--font-display);
+  color: color-mix(in oklab, var(--m-red) 22%, var(--m-fg));
+  background: color-mix(in oklab, var(--m-red) 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--m-red) 60%, transparent);
+}
+
+.m-ok {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 16px 0 0;
+  padding: 14px;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--m-muted);
+  background: color-mix(in oklab, var(--m-cyan) 12%, oklch(0.2 0.035 267 / 0.8));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--m-cyan) 45%, transparent);
+}
+
+.m-ok strong {
+  color: var(--m-fg);
+}
+
+.m-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.m-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.m-label {
+  padding: 0;
+  font: 600 15px/1.3 var(--font-display);
+}
+
+.m-required {
+  color: var(--m-red);
+}
+
+.m-input {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 12px;
+  border: 0;
+  border-radius: 4px;
+  /* 16px and up, or iOS zooms the page on focus. */
+  font-size: 17px;
+  color: var(--m-fg);
+  background: var(--m-input);
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 18%);
+  outline: none;
+}
+
+.m-input::placeholder {
+  color: oklch(0.755 0.028 265 / 0.8);
+}
+
+.m-app .m-input:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--m-cyan);
+}
+
+.m-input[aria-invalid="true"] {
+  box-shadow: inset 0 0 0 2px var(--m-red);
+}
+
+.m-hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--m-muted);
+}
+
+.m-error {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: color-mix(in oklab, var(--m-red) 40%, var(--m-fg));
+}
+
+.m-classes {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.m-class {
+  position: relative;
+}
+
+.m-class input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.m-class span {
+  display: grid;
+  place-items: center;
+  min-height: 48px;
+  border-radius: 4px;
+  font: 700 17px/1 var(--font-display);
+  color: var(--m-fg);
+  background: var(--m-input);
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 18%);
+  pointer-events: none;
+  transition: background 240ms;
+}
+
+.m-class input:checked + span {
+  color: var(--m-ink);
+  background: var(--m-cyan);
+  box-shadow: 0 0 20px color-mix(in oklab, var(--m-cyan) 40%, transparent);
+}
+
+.m-class input:focus-visible + span {
+  outline: 2px solid var(--m-fg);
+  outline-offset: 2px;
+}
+
+.m-class input[aria-invalid="true"] + span {
+  box-shadow: inset 0 0 0 2px var(--m-red);
+}
+
+.m-picks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.m-pick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  background: color-mix(in oklab, var(--m-acc) 15%, oklch(0.16 0.03 265 / 0.84));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--m-acc) 48%, transparent),
+    0 0 22px color-mix(in oklab, var(--m-acc) 16%, transparent);
+  transition:
+    background 240ms,
+    box-shadow 240ms;
+}
+
+.m-pick:has(input:checked) {
+  background: color-mix(in oklab, var(--m-acc) 26%, oklch(0.16 0.03 265 / 0.84));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in oklab, var(--m-acc) 85%, transparent),
+    0 0 26px color-mix(in oklab, var(--m-acc) 28%, transparent);
+}
+
+.m-pick input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+
+.m-pick-box {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  font: 700 14px/1 var(--font-display);
+  color: var(--m-ink);
+  box-shadow: inset 0 0 0 1.5px var(--m-acc);
+}
+
+.m-pick input:checked ~ .m-pick-box {
+  background: var(--m-acc);
+}
+
+.m-pick input:checked ~ .m-pick-box::after {
+  content: "✓";
+}
+
+.m-pick input:focus-visible ~ .m-pick-box {
+  outline: 2px solid var(--m-fg);
+  outline-offset: 2px;
+}
+
+.m-pick input[aria-invalid="true"] ~ .m-pick-box {
+  box-shadow: inset 0 0 0 2px var(--m-red);
+}
+
+.m-pick-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.m-pick-name {
+  font: 700 17px/1.2 var(--font-display);
+}
+
+.m-pick-team {
+  font-size: 13px;
+  color: var(--m-muted);
+}
+
+.m-pick-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--m-acc);
+  box-shadow: 0 0 10px var(--m-acc);
+}
+
+.m-pick-hint {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--m-muted);
+}
+
+.m-pick-count {
+  flex: none;
+  font: 600 13px/1.5 var(--font-display);
+  color: var(--m-cyan);
+}
+
+.m-lead-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 4px;
+  background: oklch(0.205 0.034 267 / 0.7);
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.1);
+}
+
+.m-lead-card > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.m-lead-num {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  font: 700 14px/1 var(--font-display);
+  color: var(--m-ink);
+  background: var(--m-cyan);
+}
+
+.m-lead-name {
+  font: 700 15px/1.2 var(--font-display);
+}
+
+.m-member {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 16px;
+  border: 0;
+  border-radius: 4px;
+  background: oklch(0.205 0.034 267 / 0.5);
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.1);
+}
+
+.m-member-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.m-member-title {
+  font: 700 15px/1.2 var(--font-display);
+}
+
+.m-chip-btn {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  font: 600 13px/1 var(--font-display);
+  color: var(--m-muted);
+  background: oklch(1 0 0 / 0.06);
+  cursor: pointer;
+}
+
+.m-member-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.m-review {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  border-radius: 4px;
+  background: oklch(0.205 0.034 267 / 0.6);
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.1);
+}
+
+.m-review > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 16px;
+  border-top: 1px solid oklch(1 0 0 / 0.07);
+}
+
+.m-review > div:first-child {
+  border-top: 0;
+}
+
+.m-review dt {
+  flex: none;
+  padding: 14px 0;
+  font: 600 11px/1.2 var(--font-display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--m-muted);
+}
+
+.m-review dd {
+  min-width: 0;
+  margin: 0;
+}
+
+.m-review dd button {
+  padding: 14px 0;
+  border: 0;
+  background: none;
+  font-size: 15px;
+  line-height: 1.4;
+  text-align: right;
+  color: var(--m-fg);
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.m-review-hint {
+  margin-top: 10px;
+}
+
+.m-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  display: flex;
+  gap: 10px;
+  margin: 28px -20px 0;
+  padding: 16px 20px 22px;
+  background: linear-gradient(180deg, oklch(0.12 0.026 265 / 0), oklch(0.12 0.026 265 / 0.96) 28%);
+}
+
+.m-btn-back {
+  flex: none;
+  width: auto;
+  min-height: 52px;
+  padding: 0 18px;
+}
+
+.m-btn-next {
+  flex: 1;
+  min-height: 52px;
+  font-size: 16px;
+}
+
+.m-btn-next[aria-busy] {
+  opacity: 0.6;
+}
+
+.m-receipt {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 24px 0 0;
+  padding: 20px;
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--m-cyan) 12%, oklch(0.2 0.035 267 / 0.8));
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--m-cyan) 45%, transparent);
+}
+
+.m-receipt strong {
+  font: 700 16px/1.3 var(--font-display);
+}
+
+.m-receipt-id {
+  font: 700 34px/1 var(--font-display);
+  letter-spacing: 0.04em;
+  color: var(--m-cyan);
+  text-shadow: 0 0 20px oklch(0.84 0.13 215 / 0.5);
+  overflow-wrap: anywhere;
+}
+
+.m-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* ---- Moving between screens ------------------------------------------ *
+ * The page fades out to the street at night and the next one rises in
+ * over it. The pill, the title bar and the dock are pictured on their own
+ * and hold still through it, because they are the frame, not the page.
+ */
+
+html[data-phase="screen"]::view-transition {
+  background:
+    linear-gradient(180deg, oklch(0.12 0.026 265 / 0.55), oklch(0.12 0.026 265 / 0.9)),
+    url("/media/crossroads.webp") center / cover no-repeat;
+}
+
+html[data-phase="screen"]::view-transition-old(root),
+html[data-phase="screen"]::view-transition-new(root) {
+  mix-blend-mode: normal;
+}
+
+html[data-phase="screen"]::view-transition-old(root) {
+  animation: m-leave 200ms cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+html[data-phase="screen"]::view-transition-new(root) {
+  animation: m-arrive 480ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both;
+}
+
+@keyframes m-leave {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes m-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m-street-sweep,
+  .m-pill-live[data-open] .m-live-dot {
+    animation: none;
+  }
+
+  .m-titlebar span {
+    transition: none;
   }
 }

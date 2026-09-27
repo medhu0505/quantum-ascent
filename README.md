@@ -224,6 +224,13 @@ match Firestore's.
 /faq /about /contact
 ```
 
+Those addresses are shared by two sites. A wide, landscape screen at least
+32rem tall gets the desktop site above. Anything else, phones, tablets held
+upright, a narrowed laptop window, gets the phone app in `src/components/mobile`:
+a street of cards, a dock along the bottom, events on a rail you swipe or drag,
+and registration in four steps. The two switch live on a resize or a rotation,
+and share the data, the validation and the registration backend.
+
 Two visual registers, deliberately opposed. Scenes (hero, hub, interiors) are
 full-bleed, neon and kinetic. The conventional pages are one quiet column at a
 readable measure, because someone checking what to bring the night before the

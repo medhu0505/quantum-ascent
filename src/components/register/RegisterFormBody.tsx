@@ -6,9 +6,23 @@ import {
   MAX_MEMBERS,
   isRegistrationOpen,
   submitRegistration,
-  type BackendReply,
   type Participant,
 } from "@/lib/registrations";
+import {
+  BLANK,
+  CLASSES,
+  FIELD_ORDER,
+  MEMBER_LABEL,
+  MEMBER_ORDER,
+  buildPayload,
+  describeFailure,
+  validate,
+  validateMembers,
+  type Errors,
+  type Fields,
+  type MemberErrors,
+  type Receipt,
+} from "@/components/register/logic";
 
 /**
  * The registration form.
@@ -34,108 +48,6 @@ import {
  * src/lib/registrations.ts. This file knows only that submitting returns a
  * reply with an ID in it or does not.
  */
-
-type Fields = {
-  student: string;
-  school: string;
-  grade: string;
-  email: string;
-  phone: string;
-  discord: string;
-};
-
-/** `events` is not a Fields key — it is the checkbox group, which is a list. */
-type Errors = Partial<Record<keyof Fields | "events", string>>;
-type MemberErrors = Partial<Record<keyof Participant, string>>;
-
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-/** Handles have no spaces. Deliberately loose otherwise — Discord has changed
- *  its username rules more than once and a strict pattern would reject real
- *  accounts. */
-const DISCORD = /^\S{2,37}$/;
-
-const CLASSES = [9, 10, 11, 12];
-
-const BLANK: Participant = { name: "", grade: "", phone: "", discord: "", email: "" };
-
-/** A row nobody has touched is not an error, it is an empty row. */
-function used(m: Participant): boolean {
-  return Object.values(m).some((v) => v.trim() !== "");
-}
-
-/**
- * An Indian phone number as ten digits, or null if it is not one.
- *
- * Every entrant is at a school in India, so nobody should need to know or type
- * a country code. People type one anyway, out of habit, so "+91 98713 79429",
- * "91-9871379429", "09871379429" and "9871379429" all come out as the same ten
- * digits. A leading 91 or 0 is only removed when it is what makes the number
- * longer than ten — a real ten-digit number that happens to start 91 is kept.
- *
- * Exactly ten, not "at least ten": an eleventh digit is a typo, and a typo in
- * the one number the organisers call on the day is worth catching here.
- */
-function indianPhone(value: string): string | null {
-  let digits = value.replace(/\D/g, "");
-  if (digits.length === 12 && digits.startsWith("91")) digits = digits.slice(2);
-  else if (digits.length === 11 && digits.startsWith("0")) digits = digits.slice(1);
-  return digits.length === 10 ? digits : null;
-}
-
-function validate(values: Fields, picked: string[]): Errors {
-  const errors: Errors = {};
-  if (!values.student.trim()) errors.student = "Enter the name of the team lead.";
-  if (!values.school.trim()) errors.school = "Enter your school's name.";
-  if (!values.grade) errors.grade = "Choose the team lead's class.";
-  if (!values.email.trim()) errors.email = "Enter an email we can send the confirmation to.";
-  else if (!EMAIL.test(values.email.trim())) errors.email = "That email address is not valid.";
-  if (!values.phone.trim()) errors.phone = "Enter a phone number we can reach during the fest.";
-  else if (!indianPhone(values.phone)) errors.phone = "Enter a 10-digit phone number.";
-  if (values.discord.trim() && !DISCORD.test(values.discord.trim()))
-    errors.discord = "A Discord handle has no spaces in it — check this one.";
-  if (picked.length === 0) errors.events = "Choose at least one event to enter.";
-  return errors;
-}
-
-/** Rows left blank are skipped; a row with anything in it needs a name. */
-function validateMembers(list: Participant[]): MemberErrors[] {
-  return list.map((m) => {
-    const e: MemberErrors = {};
-    if (!used(m)) return e;
-    if (!m.name.trim()) e.name = "Enter this member's name, or clear the row.";
-    if (m.email.trim() && !EMAIL.test(m.email.trim())) e.email = "That email address is not valid.";
-    if (m.phone.trim() && !indianPhone(m.phone)) e.phone = "Enter a 10-digit phone number.";
-    if (m.discord.trim() && !DISCORD.test(m.discord.trim()))
-      e.discord = "A Discord handle has no spaces in it — check this one.";
-    return e;
-  });
-}
-
-const FIELD_ORDER: (keyof Fields)[] = ["student", "school", "grade", "email", "phone", "discord"];
-
-const MEMBER_ORDER: (keyof Participant)[] = ["name", "grade", "phone", "discord", "email"];
-
-const MEMBER_LABEL: Record<keyof Participant, string> = {
-  name: "Full name",
-  grade: "Class",
-  phone: "Phone",
-  discord: "Discord",
-  email: "Email",
-};
-
-type Receipt = { id: string; duplicate: boolean };
-
-function describeFailure(reply: Extract<BackendReply, { ok: false }>): string {
-  if (reply.error === "closed") {
-    return "Entries closed while this page was open. Nothing was submitted.";
-  }
-  if (reply.error === "invalid") {
-    return reply.field === "members"
-      ? "One of the team member rows did not pass the server's checks. Check them and submit again."
-      : `The ${reply.field ?? "form"} field did not pass the server's checks. Check it and submit again.`;
-  }
-  return "The registration server could not save this entry. Your answers are still here, so try again in a minute.";
-}
 
 export function RegisterFormBody({ preselectedEvent }: { preselectedEvent?: string | undefined }) {
   const registrationOpen = isRegistrationOpen();
@@ -246,27 +158,7 @@ export function RegisterFormBody({ preselectedEvent }: { preselectedEvent?: stri
       if (sending) return;
       setSending(true);
       setSendError(null);
-      const trimmed = Object.fromEntries(
-        Object.entries(values).map(([k, v]) => [k, v.trim()]),
-      ) as Fields;
-      // Stored as the bare ten digits whatever was typed, so the sheet the
-      // organisers dial from reads one way, not five.
-      trimmed.phone = indianPhone(trimmed.phone) ?? trimmed.phone;
-      const team = members
-        .filter(used)
-        .map((m) => Object.fromEntries(MEMBER_ORDER.map((k) => [k, m[k].trim()])) as Participant)
-        .map((m) => (m.phone ? { ...m, phone: indianPhone(m.phone) ?? m.phone } : m));
-      // Sent in the order the events are listed, not the order they were
-      // ticked, so the same set always arrives as the same string and the
-      // backend's one-entry-per-team check can compare them.
-      const chosen = events.filter((ev) => picked.includes(ev.id)).map((ev) => ev.id);
-      submitRegistration({
-        ...trimmed,
-        type: "individual",
-        events: chosen,
-        members: team,
-        website,
-      })
+      submitRegistration(buildPayload(values, picked, members, website))
         .then((reply) => {
           if (reply.ok) {
             setReceipt({ id: reply.id, duplicate: Boolean(reply.duplicate) });

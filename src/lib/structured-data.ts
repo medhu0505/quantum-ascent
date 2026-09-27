@@ -1,4 +1,22 @@
-import { about, contact, events, fest, isTodo, school, FEST_DATES } from "@/data/quantum";
+import { about, contact, events, faqs, fest, isTodo, school, FEST_DATES } from "@/data/quantum";
+
+/**
+ * The FAQ as FAQPage structured data, because these are the questions that
+ * actually bring people to a fest site from search. Rendered by the FAQ in
+ * both layouts: the phone one is what the server sends, so it is the one a
+ * crawler reads.
+ */
+export function faqJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  };
+}
 
 /**
  * Schema.org description of the fest.

@@ -7,16 +7,16 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { PhaseProvider } from "@/components/scene/PhaseTransition";
 import { Cursor } from "@/components/scene/Cursor";
 import { RouteAnnouncer, SkipLink } from "@/components/site/Bits";
-import { MobileMenu } from "@/components/site/MobileMenu";
 import { SiteFooter } from "@/components/site/PageShell";
 import { crossroadsPlate, scenes } from "@/data/quantum";
+import { STAGE_QUERY, useLayout } from "@/lib/motion";
 import { festJsonLd } from "@/lib/structured-data";
 import { fest, school } from "@/data/quantum";
 
@@ -162,7 +162,11 @@ function RootShell({ children }: { children: ReactNode }) {
             gated on this flag, set before first paint to avoid a flash. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: 'document.documentElement.dataset.js="on"',
+            // The layout is decided here too, before first paint. The server
+            // sends the phone app; on a desktop screen the stylesheet keeps it
+            // hidden until the desktop site has taken over, so a desktop never
+            // sees the phone app flash up first.
+            __html: `document.documentElement.dataset.js="on";document.documentElement.dataset.layout=matchMedia(${JSON.stringify(STAGE_QUERY)}).matches?"desk":"phone"`,
           }}
         />
         {children}
@@ -192,13 +196,20 @@ function RootComponent() {
     void import("@/lib/firebase").then((m) => m.startAnalytics());
   }, []);
 
+  // Kept in step with the layout on screen, before paint, so the stylesheet's
+  // guard against the phone app on a desktop follows a resize or a rotation.
+  const layout = useLayout();
+  const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
+  useIsomorphicLayoutEffect(() => {
+    document.documentElement.dataset["layout"] = layout;
+  }, [layout]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <PhaseProvider>
         <SkipLink />
         <RouteAnnouncer />
         <Cursor />
-        <MobileMenu />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
         <script

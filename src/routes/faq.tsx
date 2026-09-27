@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { MobileResources } from "@/components/mobile/MobileResources";
 import { PageShell } from "@/components/site/PageShell";
 import { faqPage, faqs } from "@/data/quantum";
+import { useLayout } from "@/lib/motion";
 import { seo } from "@/lib/seo";
+import { faqJsonLd } from "@/lib/structured-data";
 
 /**
  * FAQ. Collapsed by default, one open at a time is not enforced — people
@@ -18,8 +21,12 @@ export const Route = createFileRoute("/faq")({
       description: faqPage.tagline,
       path: "/faq",
     }),
-  component: Faq,
+  component: FaqRoute,
 });
+
+function FaqRoute() {
+  return useLayout() === "desk" ? <Faq /> : <MobileResources tab="faq" />;
+}
 
 function Faq() {
   const [open, setOpen] = useState<Set<number>>(new Set());
@@ -32,15 +39,7 @@ function Faq() {
       return next;
     });
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqs.map((f) => ({
-      "@type": "Question",
-      name: f.q,
-      acceptedAnswer: { "@type": "Answer", text: f.a },
-    })),
-  };
+  const jsonLd = faqJsonLd();
 
   return (
     <PageShell title={faqPage.title} lede={faqPage.tagline}>

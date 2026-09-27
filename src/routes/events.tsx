@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { EventsInterior } from "@/components/interiors/EventsInterior";
+import { MobileEvents } from "@/components/mobile/MobileEvents";
 import { events, getScene } from "@/data/quantum";
+import { useLayout } from "@/lib/motion";
 import { seo } from "@/lib/seo";
 
 /**
@@ -21,5 +23,10 @@ export const Route = createFileRoute("/events")({
       description: `Six events at Quantum V2.0: ${events.map((e) => e.name).join(", ")}. ${getScene("events")!.room} Team sizes, formats and how each one is scored.`,
       path: "/events",
     }),
-  component: EventsInterior,
+  component: EventsRoute,
 });
+
+function EventsRoute() {
+  const { event } = Route.useSearch();
+  return useLayout() === "desk" ? <EventsInterior /> : <MobileEvents initial={event} />;
+}

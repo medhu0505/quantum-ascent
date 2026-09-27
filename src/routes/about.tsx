@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Value } from "@/components/site/Bits";
+import { MobileResources } from "@/components/mobile/MobileResources";
 import { PageShell } from "@/components/site/PageShell";
 import { BROCHURE_URL, about, events, festFacts, isTodo } from "@/data/quantum";
+import { useLayout } from "@/lib/motion";
 import { seo } from "@/lib/seo";
 
 export const Route = createFileRoute("/about")({
@@ -12,8 +14,12 @@ export const Route = createFileRoute("/about")({
       description: `${about.intro.body[0].split(". ")[0]}.`,
       path: "/about",
     }),
-  component: About,
+  component: AboutRoute,
 });
+
+function AboutRoute() {
+  return useLayout() === "desk" ? <About /> : <MobileResources tab="about" />;
+}
 
 function About() {
   return (

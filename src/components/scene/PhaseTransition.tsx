@@ -1,5 +1,5 @@
 import { useRouter } from "@tanstack/react-router";
-import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, type ReactNode } from "react";
 
 /**
  * The phase-through.
@@ -24,9 +24,22 @@ import { createContext, useCallback, useContext, useMemo, type ReactNode } from 
  * entrance plays. Reduced motion gets a short crossfade.
  */
 
+/**
+ * How to get there. A sign on the crossroads flies you through the board; a
+ * screen change in the phone app fades the page out to the street at night
+ * and lifts the next one in over it.
+ */
+export type PhaseMode = "sign" | "screen";
+
+export type PhaseOptions = {
+  mode?: PhaseMode;
+  /** Search params for the destination, such as the event to open. */
+  search?: Record<string, string>;
+};
+
 type PhaseContextValue = {
   /** Navigate to `to`, flying the page toward the element that was clicked. */
-  phaseTo: (to: string, origin: HTMLElement | null) => void;
+  phaseTo: (to: string, origin: HTMLElement | null, options?: PhaseOptions) => void;
 };
 
 const PhaseContext = createContext<PhaseContextValue | null>(null);
@@ -45,9 +58,10 @@ export function PhaseProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   const phaseTo = useCallback(
-    (to: string, origin: HTMLElement | null) => {
+    (to: string, origin: HTMLElement | null, options: PhaseOptions = {}) => {
+      const target = options.search ? { to, search: options.search } : { to };
       if (typeof document.startViewTransition !== "function") {
-        void router.navigate({ to });
+        void router.navigate(target);
         return;
       }
 
@@ -83,7 +97,7 @@ export function PhaseProvider({ children }: { children: ReactNode }) {
       const root = document.documentElement;
       root.style.setProperty("--phase-x", `${x}%`);
       root.style.setProperty("--phase-y", `${y}%`);
-      root.dataset["phase"] = still ? "fade" : dir;
+      root.dataset["phase"] = still ? "fade" : options.mode === "screen" ? "screen" : dir;
       const id = ++latest;
 
       /*
@@ -104,7 +118,7 @@ export function PhaseProvider({ children }: { children: ReactNode }) {
       });
 
       const transition = document.startViewTransition(async () => {
-        router.navigate({ to }).catch(() => {
+        router.navigate(target).catch(() => {
           /* The router renders its own error page. */
         });
         await rendered;
@@ -135,8 +149,13 @@ export function PhaseProvider({ children }: { children: ReactNode }) {
  * when the provider is absent, and always leaves modified clicks
  * (new tab, new window, download) to the browser.
  */
-export function usePhaseLink(to: string) {
+export function usePhaseLink(to: string, options?: PhaseOptions) {
   const ctx = useContext(PhaseContext);
+  // Read at click time rather than listed as a dependency: callers build the
+  // options inline, and a handler rebuilt on every render for that would be
+  // churn with no change in behaviour.
+  const latestOptions = useRef(options);
+  latestOptions.current = options;
 
   return useCallback(
     (event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -152,7 +171,7 @@ export function usePhaseLink(to: string) {
         return;
       }
       event.preventDefault();
-      ctx.phaseTo(to, event.currentTarget);
+      ctx.phaseTo(to, event.currentTarget, latestOptions.current);
     },
     [ctx, to],
   );

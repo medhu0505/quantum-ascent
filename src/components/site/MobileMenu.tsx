@@ -1,4 +1,4 @@
-import { Link, useRouter } from "@tanstack/react-router";
+import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { BROCHURE_URL, isTodo } from "@/data/quantum";
 
@@ -41,12 +41,33 @@ const ITEMS: Item[] = [
 export function MobileMenu() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  // The page on screen, which during a navigation is still the one being
+  // left: the location itself changes the moment the link is tapped.
+  const pathname = useRouterState({
+    select: (state) => (state.resolvedLocation ?? state.location).pathname,
+  });
   const button = useRef<HTMLButtonElement | null>(null);
   const wasOpen = useRef(false);
 
-  /* A tap on a link navigates and the menu has done its job. Closing on the
-     router's own event rather than on the click covers the back button too. */
+  /* The menu closes when the router has the new page on screen, not when the
+     link is tapped. Closing on the tap took the menu away while the next page
+     was still loading, so on a slow connection the visitor was left looking
+     at the page they had just asked to leave, for over a second on 3G, and
+     read it as the tap having done nothing. Closing on the router's own event
+     also covers the back button. */
   useEffect(() => router.subscribe("onResolved", () => setOpen(false)), [router]);
+
+  /* A tap on the page already showing has no navigation to wait for, so it
+     goes to the top of that page and closes. Left to the router it would
+     change nothing, and the menu would stay open over a page that never
+     moved. */
+  const toTopOfThisPage = (e: React.MouseEvent<HTMLAnchorElement>, to: string) => {
+    if (to !== pathname) return;
+    e.preventDefault();
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: 0, behavior: still ? "auto" : "smooth" });
+    setOpen(false);
+  };
 
   useEffect(() => {
     if (!open) {
@@ -115,7 +136,7 @@ export function MobileMenu() {
                   </a>
                 )
               ) : (
-                <Link to={item.to!} onClick={() => setOpen(false)}>
+                <Link to={item.to!} onClick={(e) => toTopOfThisPage(e, item.to!)}>
                   <span className="menu-label">{item.label}</span>
                   <span className="menu-note">{item.note}</span>
                 </Link>

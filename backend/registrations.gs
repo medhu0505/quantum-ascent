@@ -95,13 +95,20 @@ const MAIL_FROM_NAME = 'Quantum V2.0 Registrations';
  */
 const MAIL_REPLY_TO = '';
 
+/*
+ * `was` holds the names an event's tab has had before. The brochure renamed
+ * five of the six events after entries had started arriving, and each tab is
+ * named after its event, so without it the first entry after a rename would
+ * open an empty tab beside the old one and split that event's list in two.
+ * eventSheet_ renames the old tab instead, rows and protection intact.
+ */
 const EVENT_INFO = {
-  'quiz': { name: 'Quiz', team: 'Solo or team of 2' },
-  'film-making': { name: 'Film Making', team: 'Team of 3-5' },
-  'ad-shoot': { name: 'Ad Shoot', team: 'Team of 2-4' },
-  'surprise': { name: 'Surprise', team: 'Announced on the day' },
-  'online-gaming': { name: 'Online Gaming', team: 'Solo or squad' },
-  'pitch': { name: 'Pitch', team: 'Team of 2-3' }
+  'quiz': { name: 'The Q Factor', team: 'Team of 2', was: ['Quiz'] },
+  'film-making': { name: 'Take Two', team: 'Team of 4', was: ['Film Making'] },
+  'ad-shoot': { name: 'Mirage.exe', team: 'Team of 2', was: ['Ad Shoot'] },
+  'surprise': { name: 'Surprise', team: 'Team of 2-3', was: [] },
+  'online-gaming': { name: 'Ryoken', team: 'Solo', was: ['Online Gaming'] },
+  'pitch': { name: 'Innopreneur', team: 'Team of 2', was: ['Pitch'] }
 };
 
 // The site's own palette, converted from its oklch tokens in src/styles.css.
@@ -183,9 +190,25 @@ function sheet_() {
  *
  * Names come from EVENT_INFO, so they match the site and the email. They
  * contain none of [ ] * ? / \ : , which Sheets forbids in a tab name.
+ *
+ * When an event has been renamed, its old tab is renamed to match the first
+ * time it is needed, rather than a new tab being opened beside it. Only when
+ * no tab carries the new name, so a tab somebody made by hand is never
+ * touched, and a rename is not a removal, so the deletion alert stays quiet.
  */
 function eventSheet_(ss, eventId) {
-  return ensureSheet_(ss, eventName_(eventId));
+  const name = eventName_(eventId);
+  if (!ss.getSheetByName(name)) {
+    const was = (EVENT_INFO[eventId] && EVENT_INFO[eventId].was) || [];
+    for (let i = 0; i < was.length; i++) {
+      const old = ss.getSheetByName(was[i]);
+      if (old) {
+        old.setName(name);
+        break;
+      }
+    }
+  }
+  return ensureSheet_(ss, name);
 }
 
 /* ------------------------------------------------------------------ *

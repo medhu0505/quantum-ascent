@@ -3,7 +3,7 @@ import { useCallback, useMemo } from "react";
 import { Route } from "@/routes/events";
 import { InteriorShell } from "@/components/interiors/InteriorShell";
 import { Reveal } from "@/components/scene/Reveal";
-import { events, getScene } from "@/data/quantum";
+import { FEST_DAYS, REGISTRATION_CLOSES, eventDay, events, getScene } from "@/data/quantum";
 import { SqueezeCarousel, type SqueezeSlide } from "@/components/ui/carousel-squeeze";
 
 /**
@@ -81,6 +81,10 @@ export function EventsInterior() {
               <span className="rail-team-label">Entry</span>
               {event.team}
             </p>
+            <p className="rail-team">
+              <span className="rail-team-label">When</span>
+              {eventDay(event)}
+            </p>
             <h3 className="rail-format-title">How it runs</h3>
             <ol className="rail-format">
               {event.format.map((line) => (
@@ -118,7 +122,7 @@ export function EventsInterior() {
     <InteriorShell
       scene={scene}
       leadBelow
-      lead="Six events run across two days, one online and one offline. Every one is scored the same way and carries the same weight, so cumulative points across all six decide the overall school champion."
+      lead={`Six events run across two days: the online events on ${FEST_DAYS.online.label} and the rest at the school on ${FEST_DAYS.offline.label}. Every one is scored the same way and carries the same weight, so cumulative points across all six decide the overall school champion.`}
     >
       <section className="rail" aria-labelledby="rail-head">
         <h2 id="rail-head" className="page-subhead">
@@ -146,8 +150,9 @@ export function EventsInterior() {
           Picked your events?
         </h2>
         <p className="room-cta-note">
-          One form covers all six. Enter as many as you can physically attend — just check that the
-          rounds do not clash before you commit.
+          Each student can compete in only one event, so a school entering several events sends a
+          different team to each and registers every team on its own. Registrations close on{" "}
+          {REGISTRATION_CLOSES.label}.
         </p>
         <div className="page-actions">
           <Link to="/register" className="btn btn-accent" data-magnetic>

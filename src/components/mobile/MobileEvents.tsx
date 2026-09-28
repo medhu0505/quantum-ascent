@@ -2,7 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import { MobileShell, ScreenHead, ScreenLink } from "@/components/mobile/MobileShell";
 import { railStop, useDragScroll } from "@/components/mobile/useDragScroll";
-import { events, getScene } from "@/data/quantum";
+import { FEST_DAYS, REGISTRATION_CLOSES, eventDay, events, getScene } from "@/data/quantum";
 
 /**
  * Events on a phone: the six as a rail of cards you swipe, or drag with a
@@ -143,7 +143,7 @@ export function MobileEvents({ initial }: { initial?: string | undefined }) {
       {/* Announced when the event at rest changes, so a screen reader hears
           which one it is rather than only that something moved. */}
       <p className="sr-only" aria-live="polite">
-        {event.name}: {event.team}
+        {event.name}: {event.team}, {eventDay(event)}
       </p>
 
       <section className="m-panel m-event-panel" data-accent={event.accent}>
@@ -151,6 +151,10 @@ export function MobileEvents({ initial }: { initial?: string | undefined }) {
         <p className="m-entry">
           <span className="m-entry-key">Entry</span>
           {event.team}
+        </p>
+        <p className="m-entry">
+          <span className="m-entry-key">When</span>
+          {eventDay(event)}
         </p>
         <h4 className="m-h4">How it runs</h4>
         <ol className="m-steps-list">
@@ -174,16 +178,17 @@ export function MobileEvents({ initial }: { initial?: string | undefined }) {
       <section className="m-pad m-after">
         <h2 className="m-h2 m-h2-lg">Picked your events?</h2>
         <p className="m-muted m-body">
-          One form covers all six. Enter as many as you can attend, and check that the rounds do not
-          clash before you commit.
+          Each student can compete in only one event, so a school entering several events sends a
+          different team to each and registers every team on its own. Registrations close on{" "}
+          {REGISTRATION_CLOSES.label}.
         </p>
         <ScreenLink to="/faq" className="m-btn m-btn-ghost">
           Read the FAQ first
         </ScreenLink>
         <p className="m-muted m-small">
-          Six events run across two days, one online and one offline. Every one is scored the same
-          way and carries the same weight, so cumulative points across all six decide the overall
-          school champion.
+          Six events run across two days: the online events on {FEST_DAYS.online.label} and the rest
+          at the school on {FEST_DAYS.offline.label}. Every one is scored the same way and carries
+          the same weight, so cumulative points across all six decide the overall school champion.
         </p>
       </section>
     </MobileShell>

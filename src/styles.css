@@ -1769,6 +1769,20 @@ button.screen:active {
   color: var(--muted-foreground);
 }
 
+/* The wall in three parts, the way the brochure groups the crew. */
+.crew-heading {
+  margin: var(--s-6) 0 var(--s-3);
+  color: var(--muted-foreground);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.crew-section:first-of-type .crew-heading {
+  margin-top: var(--s-2);
+}
+
 /* Scene chips. Fixed so they stay reachable from anywhere in a long room —
    an interior can be several screens tall and the way out should never be a
    scroll away. Registration sits opposite the exit for the same reason. */
@@ -3989,6 +4003,10 @@ button.screen:active {
 }
 
 .fan-centre-card figcaption {
+  /* As wide as the picture above it and no wider: a caption naming a whole
+     team wraps under the card instead of stretching the card sideways. */
+  width: 0;
+  min-width: 100%;
   padding: var(--s-3) var(--s-4);
   background: color-mix(in oklab, #000 46%, var(--card));
   color: var(--foreground);
@@ -4166,6 +4184,8 @@ button.screen:active {
 }
 
 .rail-team-label {
+  /* Wide enough for "Entry", so the value beside "When" starts in line. */
+  min-width: 4.5em;
   color: var(--muted-foreground);
   font-size: var(--text-xs);
   letter-spacing: 0.14em;
@@ -5305,7 +5325,13 @@ html[data-layout="phone"] body {
   font-size: 15px;
 }
 
+.m-entry + .m-entry {
+  margin-top: 8px;
+}
+
 .m-entry-key {
+  /* Wide enough for "Entry", so the value beside "When" starts in line. */
+  min-width: 5em;
   font: 600 11px/1 var(--font-display);
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -5460,23 +5486,16 @@ html[data-layout="phone"] body {
 
 .m-crew-name {
   font-size: 13px;
+  line-height: 1.45;
   color: var(--m-muted);
 }
 
-/* In a list of eight the badge is a quiet line, not eight alarms. */
-.m-crew-name .todo {
-  padding: 0;
-  border: 0;
-  background: none;
-  font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0;
-  color: var(--m-muted);
+.m-crew-heading {
+  margin: 28px 4px 0;
 }
 
-.m-crew-name .todo > span {
-  color: color-mix(in oklab, var(--m-red) 35%, var(--m-fg));
+.m-crew-section:first-of-type .m-crew-heading {
+  margin-top: 16px;
 }
 
 .m-closing {

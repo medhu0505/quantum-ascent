@@ -3,7 +3,16 @@ import { Descent } from "@/components/Descent";
 import { Preloader } from "@/components/scene/Preloader";
 import { MobileStreet } from "@/components/mobile/MobileStreet";
 import { CrossroadsFooter } from "@/components/site/PageShell";
-import { descentFilm, crossroadsPlate, fest, school } from "@/data/quantum";
+import {
+  FEST_SPAN,
+  REGISTRATION_CLOSES,
+  crossroadsPlate,
+  descentFilm,
+  events,
+  fest,
+  listOf,
+  school,
+} from "@/data/quantum";
 import { STAGE_QUERY, useLayout } from "@/lib/motion";
 import { seo } from "@/lib/seo";
 
@@ -11,7 +20,7 @@ export const Route = createFileRoute("/")({
   head: () => {
     const base = seo({
       title: "Inter-school tech & culture fest",
-      description: `${fest.fullName} at ${school.name}: six inter-school events — Quiz, Film Making, Ad Shoot, Online Gaming, Pitch and one sealed Surprise. Register for the events.`,
+      description: `${fest.fullName} at ${school.name}, ${FEST_SPAN}. Six inter-school events: ${listOf(events.map((e) => e.name))}. Register by ${REGISTRATION_CLOSES.label}.`,
       path: "/",
     });
     return {

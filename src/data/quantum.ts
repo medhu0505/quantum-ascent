@@ -8,8 +8,8 @@
  */
 
 /* ------------------------------------------------------------------ *
- * Unconfirmed values. Replace these; nothing else in this file is a
- * placeholder.
+ * Settings, dates and the one value still to come. BROCHURE_URL is the
+ * only placeholder left in this file.
  * ------------------------------------------------------------------ */
 
 /** Marks a value the organisers still have to supply. */
@@ -36,8 +36,24 @@ export const REGISTRATION_ENDPOINT =
 /** TODO: swap for the real brochure PDF once design signs it off. */
 export const BROCHURE_URL = `${TODO} — brochure PDF URL`;
 
-/** TODO: fest dates are not public yet. */
-export const FEST_DATES = `${TODO} — fest dates`;
+/**
+ * The two fest days, from the brochure: every online event runs on the first
+ * and every offline one at the school on the second. `iso` is what the
+ * structured data needs; `label` is what a person reads.
+ */
+export const FEST_DAYS = {
+  online: { iso: "2026-10-08", label: "8 October 2026" },
+  offline: { iso: "2026-10-09", label: "9 October 2026" },
+} as const;
+
+/** The dates as one line, wherever a page answers "when is it". */
+export const FEST_DATES = `${FEST_DAYS.online.label} online, ${FEST_DAYS.offline.label} at the school`;
+
+/** Both days as one phrase, "8 and 9 October 2026". They share a month. */
+export const FEST_SPAN = `${FEST_DAYS.online.label.split(" ")[0]} and ${FEST_DAYS.offline.label}`;
+
+/** Last day to register for any event, from the brochure. */
+export const REGISTRATION_CLOSES = { iso: "2026-10-05", label: "5 October 2026" } as const;
 
 export const school = {
   name: "Air Force Bal Bharati School",
@@ -100,109 +116,154 @@ export const timeline = {
 
 /* ------------------------------------------------------------------ *
  * Events
+ *
+ * Names, team sizes, days, rules and coordinators are the fest brochure's.
  * ------------------------------------------------------------------ */
 
 export type Accent = "cyan" | "magenta" | "violet";
 
+/** Online events run on the first fest day, offline ones at the school on the second. */
+export type EventMode = keyof typeof FEST_DAYS;
+
 export type QuantumEvent = {
+  /**
+   * The event's permanent key, and deliberately not its name. It is stored
+   * with every registration, listed in firestore.rules and
+   * backend/registrations.gs, hashed into the duplicate check and used in
+   * `?event=` links, so renaming an event never touches it. That is why
+   * these ids still carry the working titles the events had before the
+   * brochure named them.
+   */
   id: string;
   name: string;
   tagline: string;
   team: string;
+  mode: EventMode;
   description: string;
   format: string[];
   accent: Accent;
+  /** Student coordinators, as the brochure lists them. */
+  coordinators: string[];
 };
 
+/**
+ * The order is load-bearing, not presentational. It is the canonical order an
+ * entry's event ids are sent in, and firestore.rules and the Apps Script both
+ * require exactly this order: an entry sent in any other is refused, and the
+ * form reads that refusal as "already registered". Reordering the rail means
+ * changing both of those and redeploying them first.
+ */
 export const events: QuantumEvent[] = [
   {
     id: "quiz",
-    name: "Quiz",
-    tagline: "Know it. Buzz it. Own it.",
-    team: "Solo or team of 2",
+    name: "The Q Factor",
+    tagline: "A screen-based qualifier, then a six-team final.",
+    team: "Team of 2",
+    mode: "offline",
     description:
-      "A fast, three-round general and tech quiz. Written prelims cut the field, then the finalists face buzzer rounds on science, current affairs, pop culture and the history of computing.",
+      "A two-stage team quiz on general and contemporary knowledge. Every registered team plays a screen-based qualifier and the top six go through to the finals. The questions reward speed, recall, observation and quick decisions.",
     format: [
-      "Round 1 — written prelims, 25 questions",
-      "Round 2 — themed buzzer rounds on stage",
-      "Round 3 — rapid fire with negative marking",
+      "Qualifier: a screen-based quiz open to every registered team",
+      "The top six teams go through to the finals",
+      "Finals: quickfire, open buzzer, visual trivia and a surprise round",
+      "Questions cover entertainment, food, pop culture, sports, technology and current affairs",
     ],
     accent: "cyan",
+    coordinators: ["Linisha Das", "Aayush Singh"],
   },
   {
     id: "film-making",
-    name: "Film Making",
-    tagline: "Thirty-six hours. One story.",
-    team: "Team of 3–5",
+    name: "Take Two",
+    tagline: "An original short film on an assigned theme.",
+    team: "Team of 4",
+    mode: "online",
     description:
-      "Shoot and cut a short film on a theme released at the start of the fest. Everything — footage, sound, edit — must be produced inside the window. Judged on story, craft and sound design.",
+      "An online short-film event. Each team is given a theme and a constraint in advance and makes an original film of up to five minutes around them. All footage must be shot by the team, and stock footage is not allowed.",
     format: [
-      "Theme revealed at kick-off",
-      "3–5 minutes, submitted as MP4",
-      "All footage shot during the fest window",
+      "Team numbers, themes and constraints are shared before the event",
+      "Give the film a title; anything over five minutes can be marked down or disqualified",
+      "Submit an MP4 of at least 1080p, up to 5 GB, as a Google Drive link",
+      "Judged on creativity, technical skill, relevance to the theme and narrative clarity",
     ],
     accent: "magenta",
+    coordinators: ["Rudransh Singh", "Riddhiman Srivastava"],
   },
   {
     id: "ad-shoot",
-    name: "Ad Shoot",
-    tagline: "Sixty seconds to sell the impossible.",
-    team: "Team of 2–4",
+    name: "Mirage.exe",
+    tagline: "Recreate a game's home screen in two hours.",
+    team: "Team of 2",
+    mode: "offline",
     description:
-      "You get an absurd product and one minute of screen time. Write it, shoot it, perform it. Judged on the idea first and polish second — the funniest concept usually wins the room.",
+      "Choose a game and recreate its iconic home screen on film, shooting and editing everything in a two-hour window on the day. All footage is shot during the competition on your own devices, and AI-generated content is not allowed.",
     format: [
-      "Product assigned on the spot",
-      "60-second ad, live or filmed",
-      "Scored on concept, delivery and edit",
+      "Two hours to shoot and edit, using only footage filmed during the competition",
+      "Shoot and edit on your own devices, phones included, and bring chargers: the venue has sockets but no internet",
+      "Submit the recreation, a short write-up and the software you used by Google Drive link when the two hours end",
+      "Judged on creativity, visual accuracy, technical skill, conceptual understanding and time management",
     ],
     accent: "violet",
+    coordinators: ["Manasvi Singh", "Naved"],
   },
   {
     id: "surprise",
     name: "Surprise",
     tagline: "Classified until the doors open.",
-    team: "Announced on the day",
+    team: "Team of 2–3",
+    mode: "offline",
     description:
-      "One event stays sealed. The challenge, the team size and the rules are revealed only on the morning of the fest. Bring a general kit: laptop, pens, paper and nerve.",
+      "Nothing about this event is revealed before the day. Teams get the brief on the spot, with time to prepare there, and every material they need is provided. The round runs for 60 to 90 minutes.",
     format: [
-      "Brief revealed on fest morning",
-      "Registration opens the same morning",
-      "Same points weight as every other event",
+      "The brief is revealed on the day, with time to prepare on the spot",
+      "All materials are provided, and technology is not allowed unless the organisers say so",
+      "Teams must finish inside the time limit of 60 to 90 minutes",
+      "Judged on creativity, innovation, execution, teamwork and overall performance",
     ],
     accent: "cyan",
+    coordinators: ["Shayan Khan", "Hamza", "Ishita"],
   },
   {
     id: "online-gaming",
-    name: "Online Gaming",
-    tagline: "Ladder up. Last squad standing.",
-    team: "Solo or squad",
+    name: "Ryoken",
+    tagline: "A solo bracket that opens on Brawlhalla.",
+    team: "Solo",
+    mode: "online",
     description:
-      "Bracketed tournaments across a solo title and a squad title. Seeded qualifiers run through the morning and the finals are cast live on the main screen.",
+      "A solo gaming tournament. Round one is Brawlhalla, played 1v1 against an assigned opponent, and winners move on through the bracket. Each player is responsible for their own game, controls and internet connection.",
     format: [
-      "Seeded double-elimination bracket",
-      "Own peripherals allowed, no external comms",
-      "Finals streamed to the main hall",
+      "Round 1: Brawlhalla, 1v1 against an assigned opponent",
+      "Winners advance through the tournament bracket",
+      "Check your game, controls and connection before your match",
+      "Report a technical problem to the organisers rather than leaving the match",
     ],
     accent: "magenta",
+    coordinators: ["Rudransh Singh", "Nitya"],
   },
   {
     id: "pitch",
-    name: "Pitch",
-    tagline: "Five minutes in front of the money.",
-    team: "Team of 2–3",
+    name: "Innopreneur",
+    tagline: "A two-page brief, then the pitch.",
+    team: "Team of 2",
+    mode: "offline",
     description:
-      "Build a startup case around a real problem and defend it. Five minutes to pitch, three to survive questions from the panel. Slides are optional, numbers are not.",
+      "An innovation and entrepreneurship event. Each team sends in a two-page PDF brief on its idea, covering the problem, the proposed solution, what is new about it and the impact it could have, then presents it to the judges, who use the brief as their reference.",
     format: [
-      "5-minute pitch, 3-minute grilling",
-      "Problem, solution, market, model",
-      "Deck submitted before the round",
+      "Submit a two-page PDF brief: the problem, your solution, the innovation and the expected impact",
+      "The deadline and submission guidelines are sent once registration closes",
+      "Present the idea to the judges, who read the brief as their reference",
     ],
     accent: "violet",
+    coordinators: ["Aditya Singh", "Mehal Khanna"],
   },
 ];
 
 export function getEvent(id: string): QuantumEvent | undefined {
   return events.find((e) => e.id === id);
+}
+
+/** When and how an event runs, in the words a page shows it: "9 October 2026, at the school". */
+export function eventDay(event: QuantumEvent): string {
+  return `${FEST_DAYS[event.mode].label}, ${event.mode === "online" ? "online" : "at the school"}`;
 }
 
 /* ------------------------------------------------------------------ *
@@ -413,26 +474,86 @@ export const descentFilm = {
 } as const;
 
 /* ------------------------------------------------------------------ *
- * Team roster — TODO, not yet finalised.
+ * Contact
+ * ------------------------------------------------------------------ */
+
+export const contact = {
+  /** Who answers the email and the phone below — shown with them. */
+  name: "Anjali Rawlley",
+  role: "Teacher in charge",
+  email: "anjalirawlley@gmail.com",
+  /** Shown as written; the tel: link strips the spaces. */
+  phone: "+91 98713 79429",
+  /** The fest's own account: shown as the handle, linked to the profile. */
+  instagram: "@quantum.afbbs",
+  instagramUrl: "https://www.instagram.com/quantum.afbbs/",
+  /**
+   * Where live updates go, both from the brochure. The WhatsApp code was read
+   * off the printed page, capital I and all: its height matches the capitals
+   * around it, not the taller ascenders of h and k.
+   */
+  whatsappUrl: "https://chat.whatsapp.com/DwXIcGuthWRCZkkAxzeuuw",
+  discordUrl: "https://discord.com/invite/rD7pJDzFZ",
+  school: school.name,
+  address: school.city,
+} as const;
+
+/* ------------------------------------------------------------------ *
+ * The team, as the brochure lists it.
  * ------------------------------------------------------------------ */
 
 /**
- * `photo` is unset for everyone until the organisers supply portraits. The
- * roster carousel draws an empty frame for anyone without one rather than a
- * broken image, so filling these in is the only step needed to light it up.
+ * One line of the crew: a job and the people doing it.
+ *
+ * The brochure names people by team rather than by title, and most of them by
+ * first name only, so the crew is kept that way rather than dressed up as an
+ * org chart the brochure does not give. `photo` is for a group picture once
+ * there is one; until then the group's card shows its initials.
  */
-export type TeamMember = { name: string; role: string; photo?: string };
+export type CrewGroup = { role: string; names: string[]; photo?: string };
 
-export const team: TeamMember[] = [
-  { name: `${TODO} — name`, role: "Fest Head" },
-  { name: `${TODO} — name`, role: "Deputy Fest Head" },
-  { name: `${TODO} — name`, role: "Events Lead" },
-  { name: `${TODO} — name`, role: "Tech Lead" },
-  { name: `${TODO} — name`, role: "Design Lead" },
-  { name: `${TODO} — name`, role: "Media & Coverage" },
-  { name: `${TODO} — name`, role: "Hospitality" },
-  { name: `${TODO} — name`, role: "Faculty Coordinator" },
+export type CrewSection = {
+  heading: string;
+  /**
+   * Said after a group's role wherever it stands alone, off the page that
+   * gives it its heading: "The Q Factor coordinators", on the ring's card.
+   */
+  noun?: string;
+  groups: CrewGroup[];
+};
+
+export const crew: CrewSection[] = [
+  {
+    heading: "Faculty",
+    groups: [{ role: contact.role, names: [contact.name] }],
+  },
+  {
+    heading: "Event coordinators",
+    noun: "coordinators",
+    groups: events.map((event) => ({ role: event.name, names: event.coordinators })),
+  },
+  {
+    heading: "Organising teams",
+    groups: [
+      {
+        role: "PR Team",
+        names: ["Aadi", "Arnav", "Tejasvi", "Tejbir", "Vidushi", "Avni", "Utkarsh"],
+      },
+      { role: "Web Design Team", names: ["Medansh", "Mudit", "Naman"] },
+      { role: "Creative Team", names: ["Sudeeti", "Anushri", "Shagun", "Vidisha"] },
+      {
+        role: "Social Media Team",
+        names: ["Anamta", "Ananya", "Mannat", "Majesta", "Amrita", "Vihaan"],
+      },
+    ],
+  },
 ];
+
+/** "A", "A and B", "A, B and C". */
+export function listOf(items: readonly string[]): string {
+  if (items.length < 2) return items[0] ?? "";
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
 
 /* ------------------------------------------------------------------ *
  * FAQ
@@ -444,26 +565,41 @@ export const faqPage = {
   tagline: "Key details on eligibility, registrations, tournament structure, and platform rules.",
 } as const;
 
+const eventNames = (mode: EventMode) =>
+  listOf(events.filter((event) => event.mode === mode).map((event) => event.name));
+
 export const faqs = [
   {
     q: "Who is eligible to participate in Quantum V2.0?",
-    a: "Participation is open to students from recognized schools across Grades 8 through 12. Individual events have specific grade brackets and squad limits—refer to the Events page for each category's exact roster size.",
+    a: "Students in classes 9 to 12. Every event is open to all four classes, and each school can enter one team per event. Team sizes differ from event to event and are listed on the Events page.",
+  },
+  {
+    q: "When is Quantum V2.0, and when do registrations close?",
+    a: `Registrations close on ${REGISTRATION_CLOSES.label}. The online events, ${eventNames("online")}, run on ${FEST_DAYS.online.label}. The offline events, ${eventNames("offline")}, run at ${school.name} on ${FEST_DAYS.offline.label}.`,
   },
   {
     q: "Can individual students register, or must entries go through schools?",
-    a: "All registrations must be officially submitted via the school registration form. The designated Teacher-in-Charge or Student Club President should finalize and submit the consolidated roster to ensure scores are credited toward the Overall Championship.",
+    a: "Entries go through schools, and every team's points count toward its school's overall championship. Fill in the registration form once for each team, and make sure a teacher in charge comes with the school's students on the offline day.",
+  },
+  {
+    q: "Can a student take part in more than one event?",
+    a: "No. Each student can compete in only one event, so a school entering several events needs a different team for each.",
   },
   {
     q: "Is there any registration fee?",
     a: "No. Entry to Quantum V2.0 is completely free for all invited schools and confirmed delegations.",
   },
   {
-    q: "Where will prompts, bracket updates, and announcements be shared?",
-    a: "All real-time match fixtures, problem statements, rule clarifications, and server links are distributed through the official Quantum Discord server and emailed directly to registered team points of contact.",
+    q: "What should schools know before the offline day?",
+    a: `Schools must reach ${school.name} by 7:30 a.m. on ${FEST_DAYS.offline.label}, and the registration desk is open from 7:30 to 8:00 a.m. Participants come in their school uniforms with a teacher in charge, and every school stays for both the opening and closing ceremonies. Arriving late can cut into preparation or performance time, and in some events it means disqualification.`,
+  },
+  {
+    q: "Where will updates and announcements be shared?",
+    a: `On the Quantum WhatsApp community, the Discord server and Instagram at ${contact.instagram}, as well as on this website. Join the WhatsApp community and the Discord server for updates about your events; both links are on the Contact page.`,
   },
   {
     q: "What equipment or software do participants need to prepare?",
-    a: "For online preliminary rounds, participants must have a stable internet connection, a desktop or laptop, and the necessary tools (IDE, design software, or specific game clients) pre-installed. Specific hardware and software requirements are listed under individual event briefs.",
+    a: `The host school does not provide internet access. ${getEvent("ad-shoot")!.name} is shot and edited on your own devices, so bring them with their chargers, and ${getEvent("online-gaming")!.name} players need their game, controls and connection working before their match. Whether phones, AI tools or other technology are allowed is set by each event's own rules.`,
   },
   {
     q: "How are ties and disputes resolved?",
@@ -481,7 +617,7 @@ export const faqs = [
  */
 export const festFacts: readonly { value: string; label: string; note?: string }[] = [
   { value: String(events.length), label: "events" },
-  { value: "2", label: "days", note: "1 online · 1 offline" },
+  { value: "2", label: "days", note: "8 Oct online · 9 Oct offline" },
   { value: "9–12", label: "classes" },
   { value: "100%", label: "student-run" },
 ];
@@ -492,7 +628,7 @@ export const about = {
   intro: {
     heading: "The Descent into Excellence",
     body: [
-      "Organised by the Computer Club of Air Force Bal Bharati School, Quantum is an inter-school technology symposium designed to test the limits of modern digital literacy and technical problem-solving. From high-stakes competitive programming and full-stack web development to cryptic hunts, audio-visual production, and gaming, Quantum gathers school teams to compete on a singular proving ground.",
+      "Organised by the Computer Club of Air Force Bal Bharati School, Quantum is an inter-school technology symposium designed to test the limits of modern digital literacy and technical problem-solving. Across six events, school teams take on a two-stage quiz, an online short film, a recreation of a game's home screen, a Brawlhalla bracket, an innovation pitch and one event that stays sealed until the day.",
       "Following its debut edition, Quantum V2.0 raises the benchmark with more rigorous prompts, refined tournament brackets, and a cyber-kinetic competitive atmosphere.",
     ],
   },
@@ -500,22 +636,4 @@ export const about = {
     heading: "The Championship & Scoring",
     line: "Six standalone events. One ultimate championship.",
   },
-} as const;
-
-/* ------------------------------------------------------------------ *
- * Contact
- * ------------------------------------------------------------------ */
-
-export const contact = {
-  /** Who answers the email and the phone below — shown with them. */
-  name: "Anjali Rawlley",
-  role: "Teacher in charge",
-  email: "anjalirawlley@gmail.com",
-  /** Shown as written; the tel: link strips the spaces. */
-  phone: "+91 98713 79429",
-  /** The fest's own account: shown as the handle, linked to the profile. */
-  instagram: "@quantum.afbbs",
-  instagramUrl: "https://www.instagram.com/quantum.afbbs/",
-  school: school.name,
-  address: school.city,
 } as const;

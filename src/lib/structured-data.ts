@@ -1,4 +1,4 @@
-import { about, contact, events, faqs, fest, isTodo, school, FEST_DATES } from "@/data/quantum";
+import { about, contact, events, faqs, fest, isTodo, school, FEST_DAYS } from "@/data/quantum";
 
 /**
  * The FAQ as FAQPage structured data, because these are the questions that
@@ -22,18 +22,16 @@ export function faqJsonLd() {
  * Schema.org description of the fest.
  *
  * Emitted site-wide so search engines understand Quantum as one event with six
- * sub-events rather than a set of unrelated pages. `startDate` is omitted while
- * the dates are unconfirmed: an invented date is worse than an absent one, and
- * the block is still valid structured data without it.
+ * sub-events rather than a set of unrelated pages.
  *
- * The fest runs over two days, one online and one offline, so the fest as a
- * whole is a mixed event. The sub-events carry no attendance mode of their
- * own because which day each one runs on is not published yet, and stating it
- * would be a guess.
+ * The fest runs over two days, the online events on the first and the rest at
+ * the school on the second, so the fest as a whole is a mixed event and each
+ * sub-event carries its own day and mode. Only the offline ones name a place.
+ * An online event would need a VirtualLocation URL where it is attended, and
+ * the brochure gives none: Take Two is a film sent in by link, and Ryoken is
+ * played in the game itself.
  */
 export function festJsonLd() {
-  const datesKnown = !isTodo(FEST_DATES);
-
   const place = {
     "@type": "Place",
     name: school.name,
@@ -59,7 +57,8 @@ export function festJsonLd() {
     description: about.intro.body[0],
     eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/MixedEventAttendanceMode",
-    ...(datesKnown ? { startDate: FEST_DATES } : {}),
+    startDate: FEST_DAYS.online.iso,
+    endDate: FEST_DAYS.offline.iso,
     location: place,
     organizer,
     // The fest's own account, so search engines can tie it to the event.
@@ -73,7 +72,12 @@ export function festJsonLd() {
       "@type": "Event",
       name: event.name,
       description: event.description,
-      location: place,
+      startDate: FEST_DAYS[event.mode].iso,
+      eventAttendanceMode:
+        event.mode === "online"
+          ? "https://schema.org/OnlineEventAttendanceMode"
+          : "https://schema.org/OfflineEventAttendanceMode",
+      ...(event.mode === "offline" ? { location: place } : {}),
       organizer,
       eventStatus: "https://schema.org/EventScheduled",
     })),

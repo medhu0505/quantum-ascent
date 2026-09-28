@@ -5,6 +5,7 @@ import { Value } from "@/components/site/Bits";
 import {
   BROCHURE_URL,
   FEST_DATES,
+  FEST_DAYS,
   about,
   contact,
   faqPage,
@@ -156,8 +157,13 @@ function Contact() {
         </div>
         <div>
           <dt>Dates</dt>
+          <dd>{FEST_DATES}</dd>
+        </div>
+        <div>
+          <dt>On the day</dt>
           <dd>
-            <Value value={FEST_DATES} label="Dates" />
+            Be at the school by 7:30 a.m. on {FEST_DAYS.offline.label}. The registration desk is
+            open from 7:30 to 8:00 a.m.
           </dd>
         </div>
         <div>
@@ -170,6 +176,22 @@ function Contact() {
                 {contact.instagram}
               </a>
             )}
+          </dd>
+        </div>
+        <div>
+          <dt>WhatsApp</dt>
+          <dd>
+            <a href={contact.whatsappUrl} target="_blank" rel="noreferrer">
+              Join the community
+            </a>
+          </dd>
+        </div>
+        <div>
+          <dt>Discord</dt>
+          <dd>
+            <a href={contact.discordUrl} target="_blank" rel="noreferrer">
+              Join the server
+            </a>
           </dd>
         </div>
       </dl>

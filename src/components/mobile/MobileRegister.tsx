@@ -14,7 +14,7 @@ import {
   type MemberErrors,
   type Receipt,
 } from "@/components/register/logic";
-import { events } from "@/data/quantum";
+import { REGISTRATION_CLOSES, events } from "@/data/quantum";
 import {
   MAX_MEMBERS,
   isRegistrationOpen,
@@ -43,9 +43,9 @@ const STEPS = [
   {
     label: "Lead",
     title: "Team lead",
-    lede: "Enter the team lead's details. Entering more than one team? Fill this in once per team.",
+    lede: `Enter the team lead's details. Each student can compete in only one event, so a school fills this in once for each team. Entries close on ${REGISTRATION_CLOSES.label}.`,
   },
-  { label: "Events", title: "Pick events", lede: "Tick everything this team is entering." },
+  { label: "Event", title: "Pick the event", lede: "Tick the event this team is entering." },
   {
     label: "Team",
     title: "The team",
@@ -418,7 +418,9 @@ export function MobileRegister({ preselectedEvent }: { preselectedEvent?: string
               </label>
             ))}
             <p id="m-hint-events" className="m-pick-hint">
-              <span>Tick every event this team is entering. One form covers all of them.</span>
+              <span>
+                A student can compete in only one event, so every team goes on its own form.
+              </span>
               {picked.length ? (
                 <span className="m-pick-count" aria-live="polite">
                   {picked.length} selected
@@ -529,7 +531,7 @@ export function MobileRegister({ preselectedEvent }: { preselectedEvent?: string
                   ["Email", values.email || "—", 0],
                   ["Phone", values.phone || "—", 0],
                   ["Discord", values.discord || "—", 0],
-                  ["Events", pickedNames.join(", ") || "—", 1],
+                  [picked.length > 1 ? "Events" : "Event", pickedNames.join(", ") || "—", 1],
                   ["Team", teamSize === 1 ? "Solo entry" : `${teamSize} people`, 2],
                 ] as const
               ).map(([key, value, target]) => (

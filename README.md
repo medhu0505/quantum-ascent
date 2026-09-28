@@ -14,10 +14,10 @@ npm run lint
 
 ## Before this goes live
 
-Everything below is unconfirmed data, not unfinished code. Each one is a single
-value in `src/data/quantum.ts`, and each renders as a visible "to be confirmed"
-badge until it is replaced — a missing phone number should look missing rather
-than look like a phone number.
+The fest brochure settled the event names, days, team sizes and crew. One value
+in `src/data/quantum.ts` is still to come, and until it is set it renders as a
+visible "to be confirmed" badge, so a missing link looks missing rather than
+broken.
 
 Registrations are **live**. Firestore takes each entry and the organisers' sheet
 receives a copy; rules are deployed and the whole path was verified end to end
@@ -26,13 +26,18 @@ more — what is left is copy a visitor reads.
 
 | Value | Where | What breaks until it is set |
 | --- | --- | --- |
-| `team` roster | `src/data/quantum.ts` | Eight names. Meet the Team currently shows eight real roles with every name badged as pending, which is the most visibly unfinished thing on the site. |
-| `FEST_DATES` | `src/data/quantum.ts` | Contact shows a badge under the venue address where the dates belong, and the JSON-LD omits `startDate`. |
-| `BROCHURE_URL` | `src/data/quantum.ts` | About shows a badge instead of a download button. The button appears, pointing at this URL, as soon as it is a real one. |
+| `BROCHURE_URL` | `src/data/quantum.ts` | About shows a badge instead of a download button, and the brochure sign and card open nothing. The button appears, pointing at this URL, as soon as it is a real one. The brochure is waiting on a cosmetic pass before it goes up. |
 
 Event copy, FAQ answers and the About editorial are final — no placeholders there.
 
-Three things outside this file are also outstanding, and none of them are code:
+Four things outside this file are also outstanding, and none of them are code:
+
+- **The Apps Script needs redeploying** for the brochure's event names (see
+  "Changing the script" below). Until it is, confirmation emails and the sheet's
+  tabs still say Quiz, Film Making, Ad Shoot, Online Gaming and Pitch. The event
+  ids did not change, so entries keep flowing either way. Once redeployed, the
+  script renames each old tab the first time it writes to it, rows and
+  protection intact; running `setup` renames all of them at once.
 
 - **Every row in the sheet is a test entry** and has to go before entries open —
   from the sheet *and* from Firestore's `registrations` collection, because both
@@ -43,8 +48,11 @@ Three things outside this file are also outstanding, and none of them are code:
 - **App Check is not enabled**, deliberately. See the Firebase section. It is
   waiting on a settled domain, because a reCAPTCHA key is bound to specific hosts
   and binding one to the current `*.vercel.app` address means redoing it.
-- **No custom domain.** The site answers on `quantum-ascent.vercel.app`. If a real
-  one is coming, attach it before App Check rather than after.
+- **No custom domain on record.** The site answers on
+  `quantum-ascent.vercel.app`, but the brochure prints `https://quantum-afbbs.com/`
+  and `https://quantum-afbbs.com/register/form/`. That domain has to be attached
+  to this Vercel project before the brochure goes out, and before App Check
+  rather than after. `/register/form/` forwards to the form either way.
 
 ### How the sheet is laid out
 
@@ -52,9 +60,12 @@ Seven tabs, in this order, and the file opens on the first:
 
 - **Registrations** — every entry, one row each. The record of truth, and the
   only tab the duplicate check reads.
-- **Quiz, Film Making, Ad Shoot, Surprise, Online Gaming, Pitch** — one per
-  event, each a complete list for whoever is running that event. An entry in
-  three events appears on three tabs. That is deliberate, not a duplicate.
+- **The Q Factor, Take Two, Mirage.exe, Surprise, Ryoken, Innopreneur** — one
+  per event, each a complete list for whoever is running that event. An entry in
+  three events appears on three tabs. That is deliberate, not a duplicate. Until
+  the brochure named them these were Quiz, Film Making, Ad Shoot, Surprise,
+  Online Gaming and Pitch, and the ids the site sends still are: `quiz`,
+  `film-making`, `ad-shoot`, `surprise`, `online-gaming`, `pitch`.
 
 Anything after those seven is left over — Google's default `Sheet1`, and two
 per-school tabs from before the layout changed. Nothing writes to them. They can
@@ -203,7 +214,7 @@ until `MAIL_REPLY_TO` is set — do that when the fest has its own address, alon
 It is not reachable over the web, and it writes no row, so the template can be
 checked in a real client without putting a test entry in the organisers' sheet.
 
-To change the script, paste the new file into the sheet's Extensions > Apps Script
+Changing the script: paste the new file into the sheet's Extensions > Apps Script
 editor. Then use Deploy > Manage deployments > Edit > New version. That keeps the
 same `/exec` URL. A *new* deployment gets a new URL, and `REGISTRATION_ENDPOINT`
 would have to change with it.

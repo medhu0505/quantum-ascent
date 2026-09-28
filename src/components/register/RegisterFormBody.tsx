@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { PageShell } from "@/components/site/PageShell";
-import { events } from "@/data/quantum";
+import { REGISTRATION_CLOSES, events } from "@/data/quantum";
 import {
   MAX_MEMBERS,
   isRegistrationOpen,
@@ -233,7 +233,7 @@ export function RegisterFormBody({ preselectedEvent }: { preselectedEvent?: stri
   return (
     <PageShell
       title="Register"
-      lede="One form covers every event. Enter the team lead's details, tick everything you are entering, and list the rest of the team under them. Entering more than one team? Fill this in once per team."
+      lede={`Enter the team lead's details, tick the event the team is entering, and list the rest of the team under them. Each student can compete in only one event, so a school entering several events fills this in once for each team. Registrations close on ${REGISTRATION_CLOSES.label}.`}
       registerChip={false}
     >
       {!registrationOpen ? (
@@ -395,7 +395,8 @@ export function RegisterFormBody({ preselectedEvent }: { preselectedEvent?: stri
               ))}
             </ul>
             <p id="hint-events" className="field-hint">
-              Tick every event this team is entering. One form covers all of them.
+              Tick the event this team is entering. A student can compete in only one event, so
+              every team goes on its own form.
             </p>
             <FieldError id="error-events" message={errors.events} />
           </fieldset>
@@ -404,9 +405,8 @@ export function RegisterFormBody({ preselectedEvent }: { preselectedEvent?: stri
         <fieldset className="party">
           <legend className="party-legend">Other team members</legend>
           <p className="field-hint">
-            Leave this empty for a solo entry. You can change it up to the closing date. Everything
-            except the name is optional, but a number or a Discord handle means we can reach someone
-            if the lead is mid-round.
+            Leave this empty for a solo entry. Everything except the name is optional, but a number
+            or a Discord handle means we can reach someone if the lead is mid-round.
           </p>
 
           {members.map((m, i) => (

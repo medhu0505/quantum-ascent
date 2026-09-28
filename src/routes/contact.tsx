@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Instagram, Mail, Phone } from "lucide-react";
+import { Instagram, Mail, MessageCircle, MessagesSquare, Phone } from "lucide-react";
 import { MobileResources } from "@/components/mobile/MobileResources";
 import { PageShell } from "@/components/site/PageShell";
 import { Value } from "@/components/site/Bits";
-import { FEST_DATES, contact, isTodo, school } from "@/data/quantum";
+import { FEST_DATES, FEST_DAYS, contact, isTodo, school } from "@/data/quantum";
 import { useLayout } from "@/lib/motion";
 import { seo } from "@/lib/seo";
 
@@ -46,6 +46,24 @@ const channels = [
     href: () => contact.instagramUrl,
     external: true,
     note: "Announcements, results and the highlight reel.",
+  },
+  {
+    label: "WhatsApp",
+    who: "community",
+    icon: MessageCircle,
+    value: "Join the community",
+    href: () => contact.whatsappUrl,
+    external: true,
+    note: "Live updates through both fest days, and news about the events you are in.",
+  },
+  {
+    label: "Discord",
+    who: "server",
+    icon: MessagesSquare,
+    value: "Join the server",
+    href: () => contact.discordUrl,
+    external: true,
+    note: "Updates about your own events, alongside the WhatsApp community.",
   },
 ];
 
@@ -92,18 +110,14 @@ function Contact() {
           <br />
           {school.city}
         </address>
-        {/* The dates were a constant nothing rendered — set in quantum.ts,
-            read only by the JSON-LD for search engines, and invisible to the
-            visitor standing in front of the page asking when this is. Badged
-            like every other unconfirmed value, so it looks missing until it
-            is set rather than quietly absent. */}
         <p className="venue-when">
           <span className="venue-when-label">When</span>
-          <Value value={FEST_DATES} label="Dates" />
+          {FEST_DATES}
         </p>
         <p className="channel-note measure">
-          Report to the main reception with your school ID and your confirmation email. Team codes
-          are checked at the desk before any event starts.
+          On {FEST_DAYS.offline.label}, be at the school by 7:30 a.m.: the registration desk is open
+          from 7:30 to 8:00 a.m. Bring your confirmation email, and come in school uniform with your
+          teacher in charge.
         </p>
       </section>
 

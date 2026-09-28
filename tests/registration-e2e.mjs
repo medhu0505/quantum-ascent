@@ -88,53 +88,83 @@ const formResponse = await page.goto(`${BASE}/register/form`, {
 check("the form route returns 200", formResponse.status() === 200, String(formResponse.status()));
 check(
   "the form renders with entries open",
-  (await page.locator("button[type=submit]").innerText()).includes("Submit registration"),
+  (await page.locator(".notice-todo").count()) === 0 &&
+    (await page.locator("button[type=submit]").innerText()).includes("Next"),
 );
 check(
   "no Firestore traffic before submit",
   urls.filter((u) => u.includes("127.0.0.1:8181")).length === 0,
 );
 
-console.log("\n3. A real submit must reach the emulator, pass the rules and return an id\n");
+console.log(
+  "\n3. A real submit must reach the emulator, pass the rules and return an id per event\n",
+);
 
-const EMAIL = `aarav.${Date.now()}@example.com`;
+const EMAIL = `teacher.${Date.now()}@example.com`;
+/** A team per event, as many students as each event takes. */
+const TEAMS = {
+  quiz: [
+    ["Aarav Sharma", "11"],
+    ["Ishita Rao", "10"],
+  ],
+  pitch: [
+    ["Kabir Das", "12"],
+    ["Nitya Menon", "12"],
+  ],
+};
 
-async function fillForm() {
-  await page.fill("#field-student", "Aarav Sharma");
+/** Teacher In-Charge and events, a team per event, then the review and submit. */
+async function register() {
+  await page.fill("#field-teacher", "Meera Iyer");
   await page.fill("#field-school", "Air Force Bal Bharati School");
-  await page.selectOption("#field-grade", "11");
-  await page.fill("#field-email", EMAIL);
   await page.fill("#field-phone", "+91 98100 12345");
-  await page.check("#field-event-quiz");
-  await page.check("#field-event-pitch");
-  await page.click("button:has-text('Add a team member')");
-  await page.fill("#field-member-0-name", "Ishita Rao");
-  await page.selectOption("#field-member-0-grade", "10");
-  await page.fill("#field-member-0-email", "ishita@example.com");
+  await page.fill("#field-email", EMAIL);
+  for (const event of Object.keys(TEAMS)) await page.check(`#field-event-${event}`);
+  await page.click("button[type=submit]");
+  for (const [event, team] of Object.entries(TEAMS)) {
+    await page.click(`#tab-${event}`);
+    for (const [i, [name, grade]] of team.entries()) {
+      await page.fill(`#field-student-${event}-${i}-name`, name);
+      await page.selectOption(`#field-student-${event}-${i}-grade`, grade);
+    }
+  }
+  await page.click("button:has-text('Review registration')");
+  await page.click("button[type=submit]");
+  await page.waitForSelector("#register-receipt", { timeout: 25_000 });
+  return {
+    notice: await page.locator("#register-receipt").innerText(),
+    ids: await page
+      .locator(".receipt-id")
+      .evaluateAll((els) => els.map((el) => el.textContent.match(/QV2-[0-9A-F]{8}/)?.[0] ?? "")),
+  };
 }
 
-await fillForm();
-await page.click("button[type=submit]");
-await page.waitForSelector(".notice-ok", { timeout: 25_000 });
-
-const receipt = await page.locator(".notice-ok").innerText();
-const id = receipt.match(/QV2-[0-9A-F]{8}/)?.[0] ?? "";
-check("the receipt carries a registration id", Boolean(id), id);
-check("the receipt reports a new registration", receipt.includes("Registration received"));
+const first = await register();
+check(
+  "the receipt carries an id per event",
+  first.ids.length === 2 && first.ids.every(Boolean),
+  first.ids.join(" "),
+);
+check("the receipt reports a new registration", first.notice.includes("Registration received"));
 check(
   "the request went to the emulator",
   urls.some((u) => u.includes("127.0.0.1:8181")),
 );
 
-console.log("\n4. The same entry submitted twice must come back as the same id, once\n");
+console.log("\n4. The same entries submitted twice must come back with the same ids, once\n");
 
 await page.goto(`${BASE}/register/form`, { waitUntil: "networkidle" });
-await fillForm();
-await page.click("button[type=submit]");
-await page.waitForSelector(".notice-ok", { timeout: 25_000 });
-const second = await page.locator(".notice-ok").innerText();
-check("the duplicate is recognised", second.includes("already registered"), second.split("\n")[0]);
-check("the duplicate returns the original id", second.includes(id), id);
+const second = await register();
+check(
+  "the duplicate is recognised",
+  second.notice.includes("already registered"),
+  second.notice.split("\n")[0],
+);
+check(
+  "the duplicate returns the original ids",
+  second.ids.join() === first.ids.join(),
+  second.ids.join(" "),
+);
 
 const REST =
   "http://127.0.0.1:8181/v1/projects/demo-quantum/databases/(default)/documents/registrations";
@@ -145,28 +175,36 @@ check(
   !(await fetch(REST).then((r) => r.ok)),
 );
 
-const docs = (await fetch(REST, ADMIN).then((r) => r.json())).documents ?? [];
-check("the emulator holds exactly one entry", docs.length === 1, `${docs.length} document(s)`);
-if (docs[0]) {
-  const f = docs[0].fields;
-  check("the stored id matches the receipt", f.id.stringValue === id);
-  check("the document id is the sha-256 key", /^[0-9a-f]{64}$/.test(docs[0].name.split("/").pop()));
-  check("the team size was recorded", f.teamSize.integerValue === "2", f.teamSize.integerValue);
-  check(
-    "both events were recorded",
-    f.events.arrayValue.values.map((v) => v.stringValue).join(",") === "quiz,pitch",
+const mine = async () =>
+  ((await fetch(`${REST}?pageSize=300`, ADMIN).then((r) => r.json())).documents ?? []).filter(
+    (d) => d.fields.emailLower?.stringValue === EMAIL,
   );
+const docs = await mine();
+check("the emulator holds one entry per event", docs.length === 2, `${docs.length} document(s)`);
+for (const [i, event] of Object.keys(TEAMS).entries()) {
+  const doc = docs.find((d) => d.fields.events.arrayValue.values[0].stringValue === event);
+  const f = doc?.fields;
+  check(`${event}: the stored id matches the receipt`, f?.id.stringValue === first.ids[i]);
+  check(
+    `${event}: the document id is the sha-256 key`,
+    /^[0-9a-f]{64}$/.test(doc?.name.split("/").pop() ?? ""),
+  );
+  check(`${event}: the team size was recorded`, f?.teamSize.integerValue === "2");
+  check(`${event}: the teacher was recorded`, f?.teacher?.stringValue === "Meera Iyer");
 }
 
 console.log("\n5. The honeypot must never reach the database\n");
 
 await page.goto(`${BASE}/register/form`, { waitUntil: "networkidle" });
-await page.fill("#field-student", "Bot");
+await page.fill("#field-teacher", "Bot");
 await page.fill("#field-school", "Nowhere");
-await page.selectOption("#field-grade", "9");
 await page.fill("#field-email", `bot.${Date.now()}@example.com`);
 await page.fill("#field-phone", "9810012345");
-await page.check("#field-event-quiz");
+await page.check("#field-event-online-gaming");
+await page.click("button[type=submit]");
+await page.fill("#field-student-online-gaming-0-name", "Bot");
+await page.selectOption("#field-student-online-gaming-0-grade", "9");
+await page.click("button:has-text('Review registration')");
 await page.evaluate(() => {
   const input = document.querySelector("#field-website");
   const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
@@ -174,14 +212,14 @@ await page.evaluate(() => {
   input.dispatchEvent(new Event("input", { bubbles: true }));
 });
 await page.click("button[type=submit]");
-await page.waitForSelector(".notice-ok", { timeout: 25_000 });
+await page.waitForSelector("#register-receipt", { timeout: 25_000 });
 check(
   "the bot is answered",
-  (await page.locator(".notice-ok").innerText()).includes("QV2-RECEIVED"),
+  (await page.locator(".receipt-list").innerText()).includes("QV2-RECEIVED"),
 );
 
-const after = await fetch(REST, ADMIN).then((r) => r.json());
-check("nothing was written", (after.documents ?? []).length === 1);
+const after = (await fetch(`${REST}?pageSize=300`, ADMIN).then((r) => r.json())).documents ?? [];
+check("nothing was written", !after.some((d) => d.fields.school?.stringValue === "Nowhere"));
 
 await browser.close();
 

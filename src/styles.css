@@ -2576,6 +2576,57 @@ button.screen:active {
   text-wrap: pretty;
 }
 
+/* Event contacts: a channel card per event. The event's name is what a
+   visitor scans for, so it reads larger than a channel's micro label, and
+   the icon takes the event's own colour. */
+.contact-event .channel-label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--foreground);
+}
+
+.contact-event .channel-icon {
+  color: var(--accent-hue);
+}
+
+.contact-people {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin: var(--s-3) 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A name over its number, the same in every card whatever the name's
+   length. `.channels li` would dress these as cards of their own. */
+.contact-people li {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0;
+  border-top: 0;
+}
+
+.contact-person {
+  font-weight: 600;
+}
+
+.contact-people a {
+  /* The same 24px target the channel links get. */
+  display: inline-block;
+  padding-block: 0.25rem;
+  color: var(--neon-cyan);
+  font-variant-numeric: tabular-nums;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.contact-faculty {
+  margin: calc(var(--s-4) - var(--s-7)) 0 var(--s-7);
+}
+
 .venue + .venue {
   margin-top: var(--s-7);
 }
@@ -3897,6 +3948,314 @@ button.screen:active {
   cursor: not-allowed;
 }
 
+/* The Teacher In-Charge's fields sit in a fieldset of their own, which takes
+   them out of the form's row gap; this puts it back. */
+.party-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.party-fields > .party-legend {
+  margin-bottom: var(--s-1);
+}
+
+/* The receipt keeps the form's width, so nothing jumps sideways on submit. */
+.receipt {
+  max-width: 40rem;
+}
+
+/* ---- The registration steps ------------------------------------------ *
+ * Teacher In-Charge and events, a team per event, then the review. Built
+ * from the form's own pieces: the tabs are the event picker's pill, the
+ * places are the team rows, the review is those rows read back.
+ */
+
+.form-step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
+}
+
+.form-step-count {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--neon-cyan);
+}
+
+.form-step-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 700;
+}
+
+/* Focus lands here when a step opens, for a screen reader to start from;
+   it is not something the visitor tabbed to. */
+.form-step-title:focus {
+  outline: none;
+}
+
+.team-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.team-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: 2.75rem;
+  padding: var(--s-2) var(--s-4) var(--s-2) var(--s-3);
+  border: 1px solid color-mix(in oklab, var(--foreground) 14%, transparent);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--card) 55%, transparent);
+  color: var(--muted-foreground);
+  font: inherit;
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-ui) var(--ease-out),
+    background var(--dur-ui) var(--ease-out),
+    color var(--dur-ui) var(--ease-out);
+}
+
+.team-tab:hover {
+  border-color: color-mix(in oklab, var(--accent-hue) 45%, transparent);
+  color: var(--foreground);
+}
+
+/* The open event reads as selected the way a ticked event does in the
+   picker, in the event's own colour. */
+.team-tab[aria-selected="true"] {
+  border-color: color-mix(in oklab, var(--accent-hue) 70%, transparent);
+  background: color-mix(in oklab, var(--accent-hue) 14%, var(--card));
+  color: var(--foreground);
+}
+
+.team-tab:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 2px;
+}
+
+/* An empty ring until the event has its team, then a tick. */
+.team-tab-mark {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  line-height: 1;
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--foreground) 32%, transparent);
+}
+
+.team-tab[data-done] .team-tab-mark {
+  background: var(--accent-hue);
+  color: #05070d;
+  box-shadow: none;
+}
+
+.team-tab[data-attention] .team-tab-mark {
+  box-shadow: inset 0 0 0 2px var(--destructive);
+}
+
+.team-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.team-panel-title {
+  margin: var(--s-2) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.team-panel .party-row {
+  margin-block-start: var(--s-4);
+}
+
+/* A name and a class: the name takes the room, side by side once there is
+   room for both. */
+@media (min-width: 36rem) {
+  .party-grid-student {
+    grid-template-columns: 2fr 1fr;
+  }
+
+  .party-grid-student > :first-child {
+    grid-column: auto;
+  }
+}
+
+.team-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-block-start: var(--s-4);
+}
+
+.team-status {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted-foreground);
+}
+
+.team-status[data-state="short"][data-tried] {
+  font-weight: 600;
+  color: color-mix(in oklab, var(--destructive) 30%, var(--foreground));
+}
+
+.team-status[data-state="done"] {
+  color: var(--accent-hue);
+}
+
+.team-status[data-state="done"]::before {
+  content: "✓ ";
+}
+
+.review-block {
+  padding: var(--s-5);
+  border: 1px solid color-mix(in oklab, var(--foreground) 14%, transparent);
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklab, var(--card) 55%, transparent);
+}
+
+.review-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-4);
+}
+
+.review-title {
+  margin: 0 0 var(--s-3);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+/* The same quiet text button the team rows used for Remove. */
+.review-edit {
+  border: 0;
+  padding: var(--s-1) 0;
+  background: none;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.review-edit:hover {
+  color: var(--foreground);
+}
+
+.review-edit:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.review-list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--s-2) var(--s-5);
+  margin: 0;
+}
+
+.review-list > div {
+  display: contents;
+}
+
+.review-list dt {
+  align-self: baseline;
+  font-size: var(--text-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.review-list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.review-event {
+  padding-block: var(--s-4);
+  border-top: 1px solid color-mix(in oklab, var(--foreground) 12%, transparent);
+}
+
+.review-event-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--accent-hue);
+}
+
+.review-students {
+  margin: var(--s-2) 0 0;
+  padding-left: 1.4rem;
+  line-height: 1.7;
+}
+
+.review-saved {
+  margin: var(--s-2) 0 0;
+  font-size: var(--text-sm);
+  color: var(--neon-cyan);
+}
+
+.receipt-list {
+  display: grid;
+  gap: var(--s-2);
+  margin: var(--s-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.receipt-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-1) var(--s-4);
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--radius-md);
+  background: color-mix(in oklab, var(--card) 55%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 35%, transparent);
+}
+
+.receipt-event {
+  font-weight: 600;
+}
+
+.receipt-id {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--neon-cyan);
+}
+
+.receipt-note {
+  font-family: var(--font-sans, inherit);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--muted-foreground);
+}
+
 @media (min-width: 48rem) {
 }
 
@@ -5126,7 +5485,7 @@ html[data-layout="phone"] body {
 /* Text links, but still thumb targets: 24px tall rather than the 18px of
    the line they sit in. */
 .m-foot a,
-.m-contact-line a,
+.m-contact-events a,
 .m-details a {
   display: inline-block;
   padding-block: 3px;
@@ -5686,17 +6045,40 @@ html[data-layout="phone"] body {
   color: oklch(0.99 0 0 / 0.7);
 }
 
-.m-contact-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+/* One block per event: its name in the event's own colour, then each
+   in-charge with the number to tap. */
+.m-contact-events {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
 }
 
-.m-contact-line {
+.m-contact-events > div {
+  padding: 10px 0 8px;
+  border-top: 1px solid oklch(1 0 0 / 0.12);
+}
+
+.m-contact-events dt {
+  margin-bottom: 2px;
+  font: 600 11px/1.2 var(--font-display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--m-acc);
+}
+
+.m-contact-events dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 12px;
   margin: 0;
-  font-size: 13px;
-  color: oklch(0.99 0 0 / 0.7);
-  overflow-wrap: anywhere;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.m-contact-events a {
+  font-variant-numeric: tabular-nums;
 }
 
 .m-details {

@@ -1,11 +1,14 @@
-import { events } from "@/data/quantum";
+import { events, getEvent } from "@/data/quantum";
 import type { BackendReply, Participant, RegistrationPayload } from "@/lib/registrations";
 
 /**
- * The rules an entry is held to, shared by both register forms: the desktop
- * page's single form and the phone app's four steps. One set of messages, one
- * payload, one idea of what a valid phone number is, so an entry means the
- * same thing whichever screen it was typed on.
+ * The rules an entry is held to, for both register forms.
+ *
+ * The phone app's four steps register one team with a lead: Fields,
+ * validate() and buildPayload() below. The desktop form registers a school:
+ * its Teacher In-Charge, then a team for each event, each checked against
+ * that event's own size. That is the second half of this file. Both share
+ * one set of messages and one idea of what a valid phone number or email is.
  */
 
 export type Fields = {
@@ -40,8 +43,8 @@ export function used(m: Participant): boolean {
  * An Indian phone number as ten digits, or null if it is not one.
  *
  * Every entrant is at a school in India, so nobody should need to know or type
- * a country code. People type one anyway, out of habit, so "+91 98713 79429",
- * "91-9871379429", "09871379429" and "9871379429" all come out as the same ten
+ * a country code. People type one anyway, out of habit, so "+91 98100 12345",
+ * "91-9810012345", "09810012345" and "9810012345" all come out as the same ten
  * digits. A leading 91 or 0 is only removed when it is what makes the number
  * longer than ten — a real ten-digit number that happens to start 91 is kept.
  *
@@ -95,14 +98,6 @@ export const FIELD_ORDER: (keyof Fields)[] = [
 
 export const MEMBER_ORDER: (keyof Participant)[] = ["name", "grade", "phone", "discord", "email"];
 
-export const MEMBER_LABEL: Record<keyof Participant, string> = {
-  name: "Full name",
-  grade: "Class",
-  phone: "Phone",
-  discord: "Discord",
-  email: "Email",
-};
-
 export type Receipt = { id: string; duplicate: boolean };
 
 export function describeFailure(reply: Extract<BackendReply, { ok: false }>): string {
@@ -140,4 +135,151 @@ export function buildPayload(
     .map((m) => (m.phone ? { ...m, phone: indianPhone(m.phone) ?? m.phone } : m));
   const chosen = events.filter((ev) => picked.includes(ev.id)).map((ev) => ev.id);
   return { ...trimmed, type: "individual", events: chosen, members: team, website };
+}
+
+/* ------------------------------------------------------------------ *
+ * The desktop form: a school's Teacher In-Charge, and a team per event.
+ * ------------------------------------------------------------------ */
+
+export type TeacherFields = { teacher: string; school: string; phone: string; email: string };
+
+/** `events` is the checkbox group on the same step. */
+export type TeacherErrors = Partial<Record<keyof TeacherFields | "events", string>>;
+
+export const TEACHER_ORDER: (keyof TeacherFields)[] = ["teacher", "school", "phone", "email"];
+
+export function validateTeacher(values: TeacherFields, picked: string[]): TeacherErrors {
+  const errors: TeacherErrors = {};
+  if (!values.teacher.trim()) errors.teacher = "Enter the Teacher In-Charge's name.";
+  if (!values.school.trim()) errors.school = "Enter your school's name.";
+  if (!values.phone.trim()) errors.phone = "Enter the Teacher In-Charge's phone number.";
+  else if (!indianPhone(values.phone)) errors.phone = "Enter a 10-digit phone number.";
+  if (!values.email.trim()) errors.email = "Enter an email we can send the confirmation to.";
+  else if (!EMAIL.test(values.email.trim())) errors.email = "That email address is not valid.";
+  if (picked.length === 0) errors.events = "Choose at least one event to enter.";
+  return errors;
+}
+
+/** One place in an event's team. */
+export type Student = { name: string; grade: string };
+
+export const NO_STUDENT: Student = { name: "", grade: "" };
+
+/**
+ * Every event's team, keyed by event id. An event that is unticked keeps its
+ * team here, so ticking it again brings the names back rather than blanks.
+ */
+export type Teams = Record<string, Student[]>;
+
+/** An event's places: exactly as many as it takes, never a number the visitor chooses. */
+export function places(eventId: string, teams: Teams): Student[] {
+  const max = getEvent(eventId)?.size.max ?? 1;
+  const have = teams[eventId] ?? [];
+  return Array.from({ length: max }, (_, i) => have[i] ?? NO_STUDENT);
+}
+
+export type StudentErrors = Partial<Record<keyof Student, string>>;
+
+export type TeamCheck = {
+  /** Problems with each place, in place order. */
+  places: StudentErrors[];
+  /** Students still needed before the event has its minimum. */
+  short: number;
+  /** Enough students, and nothing wrong with any of them. */
+  done: boolean;
+};
+
+/** Same student: the same name, however it is spaced or capitalised, in the same class. */
+const studentKey = (s: Student) => `${s.name.trim().toLowerCase().replace(/\s+/g, " ")}|${s.grade}`;
+
+/**
+ * Every picked event's team, checked against its own size and against the
+ * others. A student can compete in only one event, so the same name in the
+ * same class turning up a second time is flagged where it turns up second,
+ * in the order the events are listed.
+ */
+export function checkTeams(picked: string[], teams: Teams): Record<string, TeamCheck> {
+  const seen = new Map<string, string>();
+  const out: Record<string, TeamCheck> = {};
+  for (const event of events) {
+    if (!picked.includes(event.id)) continue;
+    let count = 0;
+    const errors = places(event.id, teams).map((s) => {
+      const e: StudentErrors = {};
+      const name = s.name.trim();
+      if (!name && !s.grade) return e;
+      if (!name) e.name = "Enter this student's name, or clear the class.";
+      if (!s.grade) e.grade = "Choose this student's class.";
+      if (name && s.grade) {
+        const where = seen.get(studentKey(s));
+        if (where === event.name) e.name = "This student is already in this team.";
+        else if (where)
+          e.name = `Already entered for ${where}. A student can compete in only one event.`;
+        else {
+          seen.set(studentKey(s), event.name);
+          count += 1;
+        }
+      }
+      return e;
+    });
+    const short = Math.max(0, event.size.min - count);
+    out[event.id] = {
+      places: errors,
+      short,
+      done: short === 0 && errors.every((e) => !e.name && !e.grade),
+    };
+  }
+  return out;
+}
+
+/** "Please select 1 more participant for this event." */
+export function shortBy(short: number): string {
+  return `Please select ${short} more participant${short === 1 ? "" : "s"} for this event.`;
+}
+
+/**
+ * One entry per event, as the backend takes them. The teacher's email and
+ * phone are each entry's contact and the first student is its lead, which is
+ * the shape the database has always accepted; the teacher's name rides along
+ * as `teacher`. Places left empty are dropped, and the events go in the
+ * order they are listed, so the same school and event always make the same
+ * entry and a second submit is recognised as a duplicate.
+ */
+export function buildTeamPayloads(
+  values: TeacherFields,
+  picked: string[],
+  teams: Teams,
+  website: string,
+): RegistrationPayload[] {
+  const teacher = values.teacher.trim();
+  const school = values.school.trim();
+  const email = values.email.trim();
+  const phone = indianPhone(values.phone) ?? values.phone.trim();
+  return events
+    .filter((event) => picked.includes(event.id))
+    .map((event) => {
+      const team = places(event.id, teams)
+        .map((s) => ({ name: s.name.trim(), grade: s.grade }))
+        .filter((s) => s.name && s.grade);
+      const [lead = NO_STUDENT, ...rest] = team;
+      return {
+        type: "school",
+        teacher,
+        student: lead.name,
+        grade: lead.grade,
+        school,
+        email,
+        phone,
+        discord: "",
+        events: [event.id],
+        members: rest.map((s) => ({
+          name: s.name,
+          grade: s.grade,
+          phone: "",
+          discord: "",
+          email: "",
+        })),
+        website,
+      };
+    });
 }

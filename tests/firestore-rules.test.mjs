@@ -151,6 +151,83 @@ describe("a valid registration", () => {
   });
 });
 
+/**
+ * The desktop form's entries: one per event, from a school's teacher
+ * in-charge, whose email and phone are the entry's contact while the first
+ * student is its lead.
+ */
+describe("a teacher in-charge's entry", () => {
+  const teacherEntry = (overrides = {}) =>
+    entry({
+      ...overrides,
+      members: overrides.members ?? [member({ name: "Rohan Gupta", grade: "11" })],
+      data: { type: "school", teacher: "Meera Iyer", discord: "", ...overrides.data },
+    });
+
+  it("is accepted with the teacher's name", async () => {
+    await assertSucceeds(write(teacherEntry()));
+  });
+
+  it("is accepted for the largest team an event takes", async () => {
+    const team = ["Nitya", "Kabir", "Ishaan"].map((name) => member({ name, grade: "12" }));
+    await assertSucceeds(write(teacherEntry({ events: ["film-making"], members: team })));
+  });
+
+  it("still accepts an entry with no teacher at all", async () => {
+    await assertSucceeds(write(entry()));
+  });
+
+  it("takes the same email once per event", async () => {
+    const email = `teacher-${randomUUID()}@example.com`;
+    await assertSucceeds(write(teacherEntry({ email, events: ["quiz"] })));
+    await assertSucceeds(write(teacherEntry({ email, events: ["pitch"] })));
+    await assertFails(write(teacherEntry({ email, events: ["quiz"] })));
+  });
+
+  const rejected = {
+    "an empty teacher": "",
+    "an over-long teacher": "x".repeat(121),
+    "a teacher that is not a string": 42,
+    "a teacher that is a list": ["Meera Iyer"],
+  };
+  for (const [label, value] of Object.entries(rejected)) {
+    it(`rejects ${label}`, async () => {
+      await assertFails(write(teacherEntry({ data: { teacher: value } })));
+    });
+  }
+
+  it("accepts the most expensive entry the form can produce, with a teacher", async () => {
+    const full = (name, n) => ({
+      name: name.padEnd(120, "."),
+      grade: "12",
+      phone: `+91 98${n}00 12345`,
+      discord: `handle_${n}`.padEnd(37, "x"),
+      email: `${name.toLowerCase()}.${n}@example.com`,
+    });
+    await assertSucceeds(
+      write(
+        entry({
+          events: ["quiz", "film-making", "ad-shoot", "surprise", "online-gaming", "pitch"],
+          members: [
+            full("Ishita", 1),
+            full("Dev", 2),
+            full("Nikhil", 3),
+            full("Sara", 4),
+            full("Ravi", 5),
+          ],
+          data: {
+            type: "school",
+            teacher: "T".repeat(120),
+            student: "A".repeat(120),
+            school: "B".repeat(120),
+            discord: "c".repeat(37),
+          },
+        }),
+      ),
+    );
+  });
+});
+
 describe("the collection is closed", () => {
   it("cannot be read", async () => {
     const { key, data } = entry();

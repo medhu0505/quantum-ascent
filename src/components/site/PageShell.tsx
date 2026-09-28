@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { BROCHURE_URL, contact, fest, isTodo, school } from "@/data/quantum";
-import { ExitToCrossroads, RegisterChip, Value } from "@/components/site/Bits";
+import { ExitToCrossroads, RegisterChip } from "@/components/site/Bits";
 import { Beam, Reveal } from "@/components/scene/Reveal";
 import { RevealText } from "@/components/scene/RevealText";
 
@@ -117,18 +117,7 @@ export function SiteFooter() {
               {contact.name} · {contact.role}
             </p>
             <p className="footer-line">
-              {isTodo(contact.email) ? (
-                <Value value={contact.email} label="Email" />
-              ) : (
-                <a href={`mailto:${contact.email}`}>{contact.email}</a>
-              )}
-            </p>
-            <p className="footer-line">
-              {isTodo(contact.phone) ? (
-                <Value value={contact.phone} label="Phone" />
-              ) : (
-                <a href={`tel:${contact.phone.replace(/\s/g, "")}`}>{contact.phone}</a>
-              )}
+              <Link to="/contact">Event contacts</Link>
             </p>
             <p className="footer-line">
               <a href={contact.instagramUrl} target="_blank" rel="noreferrer">

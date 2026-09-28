@@ -56,6 +56,13 @@ const GUARD_TRIGGER = 'onChangeGuard';
 const GUARD_PROP_ROWS = 'guard.registrationRows';
 
 const SHEET_NAME = 'Registrations';
+/**
+ * The header of the column the teacher in-charge goes in. Found by this label
+ * on each tab rather than assumed at a fixed position, because it arrived
+ * after the sheet was in use and the organisers annotate these tabs: a column
+ * appended at a fixed index would land in whatever they had put there.
+ */
+const TEACHER_LABEL = 'Teacher in-charge';
 const EVENTS = ['quiz', 'film-making', 'ad-shoot', 'surprise', 'online-gaming', 'pitch'];
 const CLASSES = ['9', '10', '11', '12'];
 const TYPES = ['individual', 'school'];
@@ -90,8 +97,9 @@ const MAIL_FROM_NAME = 'Quantum V2.0 Registrations';
 
 /**
  * Where replies should land. Empty means replies go to the script owner,
- * which is correct until the fest has its own address — set it then, and set
- * `contact.email` in src/data/quantum.ts at the same time.
+ * which is correct until the fest has its own address — set it then. The site
+ * itself publishes no email for the organisers: its contacts are the event
+ * coordinators.
  */
 const MAIL_REPLY_TO = '';
 
@@ -172,6 +180,35 @@ function ensureSheet_(ss, name) {
 
 function sheet_() {
   return ensureSheet_(SpreadsheetApp.getActiveSpreadsheet(), SHEET_NAME);
+}
+
+/** The 1-based column carrying `label` in row 1, or 0 if the tab has none. */
+function columnOf_(sh, label) {
+  const width = sh.getLastColumn();
+  if (width < 1) return 0;
+  return sh.getRange(1, 1, 1, width).getValues()[0].indexOf(label) + 1;
+}
+
+/**
+ * The column carrying `label`, created past everything else on the tab if it
+ * is not there yet. Past the last column anything was ever written in, not
+ * after the script's own columns, so an organiser's annotation column is
+ * never taken over.
+ */
+function labelledColumn_(sh, label) {
+  const found = columnOf_(sh, label);
+  if (found) return found;
+  const col = sh.getLastColumn() + 1;
+  sh.getRange(1, col).setValue(label).setFontWeight('bold');
+  return col;
+}
+
+/** Writes the teacher's name into `row` of `sh`, under its own header. */
+function writeTeacher_(sh, row, teacher) {
+  if (!teacher) return;
+  sh.getRange(row, labelledColumn_(sh, TEACHER_LABEL))
+    .setNumberFormat('@')
+    .setValue(escape_(teacher));
 }
 
 /**
@@ -359,6 +396,10 @@ function rebuildEventTabs() {
   const format = header_().map(function (_, i) { return i === 0 ? 'yyyy-mm-dd hh:mm:ss' : '@'; });
   const last = master.getLastRow();
   const rows = last > 1 ? master.getRange(2, 1, last - 1, width).getValues() : [];
+  const teacherCol = columnOf_(master, TEACHER_LABEL);
+  const teachers = teacherCol && last > 1
+    ? master.getRange(2, teacherCol, last - 1, 1).getValues().map(function (r) { return r[0]; })
+    : [];
   const added = {};
 
   EVENTS.forEach(function (eventId) {
@@ -372,17 +413,20 @@ function rebuildEventTabs() {
     }
 
     // Column C holds the entry's event ids, joined — "quiz, pitch".
-    const missing = rows.filter(function (r) {
+    const wanted = [];
+    rows.forEach(function (r, i) {
       const ids = String(r[2] || '').split(',').map(function (s) { return s.trim(); });
-      return r[1] && ids.indexOf(eventId) >= 0 && !have[String(r[1])];
-    }).map(function (r) {
-      return r.map(function (v, i) { return i === 0 ? v : escape_(v); });
+      if (r[1] && ids.indexOf(eventId) >= 0 && !have[String(r[1])]) wanted.push(i);
+    });
+    const missing = wanted.map(function (i) {
+      return rows[i].map(function (v, j) { return j === 0 ? v : escape_(v); });
     });
 
     if (missing.length) {
       const range = tab.getRange(tabLast + 1, 1, missing.length, width);
       range.setNumberFormats(missing.map(function () { return format; }));
       range.setValues(missing);
+      wanted.forEach(function (i, k) { writeTeacher_(tab, tabLast + 1 + k, teachers[i]); });
     }
     added[tab.getName()] = missing.length;
   });
@@ -478,6 +522,8 @@ function validate_(body) {
   if (lead.discord && !DISCORD.test(lead.discord)) throw new Invalid('discord');
   lead.events = events_(body);
   if (lead.events.length === 0) throw new Invalid('events');
+  // Optional: the desktop form sends it, the phone form and older entries do not.
+  lead.teacher = text_(body.teacher);
 
   const raw = Array.isArray(body.members) ? body.members : [];
   if (raw.length > MAX_MEMBERS) throw new Invalid('members');
@@ -543,6 +589,18 @@ function mailRow_(label, value) {
 }
 
 /**
+ * Who the entry is from and who is in it. A teacher's entry lists every
+ * student from 1, the lead included, because the teacher is the contact and
+ * not one of the team; an entry without one keeps its lead as the contact and
+ * numbers the rest of the team from 2, as it always has.
+ */
+function roster_(lead, members) {
+  if (!lead.teacher) return { first: 2, team: members };
+  const first = { name: lead.student, grade: lead.grade, phone: '', discord: lead.discord, email: '' };
+  return { first: 1, team: [first].concat(members) };
+}
+
+/**
  * "Class 11 · 9876543210 · someone@example.com", skipping what is blank —
  * every field under a member's name is optional, so a name on its own is a
  * complete entry rather than a missing one, and says so.
@@ -579,20 +637,30 @@ function confirmationText_(lead, members, id, when) {
   });
   L.push('');
   L.push('YOUR DETAILS');
-  L.push('  Team lead    ' + lead.student);
-  L.push('  School       ' + lead.school);
-  L.push('  Class        ' + lead.grade);
-  L.push('  Email        ' + lead.email);
-  L.push('  Phone        ' + lead.phone);
-  L.push('  Discord      ' + (lead.discord || 'N/A'));
-  L.push('  Team size    ' + (members.length + 1));
-  L.push('  Submitted    ' + when);
-  if (members.length) {
+  if (lead.teacher) {
+    L.push('  Teacher in-charge  ' + lead.teacher);
+    L.push('  School             ' + lead.school);
+    L.push('  Email              ' + lead.email);
+    L.push('  Phone              ' + lead.phone);
+    L.push('  Team size          ' + (members.length + 1));
+    L.push('  Submitted          ' + when);
+  } else {
+    L.push('  Team lead    ' + lead.student);
+    L.push('  School       ' + lead.school);
+    L.push('  Class        ' + lead.grade);
+    L.push('  Email        ' + lead.email);
+    L.push('  Phone        ' + lead.phone);
+    L.push('  Discord      ' + (lead.discord || 'N/A'));
+    L.push('  Team size    ' + (members.length + 1));
+    L.push('  Submitted    ' + when);
+  }
+  const roster = roster_(lead, members);
+  if (roster.team.length) {
     L.push('');
     L.push('TEAM');
-    members.forEach(function (m, i) {
+    roster.team.forEach(function (m, i) {
       const line = memberLine_(m);
-      L.push('  ' + (i + 2) + '. ' + m.name + (line ? ' — ' + line : ''));
+      L.push('  ' + (i + roster.first) + '. ' + m.name + (line ? ' — ' + line : ''));
     });
   }
   L.push('');
@@ -621,10 +689,11 @@ function confirmationHtml_(lead, members, id, when) {
       '</td></tr>';
   }).join('');
 
-  const memberRows = members.map(function (m, i) {
+  const roster = roster_(lead, members);
+  const memberRows = roster.team.map(function (m, i) {
     const line = memberLine_(m);
     return '<tr><td style="padding:9px 0;border-bottom:1px solid #e8eaf1">' +
-      '<span style="font:400 12px/1.4 ' + MONO + ';color:#8b90a3">' + (i + 2) + '</span>&nbsp;&nbsp;' +
+      '<span style="font:400 12px/1.4 ' + MONO + ';color:#8b90a3">' + (i + roster.first) + '</span>&nbsp;&nbsp;' +
       '<span style="font:600 14px/1.5 ' + SANS + ';color:#11131c">' + html_(m.name) + '</span>' +
       (line ? '<div style="padding-left:22px;font:400 13px/1.5 ' + SANS + ';color:#5c6275">' +
         html_(line) + '</div>' : '') +
@@ -667,7 +736,7 @@ html_(HOST_SCHOOL) + '</div></td></tr>',
 '<tr><td style="padding:30px 32px 0 32px">',
 '<div style="font:700 23px/1.3 ' + SANS + ';color:#11131c">Registration confirmed</div>',
 '<div style="font:400 15px/1.6 ' + SANS + ';color:#4b5162;padding-top:8px">',
-'Thanks, ' + html_(lead.student) + '. Your entry is in. Everything you submitted is ',
+'Thanks, ' + html_(lead.teacher || lead.student) + '. Your entry is in. Everything you submitted is ',
 'below — check it over, and keep the ID for the registration desk.</div></td></tr>',
 
 // The code.
@@ -684,7 +753,14 @@ html_(id) + '</div></td></tr></table></td></tr>',
 section('Events entered', eventRows),
 // No "Entered as" row: individual-vs-school is how the organisers file an
 // entry, not anything the entrant chose a word for or needs read back.
-section('Your details', [
+section('Your details', (lead.teacher ? [
+  mailRow_('Teacher in-charge', lead.teacher),
+  mailRow_('School', lead.school),
+  mailRow_('Email', lead.email),
+  mailRow_('Phone', lead.phone),
+  mailRow_('Team size', String(members.length + 1)),
+  mailRow_('Submitted', when)
+] : [
   mailRow_('Team lead', lead.student),
   mailRow_('School', lead.school),
   mailRow_('Class', lead.grade),
@@ -693,8 +769,8 @@ section('Your details', [
   mailRow_('Discord', lead.discord),
   mailRow_('Team size', String(members.length + 1)),
   mailRow_('Submitted', when)
-].join('')),
-members.length ? section('Team', memberRows) : '',
+]).join('')),
+roster.team.length ? section('Team', memberRows) : '',
 
 // Next steps.
 '<tr><td style="padding:26px 32px 0 32px">',
@@ -773,6 +849,25 @@ function previewConfirmationEmail() {
   sendConfirmation_(lead, members, 'QV2-PREVIEW', stamp_(new Date()));
 }
 
+/** The same specimen as the desktop form sends it: from a teacher in-charge, one event. */
+function previewTeacherConfirmationEmail() {
+  const lead = {
+    type: 'school',
+    teacher: 'Preview Teacher',
+    student: 'First Student',
+    school: HOST_SCHOOL,
+    grade: '11',
+    email: Session.getEffectiveUser().getEmail(),
+    phone: '9876543210',
+    discord: '',
+    events: ['film-making']
+  };
+  const members = ['Second', 'Third', 'Fourth'].map(function (n) {
+    return { name: n + ' Student', grade: '12', phone: '', discord: '', email: '' };
+  });
+  sendConfirmation_(lead, members, 'QV2-PREVIEW', stamp_(new Date()));
+}
+
 /** One format for the email, so it reads the same as the sheet's cell. */
 function stamp_(date) {
   return Utilities.formatDate(date, Session.getScriptTimeZone(), "d MMM yyyy 'at' h:mm a");
@@ -831,6 +926,7 @@ function doPost(e) {
     const range = sh.getRange(last + 1, 1, 1, out.length);
     range.setNumberFormats(formats);
     range.setValues([out]);
+    writeTeacher_(sh, last + 1, lead.teacher);
     SpreadsheetApp.flush();
 
     // The baseline the deletion guard measures against. Updated here rather
@@ -845,9 +941,11 @@ function doPost(e) {
     lead.events.forEach(function (eventId) {
       try {
         const eventSh = eventSheet_(ss, eventId);
-        const eventRange = eventSh.getRange(eventSh.getLastRow() + 1, 1, 1, out.length);
+        const eventRow = eventSh.getLastRow() + 1;
+        const eventRange = eventSh.getRange(eventRow, 1, 1, out.length);
         eventRange.setNumberFormats(formats);
         eventRange.setValues([out]);
+        writeTeacher_(eventSh, eventRow, lead.teacher);
       } catch (eventErr) {
         console.error('event sheet write failed for ' + eventId + ': ' + eventErr);
       }

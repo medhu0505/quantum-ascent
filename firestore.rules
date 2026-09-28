@@ -99,10 +99,18 @@ service cloud.firestore {
      * No hasAll beside the hasOnly: reading a key that is not there is an
      * error, and an error denies the write. A missing field fails on the
      * check that reads it.
+     *
+     * `teacher` is the one optional field: the desktop form sends the
+     * school's teacher in-charge with each of its per-event entries, and the
+     * phone form and every entry written before it do not. It is tested with
+     * `in` before it is read, for the same reason.
      */
     function registrationOk(key, data) {
       return data.keys().hasOnly(['id', 'type', 'student', 'school', 'grade', 'email',
-          'emailLower', 'phone', 'discord', 'events', 'members', 'teamSize', 'createdAt'])
+          'emailLower', 'phone', 'discord', 'events', 'members', 'teamSize', 'createdAt',
+          'teacher'])
+        && (!('teacher' in data)
+          || (data.teacher is string && data.teacher.size() > 0 && data.teacher.size() <= 120))
         && data.type in ['individual', 'school']
         && data.student is string && data.student.size() > 0 && data.student.size() <= 120
         && data.school is string && data.school.size() > 0 && data.school.size() <= 120

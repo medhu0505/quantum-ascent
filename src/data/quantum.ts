@@ -138,13 +138,30 @@ export type QuantumEvent = {
   name: string;
   tagline: string;
   team: string;
+  /**
+   * How many students the event takes, as the brochure gives it. The
+   * registration form draws exactly `max` places and needs `min` of them
+   * filled; `team` is the same numbers in words, and both come from sized().
+   */
+  size: { min: number; max: number };
   mode: EventMode;
   description: string;
   format: string[];
   accent: Accent;
-  /** Student coordinators, as the brochure lists them. */
-  coordinators: string[];
+  /** The student in-charges, with the numbers the brochure prints for them. */
+  coordinators: Coordinator[];
 };
+
+/** An event's student in-charge. `phone` is shown as written; a tel: link strips the spaces. */
+export type Coordinator = { name: string; phone: string };
+
+/** A team size, and the same size in words: "Solo", "Team of 2", "Team of 2–3". */
+function sized(min: number, max = min): Pick<QuantumEvent, "team" | "size"> {
+  return {
+    team: max === 1 ? "Solo" : min === max ? `Team of ${min}` : `Team of ${min}–${max}`,
+    size: { min, max },
+  };
+}
 
 /**
  * The order is load-bearing, not presentational. It is the canonical order an
@@ -158,7 +175,7 @@ export const events: QuantumEvent[] = [
     id: "quiz",
     name: "The Q Factor",
     tagline: "A screen-based qualifier, then a six-team final.",
-    team: "Team of 2",
+    ...sized(2),
     mode: "offline",
     description:
       "A two-stage team quiz on general and contemporary knowledge. Every registered team plays a screen-based qualifier and the top six go through to the finals. The questions reward speed, recall, observation and quick decisions.",
@@ -169,13 +186,16 @@ export const events: QuantumEvent[] = [
       "Questions cover entertainment, food, pop culture, sports, technology and current affairs",
     ],
     accent: "cyan",
-    coordinators: ["Linisha Das", "Aayush Singh"],
+    coordinators: [
+      { name: "Linisha Das", phone: "+91 98185 84550" },
+      { name: "Aayush Singh", phone: "+91 95123 73880" },
+    ],
   },
   {
     id: "film-making",
     name: "Take Two",
     tagline: "An original short film on an assigned theme.",
-    team: "Team of 4",
+    ...sized(4),
     mode: "online",
     description:
       "An online short-film event. Each team is given a theme and a constraint in advance and makes an original film of up to five minutes around them. All footage must be shot by the team, and stock footage is not allowed.",
@@ -186,13 +206,16 @@ export const events: QuantumEvent[] = [
       "Judged on creativity, technical skill, relevance to the theme and narrative clarity",
     ],
     accent: "magenta",
-    coordinators: ["Rudransh Singh", "Riddhiman Srivastava"],
+    coordinators: [
+      { name: "Rudransh Singh", phone: "+91 93118 98350" },
+      { name: "Riddhiman Srivastava", phone: "+91 88004 30107" },
+    ],
   },
   {
     id: "ad-shoot",
     name: "Mirage.exe",
     tagline: "Recreate a game's home screen in two hours.",
-    team: "Team of 2",
+    ...sized(2),
     mode: "offline",
     description:
       "Choose a game and recreate its iconic home screen on film, shooting and editing everything in a two-hour window on the day. All footage is shot during the competition on your own devices, and AI-generated content is not allowed.",
@@ -203,13 +226,16 @@ export const events: QuantumEvent[] = [
       "Judged on creativity, visual accuracy, technical skill, conceptual understanding and time management",
     ],
     accent: "violet",
-    coordinators: ["Manasvi Singh", "Naved"],
+    coordinators: [
+      { name: "Manasvi Singh", phone: "+91 93113 89955" },
+      { name: "Naved", phone: "+91 98996 48234" },
+    ],
   },
   {
     id: "surprise",
     name: "Surprise",
     tagline: "Classified until the doors open.",
-    team: "Team of 2–3",
+    ...sized(2, 3),
     mode: "offline",
     description:
       "Nothing about this event is revealed before the day. Teams get the brief on the spot, with time to prepare there, and every material they need is provided. The round runs for 60 to 90 minutes.",
@@ -220,13 +246,17 @@ export const events: QuantumEvent[] = [
       "Judged on creativity, innovation, execution, teamwork and overall performance",
     ],
     accent: "cyan",
-    coordinators: ["Shayan Khan", "Hamza", "Ishita"],
+    coordinators: [
+      { name: "Shayan Khan", phone: "+91 84475 85283" },
+      { name: "Hamza", phone: "+91 93557 55528" },
+      { name: "Ishita", phone: "+91 95610 26991" },
+    ],
   },
   {
     id: "online-gaming",
     name: "Ryoken",
     tagline: "A solo bracket that opens on Brawlhalla.",
-    team: "Solo",
+    ...sized(1),
     mode: "online",
     description:
       "A solo gaming tournament. Round one is Brawlhalla, played 1v1 against an assigned opponent, and winners move on through the bracket. Each player is responsible for their own game, controls and internet connection.",
@@ -237,13 +267,16 @@ export const events: QuantumEvent[] = [
       "Report a technical problem to the organisers rather than leaving the match",
     ],
     accent: "magenta",
-    coordinators: ["Rudransh Singh", "Nitya"],
+    coordinators: [
+      { name: "Rudransh Singh", phone: "+91 93118 98350" },
+      { name: "Nitya", phone: "+91 88009 13357" },
+    ],
   },
   {
     id: "pitch",
     name: "Innopreneur",
     tagline: "A two-page brief, then the pitch.",
-    team: "Team of 2",
+    ...sized(2),
     mode: "offline",
     description:
       "An innovation and entrepreneurship event. Each team sends in a two-page PDF brief on its idea, covering the problem, the proposed solution, what is new about it and the impact it could have, then presents it to the judges, who use the brief as their reference.",
@@ -253,7 +286,10 @@ export const events: QuantumEvent[] = [
       "Present the idea to the judges, who read the brief as their reference",
     ],
     accent: "violet",
-    coordinators: ["Aditya Singh", "Mehal Khanna"],
+    coordinators: [
+      { name: "Aditya Singh", phone: "+91 89293 22752" },
+      { name: "Mehal Khanna", phone: "+91 88262 46555" },
+    ],
   },
 ];
 
@@ -478,12 +514,13 @@ export const descentFilm = {
  * ------------------------------------------------------------------ */
 
 export const contact = {
-  /** Who answers the email and the phone below — shown with them. */
+  /**
+   * Named on the site, never numbered: her email and phone are deliberately
+   * not in this file, so no page can print them. Questions about an event go
+   * to its coordinators, whose numbers are on each event above.
+   */
   name: "Anjali Rawlley",
   role: "Teacher in charge",
-  email: "anjalirawlley@gmail.com",
-  /** Shown as written; the tel: link strips the spaces. */
-  phone: "+91 98713 79429",
   /** The fest's own account: shown as the handle, linked to the profile. */
   instagram: "@quantum.afbbs",
   instagramUrl: "https://www.instagram.com/quantum.afbbs/",
@@ -530,7 +567,10 @@ export const crew: CrewSection[] = [
   {
     heading: "Event coordinators",
     noun: "coordinators",
-    groups: events.map((event) => ({ role: event.name, names: event.coordinators })),
+    groups: events.map((event) => ({
+      role: event.name,
+      names: event.coordinators.map((c) => c.name),
+    })),
   },
   {
     heading: "Organising teams",
@@ -579,7 +619,7 @@ export const faqs = [
   },
   {
     q: "Can individual students register, or must entries go through schools?",
-    a: "Entries go through schools, and every team's points count toward its school's overall championship. Fill in the registration form once for each team, and make sure a teacher in charge comes with the school's students on the offline day.",
+    a: "Entries go through schools, and every team's points count toward its school's overall championship. The school's teacher in-charge registers its teams, one per event, and comes with the students on the offline day.",
   },
   {
     q: "Can a student take part in more than one event?",

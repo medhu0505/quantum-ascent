@@ -1,4 +1,4 @@
-import { about, contact, events, faqs, fest, isTodo, school, FEST_DAYS } from "@/data/quantum";
+import { about, contact, events, faqs, fest, school, FEST_DAYS } from "@/data/quantum";
 
 /**
  * The FAQ as FAQPage structured data, because these are the questions that
@@ -43,10 +43,11 @@ export function festJsonLd() {
     },
   };
 
+  // No email: the fest's contacts are its event coordinators, listed on the
+  // Contact page, and the teacher in charge's own address is not published.
   const organizer = {
     "@type": "EducationalOrganization",
     name: school.name,
-    ...(isTodo(contact.email) ? {} : { email: contact.email }),
   };
 
   return {

@@ -8,6 +8,7 @@ import {
   FEST_DAYS,
   about,
   contact,
+  events,
   faqPage,
   faqs,
   festFacts,
@@ -120,33 +121,47 @@ function About() {
   );
 }
 
+/** The number as the brochure prints it on the page; the link dials the digits. */
+const tel = (phone: string) => `tel:${phone.replace(/\s/g, "")}`;
+
+/**
+ * The event in-charges are the fest's public contacts, so they lead the tab.
+ * The teacher in charge is named below them but not numbered: her own email
+ * and phone are not published anywhere on the site.
+ */
 function Contact() {
-  const tel = `tel:${contact.phone.replace(/\s/g, "")}`;
   return (
     <>
       <h2 className="m-h2 m-h2-lg m-tab-head">Contact</h2>
       <p className="m-muted m-small m-tab-lede">
-        Reach the organising team before or during the fest.
+        Questions about an event go to its student in-charges.
       </p>
       <div className="m-contact">
         <p className="m-contact-who">
-          <span className="m-contact-name">{contact.name}</span>
-          <span className="m-contact-role">{contact.role}</span>
+          <span className="m-contact-name">Event contacts</span>
+          <span className="m-contact-role">
+            Call the in-charges of the event you are asking about.
+          </span>
         </p>
-        <div className="m-contact-actions">
-          <a className="m-btn m-btn-accent" data-accent="cyan" href={`mailto:${contact.email}`}>
-            Email
-          </a>
-          <a className="m-btn m-btn-ghost" href={tel}>
-            Call
-          </a>
-        </div>
-        <p className="m-contact-line">
-          <a href={`mailto:${contact.email}`}>{contact.email}</a> ·{" "}
-          <a href={tel}>{contact.phone}</a>
-        </p>
+        <dl className="m-contact-events">
+          {events.map((event) => (
+            <div key={event.id} data-accent={event.accent}>
+              <dt>{event.name}</dt>
+              {event.coordinators.map((person) => (
+                <dd key={person.name}>
+                  <span>{person.name}</span>
+                  <a href={tel(person.phone)}>{person.phone}</a>
+                </dd>
+              ))}
+            </div>
+          ))}
+        </dl>
       </div>
       <dl className="m-details">
+        <div>
+          <dt>Teacher in charge</dt>
+          <dd>{contact.name}</dd>
+        </div>
         <div>
           <dt>Venue</dt>
           <dd>

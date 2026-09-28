@@ -137,8 +137,7 @@ export function MobileStreet() {
             {contact.name} · {contact.role}
           </p>
           <p>
-            <a href={`mailto:${contact.email}`}>{contact.email}</a> ·{" "}
-            <a href={`tel:${contact.phone.replace(/\s/g, "")}`}>{contact.phone}</a>
+            <ScreenLink to="/contact">Event contacts</ScreenLink>
           </p>
           <p>
             <a href={contact.instagramUrl} target="_blank" rel="noreferrer">

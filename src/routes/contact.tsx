@@ -1,9 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Instagram, Mail, MessageCircle, MessagesSquare, Phone } from "lucide-react";
+import { Instagram, MessageCircle, MessagesSquare, Phone } from "lucide-react";
 import { MobileResources } from "@/components/mobile/MobileResources";
 import { PageShell } from "@/components/site/PageShell";
-import { Value } from "@/components/site/Bits";
-import { FEST_DATES, FEST_DAYS, contact, isTodo, school } from "@/data/quantum";
+import { FEST_DATES, FEST_DAYS, contact, eventDay, events, school } from "@/data/quantum";
 import { useLayout } from "@/lib/motion";
 import { seo } from "@/lib/seo";
 
@@ -11,7 +10,7 @@ export const Route = createFileRoute("/contact")({
   head: () =>
     seo({
       title: "Contact",
-      description: `Reach the Quantum V2.0 organising team at ${school.name}, ${school.city}.`,
+      description: `Who to call about each Quantum V2.0 event, and where to follow the fest, at ${school.name}, ${school.city}.`,
       path: "/contact",
     }),
   component: ContactRoute,
@@ -21,30 +20,16 @@ function ContactRoute() {
   return useLayout() === "desk" ? <Contact /> : <MobileResources tab="contact" />;
 }
 
+/** The number as the brochure prints it on the page; the link dials the digits. */
+const tel = (phone: string) => `tel:${phone.replace(/\s/g, "")}`;
+
 const channels = [
-  {
-    label: "Email",
-    who: `${contact.name}, ${contact.role.toLowerCase()}`,
-    icon: Mail,
-    value: contact.email,
-    href: (v: string) => `mailto:${v}`,
-    note: "Best for anything that needs a written answer: entry queries, schedule clashes, accessibility requirements.",
-  },
-  {
-    label: "Phone",
-    who: `${contact.name}, ${contact.role.toLowerCase()}`,
-    icon: Phone,
-    value: contact.phone,
-    href: (v: string) => `tel:${v.replace(/\s/g, "")}`,
-    note: "For the fest days themselves: running late or finding the venue on the offline day, or anything urgent once the fest has started.",
-  },
   {
     label: "Instagram",
     who: undefined,
     icon: Instagram,
     value: contact.instagram,
-    href: () => contact.instagramUrl,
-    external: true,
+    href: contact.instagramUrl,
     note: "Announcements, results and the highlight reel.",
   },
   {
@@ -52,8 +37,7 @@ const channels = [
     who: "community",
     icon: MessageCircle,
     value: "Join the community",
-    href: () => contact.whatsappUrl,
-    external: true,
+    href: contact.whatsappUrl,
     note: "Live updates through both fest days, and news about the events you are in.",
   },
   {
@@ -61,45 +45,80 @@ const channels = [
     who: "server",
     icon: MessagesSquare,
     value: "Join the server",
-    href: () => contact.discordUrl,
-    external: true,
+    href: contact.discordUrl,
     note: "Updates about your own events, alongside the WhatsApp community.",
   },
 ];
 
+/**
+ * Contact: the people to call about each event, then where the fest posts
+ * its updates.
+ *
+ * The event in-charges are the fest's public contacts, one card per event
+ * with the numbers the brochure prints for them. The teacher in charge is
+ * named here but not numbered: her own email and phone are not published
+ * anywhere on the site.
+ */
 function Contact() {
   return (
     <PageShell
       ledeBelow
       title="Contact"
-      lede="Questions about entry, scheduling, or anything on either fest day go to the teacher in charge. Please allow a little time for a reply outside school hours."
+      lede="Questions about an event go to its student in-charges, whose numbers are on this page. For live updates through both fest days, follow the WhatsApp community, Discord or Instagram."
     >
-      <ul className="channels">
-        {channels.map((channel) => (
-          <li key={channel.label}>
-            <div className="channel-head">
-              <channel.icon className="channel-icon" aria-hidden="true" strokeWidth={1.75} />
-              <p className="channel-label">
-                {channel.label}
-                {channel.who ? <span className="channel-who"> · {channel.who}</span> : null}
-              </p>
-            </div>
-            <p className="channel-value">
-              {isTodo(channel.value) ? (
-                <Value value={channel.value} label={channel.label} />
-              ) : (
-                <a
-                  href={channel.href(channel.value)}
-                  {...("external" in channel ? { target: "_blank", rel: "noreferrer" } : {})}
-                >
+      <section aria-labelledby="event-contacts">
+        <h2 id="event-contacts" className="page-subhead">
+          Event contacts
+        </h2>
+        <ul className="channels">
+          {events.map((event) => (
+            <li key={event.id} className="contact-event" data-accent={event.accent}>
+              <div className="channel-head">
+                <Phone className="channel-icon" aria-hidden="true" strokeWidth={1.75} />
+                <h3 className="channel-label">{event.name}</h3>
+              </div>
+              <ul className="contact-people">
+                {event.coordinators.map((person) => (
+                  <li key={person.name}>
+                    <span className="contact-person">{person.name}</span>
+                    <a href={tel(person.phone)}>{person.phone}</a>
+                  </li>
+                ))}
+              </ul>
+              <p className="channel-note">{eventDay(event)}</p>
+            </li>
+          ))}
+        </ul>
+        <p className="channel-note measure contact-faculty">
+          The fest&apos;s teacher in charge is {contact.name}. For anything about a particular
+          event, its in-charges are the people to call.
+        </p>
+      </section>
+
+      <section aria-labelledby="updates" className="contact-updates">
+        <h2 id="updates" className="page-subhead">
+          Updates
+        </h2>
+        <ul className="channels">
+          {channels.map((channel) => (
+            <li key={channel.label}>
+              <div className="channel-head">
+                <channel.icon className="channel-icon" aria-hidden="true" strokeWidth={1.75} />
+                <p className="channel-label">
+                  {channel.label}
+                  {channel.who ? <span className="channel-who"> · {channel.who}</span> : null}
+                </p>
+              </div>
+              <p className="channel-value">
+                <a href={channel.href} target="_blank" rel="noreferrer">
                   {channel.value}
                 </a>
-              )}
-            </p>
-            <p className="channel-note">{channel.note}</p>
-          </li>
-        ))}
-      </ul>
+              </p>
+              <p className="channel-note">{channel.note}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <section className="venue" aria-labelledby="venue-heading">
         <h2 id="venue-heading" className="page-subhead">
@@ -117,7 +136,7 @@ function Contact() {
         <p className="channel-note measure">
           On {FEST_DAYS.offline.label}, be at the school by 7:30 a.m.: the registration desk is open
           from 7:30 to 8:00 a.m. Bring your confirmation email, and come in school uniform with your
-          teacher in charge.
+          teacher in-charge.
         </p>
       </section>
 

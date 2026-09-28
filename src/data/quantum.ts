@@ -503,7 +503,7 @@ export const about = {
 } as const;
 
 /* ------------------------------------------------------------------ *
- * Contact — TODO, not yet finalised.
+ * Contact
  * ------------------------------------------------------------------ */
 
 export const contact = {
@@ -513,7 +513,9 @@ export const contact = {
   email: "anjalirawlley@gmail.com",
   /** Shown as written; the tel: link strips the spaces. */
   phone: "+91 98713 79429",
-  instagram: `${TODO} — fest Instagram handle`,
+  /** The fest's own account: shown as the handle, linked to the profile. */
+  instagram: "@quantum.afbbs",
+  instagramUrl: "https://www.instagram.com/quantum.afbbs/",
   school: school.name,
   address: school.city,
 } as const;

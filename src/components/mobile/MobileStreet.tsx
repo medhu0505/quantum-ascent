@@ -140,6 +140,11 @@ export function MobileStreet() {
             <a href={`mailto:${contact.email}`}>{contact.email}</a> ·{" "}
             <a href={`tel:${contact.phone.replace(/\s/g, "")}`}>{contact.phone}</a>
           </p>
+          <p>
+            <a href={contact.instagramUrl} target="_blank" rel="noreferrer">
+              Instagram {contact.instagram}
+            </a>
+          </p>
         </footer>
       </div>
     </MobileShell>

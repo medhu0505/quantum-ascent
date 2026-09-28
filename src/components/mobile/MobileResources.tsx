@@ -121,7 +121,6 @@ function About() {
 
 function Contact() {
   const tel = `tel:${contact.phone.replace(/\s/g, "")}`;
-  const instagram = contact.instagram.replace(/^@/, "");
   return (
     <>
       <h2 className="m-h2 m-h2-lg m-tab-head">Contact</h2>
@@ -167,8 +166,8 @@ function Contact() {
             {isTodo(contact.instagram) ? (
               <Value value={contact.instagram} label="Instagram" />
             ) : (
-              <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noreferrer">
-                @{instagram}
+              <a href={contact.instagramUrl} target="_blank" rel="noreferrer">
+                {contact.instagram}
               </a>
             )}
           </dd>

@@ -62,6 +62,8 @@ export function festJsonLd() {
     ...(datesKnown ? { startDate: FEST_DATES } : {}),
     location: place,
     organizer,
+    // The fest's own account, so search engines can tie it to the event.
+    sameAs: [contact.instagramUrl],
     audience: {
       "@type": "EducationalAudience",
       educationalRole: "student",

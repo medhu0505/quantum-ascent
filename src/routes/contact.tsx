@@ -43,7 +43,8 @@ const channels = [
     who: undefined,
     icon: Instagram,
     value: contact.instagram,
-    href: (v: string) => `https://instagram.com/${v.replace(/^@/, "")}`,
+    href: () => contact.instagramUrl,
+    external: true,
     note: "Announcements, results and the highlight reel.",
   },
 ];
@@ -69,7 +70,12 @@ function Contact() {
               {isTodo(channel.value) ? (
                 <Value value={channel.value} label={channel.label} />
               ) : (
-                <a href={channel.href(channel.value)}>{channel.value}</a>
+                <a
+                  href={channel.href(channel.value)}
+                  {...("external" in channel ? { target: "_blank", rel: "noreferrer" } : {})}
+                >
+                  {channel.value}
+                </a>
               )}
             </p>
             <p className="channel-note">{channel.note}</p>

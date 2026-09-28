@@ -130,6 +130,11 @@ export function SiteFooter() {
                 <a href={`tel:${contact.phone.replace(/\s/g, "")}`}>{contact.phone}</a>
               )}
             </p>
+            <p className="footer-line">
+              <a href={contact.instagramUrl} target="_blank" rel="noreferrer">
+                Instagram {contact.instagram}
+              </a>
+            </p>
           </div>
         </div>
       </div>

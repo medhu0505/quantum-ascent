@@ -5106,7 +5106,8 @@ html[data-layout="phone"] body {
 /* Text links, but still thumb targets: 24px tall rather than the 18px of
    the line they sit in. */
 .m-foot a,
-.m-contact-line a {
+.m-contact-line a,
+.m-details a {
   display: inline-block;
   padding-block: 3px;
 }

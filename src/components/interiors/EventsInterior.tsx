@@ -151,8 +151,8 @@ export function EventsInterior() {
         </h2>
         <p className="room-cta-note">
           Each student can compete in only one event, so a school entering several events sends a
-          different team to each and registers every team on its own. Registrations close on{" "}
-          {REGISTRATION_CLOSES.label}.
+          different team to each and lists every team under its event on the registration form.
+          Registrations close on {REGISTRATION_CLOSES.label}.
         </p>
         <div className="page-actions">
           <Link to="/register" className="btn btn-accent" data-magnetic>

@@ -1,67 +1,55 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type RefObject } from "react";
 import { PageShell } from "@/components/site/PageShell";
-import { REGISTRATION_CLOSES, events } from "@/data/quantum";
+import { REGISTRATION_CLOSES, eventDay, events, listOf, type QuantumEvent } from "@/data/quantum";
+import { isRegistrationOpen } from "@/lib/registrations";
 import {
-  MAX_MEMBERS,
-  isRegistrationOpen,
-  submitRegistration,
-  type Participant,
-} from "@/lib/registrations";
-import {
-  BLANK,
   CLASSES,
-  FIELD_ORDER,
-  MEMBER_LABEL,
-  MEMBER_ORDER,
-  buildPayload,
-  describeFailure,
-  validate,
-  validateMembers,
-  type Errors,
-  type Fields,
-  type MemberErrors,
-  type Receipt,
+  CONTACT_ORDER,
+  EMPTY_CONTACT,
+  MAX_TEXT,
+  OFFLINE,
+  checkTeams,
+  placeLabel,
+  placeName,
+  places,
+  sendTeams,
+  teamNames,
+  teamProblems,
+  validateContact,
+  type Contact,
+  type ContactErrors,
+  type Failure,
+  type Outcomes,
+  type Player,
+  type PlayerErrors,
+  type RegisterDraft,
+  type Teams,
 } from "@/components/register/logic";
 
 /**
  * The registration form.
  *
- * There was a fork here — an individual/team form and a separate school
- * one, chosen on a page before this — and it is gone. Every entry comes in
- * the same way now: a team lead, the events they are entering, and the rest
- * of the team under them. A coordinator submitting for a school fills in
- * the same form, once per team, which is what they were doing anyway.
+ * One page, for a school. At the top, whom the organisers write to and call.
+ * Under it the six events, each its own section: ticking one opens that
+ * event's team right beneath it, with exactly as many places as the event
+ * takes, and every place asks for a name, a class and a Discord ID. A student
+ * can compete in only one event, so the same student under two events is
+ * caught before anything is sent.
  *
  * Plain controlled state rather than a form library, so the error wiring —
- * aria-invalid, aria-describedby, focus on the first bad field, a live
- * region for the summary — stays explicit and testable.
+ * aria-invalid, aria-describedby, focus on the first bad field, a summary that
+ * links to each one — stays explicit and testable.
  *
- * Submission deliberately has no fake success path. Until a backend is
- * configured — Firestore, or the Apps Script behind it — the form validates,
- * keeps the visitor's input, and says plainly that entries are not open yet.
- * Once one is, a registration only counts as received when that backend
- * answers with an ID. Accepting a registration that goes nowhere is worse
- * than not accepting one.
+ * Each event goes to the backend as an entry of its own, with its own
+ * registration id, so one event failing never costs the others, and sending
+ * again is always safe: an event that already went through is shown as
+ * registered and is not sent twice. src/lib/registrations.ts decides where the
+ * entries go; this file only reads back an id, or a reason there is none.
  *
- * Which backend that is, and everything about reaching it, lives in
- * src/lib/registrations.ts. This file knows only that submitting returns a
- * reply with an ID in it or does not.
+ * There is still no fake success path. Until a backend is configured the form
+ * checks everything and says plainly that entries are not open yet.
  */
-
-/**
- * What has been typed, and the receipt once there is one. The site swaps
- * between its desktop and phone layouts live, and snapping a laptop window to
- * half the screen is enough to do it; the swap unmounts this form. The
- * register route holds this across it, so nothing typed goes with it. None of
- * it is stored anywhere, and leaving the page starts the next visit clean.
- */
-export type RegisterDraft = {
-  values: Fields;
-  picked: string[];
-  members: Participant[];
-  receipt: Receipt | null;
-};
 
 export function RegisterFormBody({
   preselectedEvent,
@@ -74,183 +62,177 @@ export function RegisterFormBody({
   // Read by the initial states only: after the first render the form owns it.
   const saved = draft?.current ?? null;
 
-  const [values, setValues] = useState<Fields>(
-    saved?.values ?? {
-      student: "",
-      school: "",
-      grade: "",
-      email: "",
-      phone: "",
-      discord: "",
-    },
-  );
-  /*
-   * Events are a list now: one entry can be in several. Kept out of
-   * `values` because that is trimmed as a map of strings on submit, and
-   * because a set of chosen ids is not a form field's value.
-   */
+  const [contact, setContact] = useState<Contact>(saved?.contact ?? EMPTY_CONTACT);
   const [picked, setPicked] = useState<string[]>(
     saved?.picked ?? (preselectedEvent ? [preselectedEvent] : []),
   );
-  const [members, setMembers] = useState<Participant[]>(saved?.members ?? []);
-  const [errors, setErrors] = useState<Errors>({});
-  const [memberErrors, setMemberErrors] = useState<MemberErrors[]>([]);
-  /** Focus lands on a newly added row so the keyboard does not have to walk to it. */
-  const focusRow = useRef<number | null>(null);
+  const [teams, setTeams] = useState<Teams>(saved?.teams ?? {});
+  const [outcomes, setOutcomes] = useState<Outcomes>(saved?.outcomes ?? {});
+  const [done, setDone] = useState(saved?.done ?? false);
+  const [errors, setErrors] = useState<ContactErrors>({});
+  const [teamErrors, setTeamErrors] = useState<Record<string, PlayerErrors[]>>({});
   const [submitted, setSubmitted] = useState(false);
   /** Set once the form validates while entries are still closed. */
   const [checked, setChecked] = useState(false);
-  const formRef = useRef<HTMLFormElement | null>(null);
-  const checkedRef = useRef<HTMLParagraphElement | null>(null);
   const [sending, setSending] = useState(false);
-  const [receipt, setReceipt] = useState<Receipt | null>(saved?.receipt ?? null);
-  const [sendError, setSendError] = useState<string | null>(null);
-  const sendErrorRef = useRef<HTMLDivElement | null>(null);
-  const receiptRef = useRef<HTMLDivElement | null>(null);
+  const [failures, setFailures] = useState<Failure[]>([]);
   /** Honeypot. Hidden from people and assistive tech; bots fill it in. */
   const [website, setWebsite] = useState("");
 
-  useEffect(() => {
-    if (draft) draft.current = { values, picked, members, receipt };
-  }, [draft, values, picked, members, receipt]);
-
-  const set =
-    (key: keyof Fields) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-      setValues((v) => ({ ...v, [key]: e.target.value }));
-      setChecked(false);
-      setErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
-    };
-
-  const setMember =
-    (index: number, key: keyof Participant) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-      const next = e.target.value;
-      setMembers((list) => list.map((m, i) => (i === index ? { ...m, [key]: next } : m)));
-      setChecked(false);
-      setMemberErrors((prev) =>
-        prev[index]?.[key]
-          ? prev.map((row, i) => (i === index ? { ...row, [key]: undefined } : row))
-          : prev,
-      );
-    };
-
-  const addMember = () => {
-    if (members.length >= MAX_MEMBERS) return;
-    focusRow.current = members.length;
-    setMembers((list) => [...list, { ...BLANK }]);
-    setMemberErrors((prev) => [...prev, {}]);
-    setChecked(false);
-  };
-
-  const removeMember = (index: number) => {
-    setMembers((list) => list.filter((_, i) => i !== index));
-    setMemberErrors((prev) => prev.filter((_, i) => i !== index));
-    setChecked(false);
-  };
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const checkedRef = useRef<HTMLParagraphElement | null>(null);
+  const failedRef = useRef<HTMLDivElement | null>(null);
+  const receiptRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const row = focusRow.current;
-    if (row === null) return;
-    focusRow.current = null;
-    formRef.current?.querySelector<HTMLElement>(`#field-member-${row}-name`)?.focus();
-  }, [members.length]);
+    if (!draft) return;
+    draft.current = { contact, picked, teams, outcomes, done, step: draft.current?.step ?? 0 };
+  }, [draft, contact, picked, teams, outcomes, done]);
+
+  const focus = (selector: string) =>
+    window.requestAnimationFrame(() =>
+      formRef.current?.querySelector<HTMLElement>(selector)?.focus(),
+    );
+
+  const setField = (key: keyof Contact) => (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setContact((v) => ({ ...v, [key]: value }));
+    setChecked(false);
+    setErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
+  };
+
+  const togglePick = (id: string, on: boolean) => {
+    setPicked((list) => (on ? [...list, id] : list.filter((x) => x !== id)));
+    setChecked(false);
+    setErrors((prev) => {
+      if (!prev.events) return prev;
+      const rest = { ...prev };
+      delete rest.events;
+      return rest;
+    });
+  };
+
+  const setPlayer = (eventId: string, index: number, key: keyof Player, value: string) => {
+    setTeams((all) => {
+      const list = places(eventId, all).slice();
+      list[index] = { ...list[index]!, [key]: value };
+      return { ...all, [eventId]: list };
+    });
+    setChecked(false);
+    setTeamErrors((prev) =>
+      prev[eventId]?.[index]?.[key]
+        ? {
+            ...prev,
+            [eventId]: prev[eventId]!.map((row, i) =>
+              i === index ? { ...row, [key]: undefined } : row,
+            ),
+          }
+        : prev,
+    );
+  };
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const found = validate(values, picked);
-    const foundMembers = validateMembers(members);
+    if (sending) return;
+
+    const found = validateContact(contact, picked);
+    const foundTeams = checkTeams(picked, teams);
     setErrors(found);
-    setMemberErrors(foundMembers);
+    setTeamErrors(foundTeams);
     setSubmitted(true);
+    setFailures([]);
 
-    const firstBad = FIELD_ORDER.find((key) => found[key]);
-    if (firstBad) {
-      formRef.current?.querySelector<HTMLElement>(`[name="${firstBad}"]`)?.focus();
+    const firstBad = CONTACT_ORDER.find((key) => found[key]);
+    const firstTeam = teamProblems(foundTeams)[0];
+    if (firstBad || found.events || firstTeam) {
+      focus(
+        firstBad
+          ? `#field-${firstBad}`
+          : found.events
+            ? "[name='events']"
+            : `#field-team-${firstTeam!.event.id}-${firstTeam!.index}-${firstTeam!.key}`,
+      );
       return;
     }
 
-    if (found.events) {
-      formRef.current?.querySelector<HTMLElement>("[name='events']")?.focus();
+    if (!registrationOpen) {
+      // Entries are not open, so there is nothing to submit to, but the form
+      // still reports whether what has been typed would pass. Disabling the
+      // button instead would make the notice above a lie.
+      setChecked(true);
+      window.requestAnimationFrame(() => checkedRef.current?.focus());
       return;
     }
 
-    const badRow = foundMembers.findIndex((row) => MEMBER_ORDER.some((k) => row[k]));
-    if (badRow >= 0) {
-      const key = MEMBER_ORDER.find((k) => foundMembers[badRow]?.[k]);
-      formRef.current
-        ?.querySelector<HTMLElement>(`#field-member-${badRow}-${String(key)}`)
-        ?.focus();
-      return;
-    }
-
-    if (registrationOpen) {
-      if (sending) return;
-      setSending(true);
-      setSendError(null);
-      submitRegistration(buildPayload(values, picked, members, website))
-        .then((reply) => {
-          if (reply.ok) {
-            setReceipt({ id: reply.id, duplicate: Boolean(reply.duplicate) });
-            window.requestAnimationFrame(() => receiptRef.current?.focus());
-          } else {
-            setSendError(describeFailure(reply));
-            window.requestAnimationFrame(() => sendErrorRef.current?.focus());
-          }
-        })
-        .catch(() => {
-          setSendError(
-            "Could not reach the registration server. Check your connection; your answers are still here, so submit again when you are back online.",
-          );
-          window.requestAnimationFrame(() => sendErrorRef.current?.focus());
-        })
-        .finally(() => setSending(false));
-      return;
-    }
-
-    // Entries are not open, so there is nothing to submit to — but the form
-    // still reports whether what has been typed would pass. Disabling the
-    // button instead would make the notice above a lie.
-    setChecked(true);
-    window.requestAnimationFrame(() => checkedRef.current?.focus());
+    setSending(true);
+    sendTeams(contact, picked, teams, outcomes, website)
+      .then((result) => {
+        setOutcomes(result.outcomes);
+        setFailures(result.failures);
+        if (result.failures.length === 0) {
+          setDone(true);
+          window.requestAnimationFrame(() => receiptRef.current?.focus());
+        } else {
+          window.requestAnimationFrame(() => failedRef.current?.focus());
+        }
+      })
+      .catch(() => {
+        setFailures([{ event: "", message: OFFLINE }]);
+        window.requestAnimationFrame(() => failedRef.current?.focus());
+      })
+      .finally(() => setSending(false));
   };
 
-  const errorList = FIELD_ORDER.filter((k) => errors[k]);
-  const memberErrorList = memberErrors.flatMap((row, i) =>
-    MEMBER_ORDER.filter((k) => row[k]).map((k) => ({ row: i, key: k, message: row[k] as string })),
-  );
-  const problems = errorList.length + memberErrorList.length;
+  const registerMore = () => {
+    setPicked([]);
+    setTeams({});
+    setOutcomes({});
+    setDone(false);
+    setSubmitted(false);
+    setErrors({});
+    setTeamErrors({});
+    setFailures([]);
+  };
 
-  if (receipt) {
-    const chosenNames = events.filter((e) => picked.includes(e.id)).map((e) => e.name);
+  if (done) {
+    const entered = events.filter((e) => picked.includes(e.id) && outcomes[e.id]);
+    const repeats = entered.filter((e) => outcomes[e.id]!.duplicate).length;
     return (
-      <PageShell
-        title="Registered"
-        lede={`${chosenNames.join(", ")} — ${values.school.trim()}`}
-        registerChip={false}
-      >
+      <PageShell title="Registered" lede={contact.school.trim()} registerChip={false}>
         <div className="notice notice-ok" role="status" tabIndex={-1} ref={receiptRef}>
           <strong>
-            {receipt.duplicate
-              ? "This team is already registered for these events."
-              : "Registration received."}
+            {repeats === entered.length
+              ? entered.length === 1
+                ? "This team is already registered."
+                : "These teams are already registered."
+              : entered.length === 1
+                ? "Registration received."
+                : "Registrations received."}
           </strong>
           <span>
-            Your registration ID is <strong>{receipt.id}</strong>. Keep it; the organisers will ask
-            for it at the desk. Reporting times go to {values.email.trim()}.
+            Every team has its own registration ID. Keep them; the organisers will ask for them at
+            the desk. Reporting times go to {contact.email.trim()}.
           </span>
         </div>
+        <ul className="receipt-list">
+          {entered.map((event) => {
+            const receipt = outcomes[event.id]!;
+            return (
+              <li key={event.id} className="receipt-item" data-accent={event.accent}>
+                <span className="receipt-event">{event.name}</span>
+                <strong className="receipt-id">{receipt.id}</strong>
+                <span className="receipt-team">
+                  {receipt.duplicate
+                    ? "Already registered from this email. The team sent first is the one on record."
+                    : listOf(teamNames(event.id, teams))}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
         <div className="form-actions">
-          <button
-            type="button"
-            className="btn btn-accent btn-block"
-            onClick={() => {
-              setReceipt(null);
-              setSubmitted(false);
-              setPicked([]);
-            }}
-          >
-            Register the same lead for a different set of events
+          <button type="button" className="btn btn-accent btn-block" onClick={registerMore}>
+            Register more teams
           </button>
           <Link to="/events" className="btn btn-ghost btn-block" data-magnetic>
             Back to the events
@@ -260,10 +242,14 @@ export function RegisterFormBody({
     );
   }
 
+  const contactList = CONTACT_ORDER.filter((key) => errors[key]);
+  const teamList = teamProblems(teamErrors);
+  const problems = contactList.length + (errors.events ? 1 : 0) + teamList.length;
+
   return (
     <PageShell
       title="Register"
-      lede={`Enter the team lead's details, select the event the team is entering for, and list the rest of the team under them. Each student can compete in only one event, so a school entering several events fills this in once for each team. Registrations close on ${REGISTRATION_CLOSES.label}.`}
+      lede={`Enter your school's details, then select every event your school is entering for and list its team under it. Registrations close on ${REGISTRATION_CLOSES.label}.`}
       registerChip={false}
     >
       {!registrationOpen ? (
@@ -286,15 +272,20 @@ export function RegisterFormBody({
               {problems === 1 ? "One field needs fixing" : `${problems} fields need fixing`}
             </p>
             <ul>
-              {errorList.map((key) => (
+              {contactList.map((key) => (
                 <li key={key}>
                   <a href={`#field-${key}`}>{errors[key]}</a>
                 </li>
               ))}
-              {memberErrorList.map(({ row, key, message }) => (
-                <li key={`${row}-${key}`}>
-                  <a href={`#field-member-${row}-${key}`}>
-                    Member {row + 2}: {message}
+              {errors.events ? (
+                <li>
+                  <a href={`#field-event-${events[0]!.id}`}>{errors.events}</a>
+                </li>
+              ) : null}
+              {teamList.map(({ event, index, key, message }) => (
+                <li key={`${event.id}-${index}-${key}`}>
+                  <a href={`#field-team-${event.id}-${index}-${key}`}>
+                    {placeName(event, index)}: {message}
                   </a>
                 </li>
               ))}
@@ -302,234 +293,98 @@ export function RegisterFormBody({
           </div>
         ) : null}
 
-        <Field
-          id="student"
-          label="Team lead's full name"
-          error={errors.student}
-          value={values.student}
-          onChange={set("student")}
-          autoComplete="name"
-          required
-        />
-
-        <div className="field-row">
+        <fieldset className="form-block">
+          <legend className="form-block-title">Your school</legend>
           <Field
             id="school"
             label="School"
             error={errors.school}
-            value={values.school}
-            onChange={set("school")}
+            value={contact.school}
+            onChange={setField("school")}
             autoComplete="organization"
             required
           />
-
-          <div className="field">
-            <label htmlFor="field-grade">
-              Class <RequiredMark />
-            </label>
-            <select
-              id="field-grade"
-              name="grade"
-              value={values.grade}
-              onChange={set("grade")}
-              aria-invalid={errors.grade ? true : undefined}
-              aria-describedby={errors.grade ? "error-grade" : undefined}
+          <div className="field-row">
+            <Field
+              id="email"
+              label="Email"
+              type="email"
+              hint="We send each team's registration ID and reporting times here."
+              error={errors.email}
+              value={contact.email}
+              onChange={setField("email")}
+              autoComplete="email"
               required
-            >
-              <option value="">Choose a class</option>
-              {[9, 10, 11, 12].map((g) => (
-                <option key={g} value={String(g)}>
-                  Class {g}
-                </option>
-              ))}
-            </select>
-            <FieldError id="error-grade" message={errors.grade} />
+            />
+            <Field
+              id="phone"
+              label="Phone"
+              type="tel"
+              hint="10 digits, reachable on both fest days. No +91 needed."
+              error={errors.phone}
+              value={contact.phone}
+              onChange={setField("phone")}
+              autoComplete="tel"
+              required
+            />
           </div>
-        </div>
+        </fieldset>
 
-        <div className="field-row">
-          <Field
-            id="email"
-            label="Email"
-            type="email"
-            hint="We send your team code and reporting times here."
-            error={errors.email}
-            value={values.email}
-            onChange={set("email")}
-            autoComplete="email"
-            required
-          />
+        <fieldset
+          className="form-block entries"
+          aria-describedby={errors.events ? "hint-events error-events" : "hint-events"}
+        >
+          <legend className="form-block-title">
+            Events and teams <RequiredMark />
+          </legend>
+          <p id="hint-events" className="field-hint">
+            Select every event your school is entering for, and its team opens under it. A student
+            can compete in only one event, so each event needs different students. Add each
+            participant's Discord ID: briefings and results go out on the fest Discord server.
+          </p>
+          <FieldError id="error-events" message={errors.events} />
 
-          <Field
-            id="phone"
-            label="Phone"
-            type="tel"
-            hint="10 digits, reachable on both fest days. No +91 needed."
-            error={errors.phone}
-            value={values.phone}
-            onChange={set("phone")}
-            autoComplete="tel"
-            required
-          />
-        </div>
-
-        <div className="field-row">
-          <Field
-            id="discord"
-            label="Discord"
-            hint="Optional. Briefing and results go out on the fest server, so add it if you have one."
-            error={errors.discord}
-            value={values.discord}
-            onChange={set("discord")}
-            autoComplete="off"
-          />
-
-          <fieldset
-            className="field events-field"
-            aria-invalid={errors.events ? true : undefined}
-            aria-describedby={errors.events ? "error-events hint-events" : "hint-events"}
-          >
-            <legend>
-              Events <RequiredMark />
-            </legend>
-            <ul className="event-picks">
-              {events.map((e) => (
-                <li key={e.id}>
-                  <label className="event-pick" htmlFor={`field-event-${e.id}`}>
+          <ul className="entry-list">
+            {events.map((event) => {
+              const on = picked.includes(event.id);
+              const receipt = outcomes[event.id];
+              return (
+                <li key={event.id} className="entry" data-on={on || undefined}>
+                  <label className="event-pick entry-pick" htmlFor={`field-event-${event.id}`}>
                     <input
                       type="checkbox"
-                      id={`field-event-${e.id}`}
+                      id={`field-event-${event.id}`}
                       name="events"
-                      value={e.id}
-                      checked={picked.includes(e.id)}
-                      onChange={(ev) => {
-                        const on = ev.currentTarget.checked;
-                        setPicked((list) =>
-                          on ? [...list, e.id] : list.filter((id) => id !== e.id),
-                        );
-                        if (errors.events) {
-                          setErrors((prev) => {
-                            const next = { ...prev };
-                            delete next.events;
-                            return next;
-                          });
-                        }
-                      }}
+                      value={event.id}
+                      checked={on}
+                      disabled={Boolean(receipt)}
+                      aria-invalid={errors.events ? true : undefined}
+                      onChange={(ev) => togglePick(event.id, ev.currentTarget.checked)}
                     />
                     <span className="event-pick-body">
-                      <span className="event-pick-name">{e.name}</span>
-                      <span className="event-pick-team">{e.team}</span>
+                      <span className="event-pick-name">{event.name}</span>
+                      <span className="event-pick-team">
+                        {event.team} · {eventDay(event)}
+                      </span>
                     </span>
                   </label>
+
+                  {on && receipt ? (
+                    <p className="entry-done" id={`team-${event.id}`}>
+                      Registered · <strong>{receipt.id}</strong>
+                    </p>
+                  ) : on ? (
+                    <TeamFields
+                      event={event}
+                      team={places(event.id, teams)}
+                      errors={teamErrors[event.id] ?? []}
+                      onChange={setPlayer}
+                    />
+                  ) : null}
                 </li>
-              ))}
-            </ul>
-            <p id="hint-events" className="field-hint">
-              Select the event this team is entering for. A student can compete in only one event,
-              so every team goes on its own form.
-            </p>
-            <FieldError id="error-events" message={errors.events} />
-          </fieldset>
-        </div>
-
-        <fieldset className="party">
-          <legend className="party-legend">Other team members</legend>
-          <p className="field-hint">
-            Leave this empty for a solo entry. Everything except the name is optional, but a number
-            or a Discord handle means we can reach someone if the lead is mid-round.
-          </p>
-
-          {members.map((m, i) => (
-            <div className="party-row" key={i}>
-              <div className="party-head">
-                <h3 className="party-title">Member {i + 2}</h3>
-                <button
-                  type="button"
-                  className="party-remove"
-                  onClick={() => removeMember(i)}
-                  aria-label={`Remove member ${i + 2}`}
-                >
-                  Remove
-                </button>
-              </div>
-
-              <div className="party-grid">
-                <Field
-                  id={`member-${i}-name`}
-                  label={MEMBER_LABEL.name}
-                  error={memberErrors[i]?.name}
-                  value={m.name}
-                  onChange={setMember(i, "name")}
-                  autoComplete="off"
-                />
-
-                <div className="field">
-                  <label htmlFor={`field-member-${i}-grade`}>{MEMBER_LABEL.grade}</label>
-                  <select
-                    id={`field-member-${i}-grade`}
-                    name={`member-${i}-grade`}
-                    value={m.grade}
-                    onChange={setMember(i, "grade")}
-                  >
-                    <option value="">Choose a class</option>
-                    {CLASSES.map((g) => (
-                      <option key={g} value={String(g)}>
-                        Class {g}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <Field
-                  id={`member-${i}-phone`}
-                  label={MEMBER_LABEL.phone}
-                  type="tel"
-                  error={memberErrors[i]?.phone}
-                  value={m.phone}
-                  onChange={setMember(i, "phone")}
-                  autoComplete="off"
-                />
-
-                <Field
-                  id={`member-${i}-discord`}
-                  label={MEMBER_LABEL.discord}
-                  error={memberErrors[i]?.discord}
-                  value={m.discord}
-                  onChange={setMember(i, "discord")}
-                  autoComplete="off"
-                />
-
-                <Field
-                  id={`member-${i}-email`}
-                  label={MEMBER_LABEL.email}
-                  type="email"
-                  error={memberErrors[i]?.email}
-                  value={m.email}
-                  onChange={setMember(i, "email")}
-                  autoComplete="off"
-                />
-              </div>
-            </div>
-          ))}
-
-          <div className="party-actions">
-            <button
-              type="button"
-              className="btn btn-ghost"
-              onClick={addMember}
-              disabled={members.length >= MAX_MEMBERS}
-            >
-              Add a team member
-            </button>
-            {/* Polite: the count changing is worth knowing, not worth interrupting. */}
-            <p className="field-hint" aria-live="polite">
-              {members.length === 0
-                ? "No other members listed — that is a solo entry."
-                : `${members.length + 1} people listed, including you.${
-                    members.length >= MAX_MEMBERS ? " That is the most this form takes." : ""
-                  }`}
-            </p>
-          </div>
+              );
+            })}
+          </ul>
         </fieldset>
 
         {/* Off-screen honeypot. Real visitors never reach it. */}
@@ -546,10 +401,24 @@ export function RegisterFormBody({
           />
         </div>
 
-        {sendError ? (
-          <div className="form-summary" role="alert" tabIndex={-1} ref={sendErrorRef}>
-            <p className="form-summary-title">Not submitted</p>
-            <p className="field-hint">{sendError}</p>
+        {failures.length > 0 ? (
+          <div className="form-summary" role="alert" tabIndex={-1} ref={failedRef}>
+            <p className="form-summary-title">
+              {Object.keys(outcomes).length > 0 ? "Not every team was submitted" : "Not submitted"}
+            </p>
+            <ul>
+              {failures.map((f) => (
+                <li key={f.event || "all"}>
+                  {f.event ? `${events.find((e) => e.id === f.event)?.name ?? f.event}: ` : ""}
+                  {f.message}
+                </li>
+              ))}
+            </ul>
+            {Object.keys(outcomes).length > 0 ? (
+              <p className="field-hint">
+                The teams marked registered are in. Submitting again sends only the rest.
+              </p>
+            ) : null}
           </div>
         ) : null}
 
@@ -571,6 +440,80 @@ export function RegisterFormBody({
         </div>
       </form>
     </PageShell>
+  );
+}
+
+/** One event's places, right under its checkbox. */
+function TeamFields({
+  event,
+  team,
+  errors,
+  onChange,
+}: {
+  event: QuantumEvent;
+  team: Player[];
+  errors: PlayerErrors[];
+  onChange: (eventId: string, index: number, key: keyof Player, value: string) => void;
+}) {
+  return (
+    <div className="entry-team" id={`team-${event.id}`}>
+      {team.map((p, i) => {
+        const base = `team-${event.id}-${i}`;
+        const err = errors[i] ?? {};
+        const needed = i < event.size.min;
+        const set = (key: keyof Player) => (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+          onChange(event.id, i, key, e.target.value);
+        return (
+          <fieldset key={i} className="entry-row">
+            <legend className="entry-place">
+              <span className="sr-only">{event.name}, </span>
+              {placeLabel(event, i)}
+            </legend>
+            <div className="entry-grid">
+              <Field
+                id={`${base}-name`}
+                label="Full name"
+                error={err.name}
+                value={p.name}
+                onChange={set("name")}
+                autoComplete="off"
+                required={needed}
+              />
+              <div className="field">
+                <label htmlFor={`field-${base}-grade`}>
+                  Class {needed ? <RequiredMark /> : null}
+                </label>
+                <select
+                  id={`field-${base}-grade`}
+                  name={`${base}-grade`}
+                  value={p.grade}
+                  onChange={set("grade")}
+                  aria-invalid={err.grade ? true : undefined}
+                  aria-describedby={err.grade ? `error-${base}-grade` : undefined}
+                  required={needed}
+                >
+                  <option value="">Choose a class</option>
+                  {CLASSES.map((g) => (
+                    <option key={g} value={String(g)}>
+                      Class {g}
+                    </option>
+                  ))}
+                </select>
+                <FieldError id={`error-${base}-grade`} message={err.grade} />
+              </div>
+              <Field
+                id={`${base}-discord`}
+                label="Discord ID"
+                error={err.discord}
+                value={p.discord}
+                onChange={set("discord")}
+                autoComplete="off"
+              />
+            </div>
+          </fieldset>
+        );
+      })}
+    </div>
   );
 }
 
@@ -627,9 +570,7 @@ function Field({
   required?: boolean | undefined;
   type?: string | undefined;
   value: string;
-  onChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
-  ) => void;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
   autoComplete?: string | undefined;
 }) {
   const describedBy = [hint ? `hint-${id}` : null, error ? `error-${id}` : null]
@@ -645,6 +586,7 @@ function Field({
         id={`field-${id}`}
         name={id}
         type={type}
+        maxLength={MAX_TEXT}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy || undefined}
         required={required}

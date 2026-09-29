@@ -61,8 +61,10 @@ Seven tabs, in this order, and the file opens on the first:
 - **Registrations** — every entry, one row each. The record of truth, and the
   only tab the duplicate check reads.
 - **The Q Factor, Take Two, Mirage.exe, Surprise, Ryoken, Innopreneur** — one
-  per event, each a complete list for whoever is running that event. An entry in
-  three events appears on three tabs. That is deliberate, not a duplicate. Until
+  per event, each a complete list for whoever is running that event. The form
+  sends one entry per event, so each row lands on its own event's tab. Entries
+  from before that, which could name several events, appear on the tab of each
+  of them. That is deliberate, not a duplicate. Until
   the brochure named them these were Quiz, Film Making, Ad Shoot, Surprise,
   Online Gaming and Pitch, and the ids the site sends still are: `quiz`,
   `film-making`, `ad-shoot`, `surprise`, `online-gaming`, `pitch`.
@@ -114,13 +116,28 @@ registration Firestore already accepted.
 
 ### What the forms send
 
-Both forms register one team: its lead, the events it is entering and the rest
-of the team, the desktop form on one page and the phone form in four steps.
+Both forms register a school: whom to write to and call, the events it is
+entering, and under each of those events that event's team, with every student's
+name, class and Discord ID (the Discord ID is optional). The desktop form does it
+on one page, each event a section of its own; the phone form does it in four
+steps. A student can compete in only one event, so the forms refuse the same
+name and class under two events.
 
-The rules and the Apps Script also accept an optional `teacher`, from a
-step-by-step desktop form that registered a school through its Teacher
-In-Charge, one entry per event. That form was taken back out; neither form
-sends the field now, and entries without it are what they always were.
+Each event goes to the backend as an entry of its own, in the shape both
+backends have always taken, so neither needed a change or a redeploy for this:
+
+- the team's first student is the entry's lead (`student`, `grade`, `discord`),
+  and the rest are its `members`, each with its `discord`;
+- `school`, `email` and `phone` are the school's, the same on every entry;
+- `events` names that one event, and `type` is `school`.
+
+So each team gets its own registration ID, the duplicate check is one entry per
+email per event, and an event that fails can be sent again without resending the
+ones that went through. The Apps Script mails one confirmation per entry.
+
+The rules and the Apps Script also accept an optional `teacher`, from an earlier
+step-by-step form. Neither form sends it: the rules deployed in production
+predate the field and would refuse an entry that carries it.
 
 ### Firebase
 
@@ -145,7 +162,8 @@ unauthenticated. They enforce three things rather than assume them:
   students' names, phone numbers and emails. Organisers read the collection
   through the console or the Admin SDK, both of which bypass rules.
 - **One entry per email per event set.** A document's id is SHA-256 of the
-  lowercased lead email and the chosen events, and a create only succeeds on a
+  lowercased lead email and the chosen events (one event, from the current
+  forms), and a create only succeeds on a
   document that does not exist. The rules recompute that hash, so a client
   cannot pick its own id and write the same entrant a thousand times.
 - **Every field.** Type, class, email, phone, Discord handle, event list,

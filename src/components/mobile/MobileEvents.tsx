@@ -179,8 +179,8 @@ export function MobileEvents({ initial }: { initial?: string | undefined }) {
         <h2 className="m-h2 m-h2-lg">Picked your events?</h2>
         <p className="m-muted m-body">
           Each student can compete in only one event, so a school entering several events sends a
-          different team to each and registers every team on its own. Registrations close on{" "}
-          {REGISTRATION_CLOSES.label}.
+          different team to each and lists every team under its event on the registration form.
+          Registrations close on {REGISTRATION_CLOSES.label}.
         </p>
         <ScreenLink to="/faq" className="m-btn m-btn-ghost">
           Read the FAQ first

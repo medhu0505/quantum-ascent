@@ -1,83 +1,98 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type RefObject } from "react";
 import { MobileShell, ScreenLink } from "@/components/mobile/MobileShell";
 import {
-  BLANK,
   CLASSES,
-  FIELD_ORDER,
-  MEMBER_ORDER,
-  buildPayload,
-  describeFailure,
-  validate,
-  validateMembers,
-  type Errors,
-  type Fields,
-  type MemberErrors,
-  type Receipt,
+  CONTACT_ORDER,
+  EMPTY_CONTACT,
+  MAX_TEXT,
+  OFFLINE,
+  checkTeams,
+  placeLabel,
+  places,
+  sendTeams,
+  teamNames,
+  teamProblems,
+  validateContact,
+  type Contact,
+  type ContactErrors,
+  type Failure,
+  type Outcomes,
+  type Player,
+  type PlayerErrors,
+  type RegisterDraft,
+  type Teams,
 } from "@/components/register/logic";
-import { REGISTRATION_CLOSES, events } from "@/data/quantum";
-import {
-  MAX_MEMBERS,
-  isRegistrationOpen,
-  submitRegistration,
-  type Participant,
-} from "@/lib/registrations";
+import { REGISTRATION_CLOSES, events, listOf } from "@/data/quantum";
+import { isRegistrationOpen } from "@/lib/registrations";
 
 /**
- * Registering on a phone, in four steps: the team lead, the events, the rest
- * of the team, and a last look before it is sent.
+ * Registering on a phone, in four steps: the school, the events, a team for
+ * each of those events, and a last look before it is sent.
  *
  * One long form is a lot of scrolling on a phone, and an error at the top is
  * out of sight by the time the button at the bottom is pressed. Split into
- * steps, each screen is short enough to see whole and is checked before the
+ * steps, each screen is short enough to take in, and is checked before the
  * next one opens, so a mistake is caught on the screen where it was made.
  *
  * The rules, the messages and what is sent are the desktop form's own, from
- * register/logic.ts, so an entry is the same whichever screen it came from.
+ * register/logic.ts, so an entry is the same whichever screen it came from,
+ * and what is typed on one carries over to the other.
  */
-
-const EMPTY: Fields = { student: "", school: "", grade: "", email: "", phone: "", discord: "" };
 
 type Step = 0 | 1 | 2 | 3;
 
 const STEPS = [
   {
-    label: "Lead",
-    title: "Team lead",
-    lede: `Enter the team lead's details. Each student can compete in only one event, so a school fills this in once for each team. Entries close on ${REGISTRATION_CLOSES.label}.`,
+    label: "School",
+    title: "Your school",
+    lede: `Enter your school's details. Registrations close on ${REGISTRATION_CLOSES.label}.`,
   },
-  { label: "Event", title: "Pick the event", lede: "Select the event this team is entering for." },
   {
-    label: "Team",
-    title: "The team",
-    lede: "Leave this empty for a solo entry. Everything except the name is optional.",
+    label: "Events",
+    title: "Pick the events",
+    lede: "Select every event your school is entering for.",
+  },
+  {
+    label: "Teams",
+    title: "The teams",
+    lede: "List each event's team. Add each participant's Discord ID: briefings and results go out on the fest Discord server.",
   },
   { label: "Review", title: "Check it", lede: "" },
 ] as const;
 
-/** Which step a field lives on, for sending the visitor back to it. */
-function stepOf(field: string | undefined): Step {
-  if (field === "events") return 1;
-  if (field === "members") return 2;
-  return 0;
-}
+type Found = { errors: ContactErrors; teamErrors: Record<string, PlayerErrors[]> };
 
-const errorCount = (errors: Errors, memberErrors: MemberErrors[]) =>
-  Object.values(errors).filter(Boolean).length +
-  memberErrors.reduce((n, row) => n + MEMBER_ORDER.filter((k) => row[k]).length, 0);
+const count = ({ errors, teamErrors }: Found) =>
+  Object.values(errors).filter(Boolean).length + teamProblems(teamErrors).length;
 
-export function MobileRegister({ preselectedEvent }: { preselectedEvent?: string | undefined }) {
+export function MobileRegister({
+  preselectedEvent,
+  draft,
+}: {
+  preselectedEvent?: string | undefined;
+  draft?: RefObject<RegisterDraft | null> | undefined;
+}) {
   const open = isRegistrationOpen();
+  // Read by the initial states only: after the first render the form owns it.
+  const saved = draft?.current ?? null;
 
-  const [step, setStep] = useState<Step>(0);
-  const [values, setValues] = useState<Fields>(EMPTY);
-  const [picked, setPicked] = useState<string[]>(preselectedEvent ? [preselectedEvent] : []);
-  const [members, setMembers] = useState<Participant[]>([]);
-  const [errors, setErrors] = useState<Errors>({});
-  const [memberErrors, setMemberErrors] = useState<MemberErrors[]>([]);
+  const [step, setStep] = useState<Step>(() => {
+    if (!saved) return 0;
+    // A teams step with no events picked would be an empty screen.
+    return (saved.step >= 2 && saved.picked.length === 0 ? 1 : saved.step) as Step;
+  });
+  const [contact, setContact] = useState<Contact>(saved?.contact ?? EMPTY_CONTACT);
+  const [picked, setPicked] = useState<string[]>(
+    saved?.picked ?? (preselectedEvent ? [preselectedEvent] : []),
+  );
+  const [teams, setTeams] = useState<Teams>(saved?.teams ?? {});
+  const [outcomes, setOutcomes] = useState<Outcomes>(saved?.outcomes ?? {});
+  const [done, setDone] = useState(saved?.done ?? false);
+  const [errors, setErrors] = useState<ContactErrors>({});
+  const [teamErrors, setTeamErrors] = useState<Record<string, PlayerErrors[]>>({});
   const [checked, setChecked] = useState(false);
   const [sending, setSending] = useState(false);
-  const [receipt, setReceipt] = useState<Receipt | null>(null);
-  const [sendError, setSendError] = useState<string | null>(null);
+  const [failures, setFailures] = useState<Failure[]>([]);
   /** Honeypot. Hidden from people and assistive tech; bots fill it in. */
   const [website, setWebsite] = useState("");
 
@@ -87,24 +102,30 @@ export function MobileRegister({ preselectedEvent }: { preselectedEvent?: string
   const moved = useRef(false);
   const focusFirstBad = useRef(false);
 
+  useEffect(() => {
+    if (draft) draft.current = { contact, picked, teams, outcomes, done, step };
+  }, [draft, contact, picked, teams, outcomes, done, step]);
+
   /** The errors a step would show if it were checked now. */
-  const check = (s: Step): { errors: Errors; memberErrors: MemberErrors[] } => {
-    const all = validate(values, picked);
+  const check = (s: Step): Found => {
     if (s === 0) {
-      const lead: Errors = {};
-      for (const key of FIELD_ORDER) if (all[key]) lead[key] = all[key];
-      return { errors: lead, memberErrors: [] };
+      const all = validateContact(contact, picked);
+      const own: ContactErrors = {};
+      for (const key of CONTACT_ORDER) if (all[key]) own[key] = all[key];
+      return { errors: own, teamErrors: {} };
     }
-    if (s === 1) return { errors: all.events ? { events: all.events } : {}, memberErrors: [] };
-    if (s === 2) return { errors: {}, memberErrors: validateMembers(members) };
-    return { errors: {}, memberErrors: [] };
+    if (s === 1) {
+      const all = validateContact(contact, picked);
+      return { errors: all.events ? { events: all.events } : {}, teamErrors: {} };
+    }
+    if (s === 2) return { errors: {}, teamErrors: checkTeams(picked, teams) };
+    return { errors: {}, teamErrors: {} };
   };
 
   const goTo = (s: Step) => {
     moved.current = true;
     setStep(s);
     setChecked(false);
-    setSendError(null);
     window.scrollTo({ top: 0, behavior: "auto" });
   };
 
@@ -115,20 +136,20 @@ export function MobileRegister({ preselectedEvent }: { preselectedEvent?: string
     if (!moved.current) return;
     moved.current = false;
     heading.current?.focus();
-  }, [step, receipt]);
+  }, [step, done]);
 
   // After a failed Continue, focus goes to the first field that needs fixing.
   useEffect(() => {
     if (!focusFirstBad.current) return;
     focusFirstBad.current = false;
     form.current?.querySelector<HTMLElement>("[aria-invalid='true']")?.focus();
-  }, [errors, memberErrors]);
+  }, [errors, teamErrors]);
 
-  const fail = (s: Step, found: { errors: Errors; memberErrors: MemberErrors[] }) => {
+  const fail = (s: Step, found: Found) => {
     if (s !== step) goTo(s);
     focusFirstBad.current = true;
     setErrors(found.errors);
-    setMemberErrors(found.memberErrors);
+    setTeamErrors(found.teamErrors);
   };
 
   const next = () => {
@@ -136,9 +157,9 @@ export function MobileRegister({ preselectedEvent }: { preselectedEvent?: string
 
     if (step < 3) {
       const found = check(step);
-      if (errorCount(found.errors, found.memberErrors) > 0) return fail(step, found);
+      if (count(found) > 0) return fail(step, found);
       setErrors({});
-      setMemberErrors([]);
+      setTeamErrors({});
       goTo((step + 1) as Step);
       return;
     }
@@ -147,7 +168,7 @@ export function MobileRegister({ preselectedEvent }: { preselectedEvent?: string
     // the first one with a problem, rather than submitting around it.
     for (const s of [0, 1, 2] as const) {
       const found = check(s);
-      if (errorCount(found.errors, found.memberErrors) > 0) return fail(s, found);
+      if (count(found) > 0) return fail(s, found);
     }
 
     if (!open) {
@@ -157,24 +178,21 @@ export function MobileRegister({ preselectedEvent }: { preselectedEvent?: string
     }
 
     setSending(true);
-    setSendError(null);
-    submitRegistration(buildPayload(values, picked, members, website))
-      .then((reply) => {
-        if (reply.ok) {
+    setFailures([]);
+    sendTeams(contact, picked, teams, outcomes, website)
+      .then((result) => {
+        setOutcomes(result.outcomes);
+        setFailures(result.failures);
+        if (result.failures.length === 0) {
           moved.current = true;
-          setReceipt({ id: reply.id, duplicate: Boolean(reply.duplicate) });
+          setDone(true);
           window.scrollTo({ top: 0, behavior: "auto" });
           return;
         }
-        const message = describeFailure(reply);
-        if (reply.error === "invalid") goTo(stepOf(reply.field));
-        setSendError(message);
         window.requestAnimationFrame(() => notice.current?.focus());
       })
       .catch(() => {
-        setSendError(
-          "Could not reach the registration server. Check your connection; your answers are still here, so submit again when you are back online.",
-        );
+        setFailures([{ event: "", message: OFFLINE }]);
         window.requestAnimationFrame(() => notice.current?.focus());
       })
       .finally(() => setSending(false));
@@ -185,18 +203,27 @@ export function MobileRegister({ preselectedEvent }: { preselectedEvent?: string
     next();
   };
 
-  const setField = (key: keyof Fields, value: string) => {
-    setValues((v) => ({ ...v, [key]: value }));
+  const setField = (key: keyof Contact, value: string) => {
+    setContact((v) => ({ ...v, [key]: value }));
     setChecked(false);
     setErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
   };
 
-  const setMember = (index: number, key: keyof Participant, value: string) => {
-    setMembers((list) => list.map((m, i) => (i === index ? { ...m, [key]: value } : m)));
+  const setPlayer = (eventId: string, index: number, key: keyof Player, value: string) => {
+    setTeams((all) => {
+      const list = places(eventId, all).slice();
+      list[index] = { ...list[index]!, [key]: value };
+      return { ...all, [eventId]: list };
+    });
     setChecked(false);
-    setMemberErrors((prev) =>
-      prev[index]?.[key]
-        ? prev.map((row, i) => (i === index ? { ...row, [key]: undefined } : row))
+    setTeamErrors((prev) =>
+      prev[eventId]?.[index]?.[key]
+        ? {
+            ...prev,
+            [eventId]: prev[eventId]!.map((row, i) =>
+              i === index ? { ...row, [key]: undefined } : row,
+            ),
+          }
         : prev,
     );
   };
@@ -212,11 +239,13 @@ export function MobileRegister({ preselectedEvent }: { preselectedEvent?: string
     });
   };
 
-  const pickedNames = events.filter((e) => picked.includes(e.id)).map((e) => e.name);
-  const teamSize = members.filter((m) => m.name.trim()).length + 1;
-  const problems = errorCount(errors, memberErrors);
+  const chosen = events.filter((e) => picked.includes(e.id));
+  const problems = count({ errors, teamErrors });
+  const anyIn = Object.keys(outcomes).length > 0;
 
-  if (receipt) {
+  if (done) {
+    const entered = chosen.filter((e) => outcomes[e.id]);
+    const repeats = entered.filter((e) => outcomes[e.id]!.duplicate).length;
     return (
       <MobileShell screen="register">
         <div className="m-register">
@@ -224,33 +253,53 @@ export function MobileRegister({ preselectedEvent }: { preselectedEvent?: string
           <h1 className="m-reg-title" ref={heading} tabIndex={-1}>
             Registered
           </h1>
-          <p className="m-reg-lede">
-            {pickedNames.join(", ")} · {values.school.trim()}
-          </p>
+          <p className="m-reg-lede">{contact.school.trim()}</p>
           <div className="m-receipt" role="status">
             <strong>
-              {receipt.duplicate
-                ? "This team is already registered for these events."
-                : "Registration received."}
+              {repeats === entered.length
+                ? entered.length === 1
+                  ? "This team is already registered."
+                  : "These teams are already registered."
+                : entered.length === 1
+                  ? "Registration received."
+                  : "Registrations received."}
             </strong>
-            <span className="m-receipt-id">{receipt.id}</span>
             <span className="m-muted m-small">
-              Keep it; the organisers will ask for it at the desk. Reporting times go to{" "}
-              {values.email.trim()}.
+              Every team has its own registration ID. Keep them; the organisers will ask for them at
+              the desk. Reporting times go to {contact.email.trim()}.
             </span>
           </div>
+          <ul className="m-receipt-list">
+            {entered.map((event) => {
+              const receipt = outcomes[event.id]!;
+              return (
+                <li key={event.id} data-accent={event.accent}>
+                  <span className="m-receipt-event">{event.name}</span>
+                  <span className="m-receipt-code">{receipt.id}</span>
+                  <span className="m-muted m-small">
+                    {receipt.duplicate
+                      ? "Already registered from this email. The team sent first is the one on record."
+                      : listOf(teamNames(event.id, teams))}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
           <div className="m-stack">
             <button
               type="button"
               className="m-btn m-btn-accent"
               data-accent="cyan"
               onClick={() => {
-                setReceipt(null);
                 setPicked([]);
+                setTeams({});
+                setOutcomes({});
+                setFailures([]);
+                setDone(false);
                 goTo(1);
               }}
             >
-              Register the same lead for different events
+              Register more teams
             </button>
             <ScreenLink to="/events" className="m-btn m-btn-ghost">
               Back to the events
@@ -321,53 +370,22 @@ export function MobileRegister({ preselectedEvent }: { preselectedEvent?: string
         {step === 0 ? (
           <div className="m-fields">
             <Field
-              id="student"
-              label="Team lead's full name"
-              required
-              value={values.student}
-              error={errors.student}
-              autoComplete="name"
-              onChange={(v) => setField("student", v)}
-            />
-            <Field
               id="school"
               label="School"
               required
-              value={values.school}
+              value={contact.school}
               error={errors.school}
               autoComplete="organization"
               onChange={(v) => setField("school", v)}
             />
-            <fieldset className="m-field">
-              <legend className="m-label">
-                Class <Required />
-              </legend>
-              <div className="m-classes">
-                {CLASSES.map((g) => (
-                  <label key={g} className="m-class">
-                    <input
-                      type="radio"
-                      name="grade"
-                      value={String(g)}
-                      checked={values.grade === String(g)}
-                      onChange={() => setField("grade", String(g))}
-                      aria-invalid={errors.grade ? true : undefined}
-                      aria-describedby={errors.grade ? "m-error-grade" : undefined}
-                    />
-                    <span>{g}</span>
-                  </label>
-                ))}
-              </div>
-              <FieldError id="m-error-grade" message={errors.grade} />
-            </fieldset>
             <Field
               id="email"
               label="Email"
               type="email"
               inputMode="email"
               required
-              hint="We send your team code and reporting times here."
-              value={values.email}
+              hint="We send each team's registration ID and reporting times here."
+              value={contact.email}
               error={errors.email}
               autoComplete="email"
               onChange={(v) => setField("email", v)}
@@ -379,19 +397,10 @@ export function MobileRegister({ preselectedEvent }: { preselectedEvent?: string
               inputMode="tel"
               required
               hint="10 digits, reachable on both fest days. No +91 needed."
-              value={values.phone}
+              value={contact.phone}
               error={errors.phone}
               autoComplete="tel"
               onChange={(v) => setField("phone", v)}
-            />
-            <Field
-              id="discord"
-              label="Discord"
-              hint="Optional. Briefing and results go out on the fest server."
-              value={values.discord}
-              error={errors.discord}
-              autoComplete="off"
-              onChange={(v) => setField("discord", v)}
             />
           </div>
         ) : null}
@@ -406,20 +415,24 @@ export function MobileRegister({ preselectedEvent }: { preselectedEvent?: string
                   name="events"
                   value={e.id}
                   checked={picked.includes(e.id)}
+                  disabled={Boolean(outcomes[e.id])}
                   onChange={() => togglePick(e.id)}
                   aria-invalid={errors.events ? true : undefined}
                 />
                 <span className="m-pick-box" aria-hidden="true" />
                 <span className="m-pick-text">
                   <span className="m-pick-name">{e.name}</span>
-                  <span className="m-pick-team">{e.team}</span>
+                  <span className="m-pick-team">
+                    {e.team}
+                    {outcomes[e.id] ? ` · Registered ${outcomes[e.id]!.id}` : ""}
+                  </span>
                 </span>
                 <span className="m-pick-dot" aria-hidden="true" />
               </label>
             ))}
             <p id="m-hint-events" className="m-pick-hint">
               <span>
-                A student can compete in only one event, so every team goes on its own form.
+                A student can compete in only one event, so each event needs different students.
               </span>
               {picked.length ? (
                 <span className="m-pick-count" aria-live="polite">
@@ -432,88 +445,84 @@ export function MobileRegister({ preselectedEvent }: { preselectedEvent?: string
 
         {step === 2 ? (
           <div className="m-fields">
-            <div className="m-lead-card">
-              <span className="m-lead-num" aria-hidden="true">
-                1
-              </span>
-              <span>
-                <span className="m-lead-name">{values.student.trim() || "Team lead"}</span>
-                <span className="m-muted m-small">Team lead</span>
-              </span>
-            </div>
-            {members.map((m, i) => (
-              <fieldset key={i} className="m-member">
-                <legend className="sr-only">Member {i + 2}</legend>
-                <div className="m-member-head">
-                  <span className="m-member-title" aria-hidden="true">
-                    Member {i + 2}
-                  </span>
-                  <button
-                    type="button"
-                    className="m-chip-btn"
-                    aria-label={`Remove member ${i + 2}`}
-                    onClick={() => {
-                      setMembers((list) => list.filter((_, j) => j !== i));
-                      setMemberErrors((prev) => prev.filter((_, j) => j !== i));
-                    }}
-                  >
-                    Remove
-                  </button>
-                </div>
-                <Field
-                  id={`member-${i}-name`}
-                  label={`Member ${i + 2}, full name`}
-                  hideLabel
-                  placeholder="Full name"
-                  value={m.name}
-                  error={memberErrors[i]?.name}
-                  autoComplete="off"
-                  onChange={(v) => setMember(i, "name", v)}
-                />
-                <div className="m-member-grid">
-                  <Field
-                    id={`member-${i}-phone`}
-                    label={`Member ${i + 2}, phone`}
-                    hideLabel
-                    placeholder="Phone"
-                    type="tel"
-                    inputMode="tel"
-                    value={m.phone}
-                    error={memberErrors[i]?.phone}
-                    autoComplete="off"
-                    onChange={(v) => setMember(i, "phone", v)}
-                  />
-                  <Field
-                    id={`member-${i}-discord`}
-                    label={`Member ${i + 2}, Discord`}
-                    hideLabel
-                    placeholder="Discord"
-                    value={m.discord}
-                    error={memberErrors[i]?.discord}
-                    autoComplete="off"
-                    onChange={(v) => setMember(i, "discord", v)}
-                  />
-                </div>
-              </fieldset>
-            ))}
-            <button
-              type="button"
-              className="m-btn m-btn-ghost"
-              disabled={members.length >= MAX_MEMBERS}
-              onClick={() => {
-                setMembers((list) => [...list, { ...BLANK }]);
-                setMemberErrors((prev) => [...prev, {}]);
-              }}
-            >
-              + Add a team member
-            </button>
-            <p className="m-muted m-small" aria-live="polite">
-              {members.length === 0
-                ? "No other members listed — that is a solo entry."
-                : `${members.length + 1} people listed, including you.${
-                    members.length >= MAX_MEMBERS ? " That is the most this form takes." : ""
-                  }`}
-            </p>
+            {chosen.map((event) => {
+              const receipt = outcomes[event.id];
+              return (
+                <section
+                  key={event.id}
+                  className="m-team"
+                  data-accent={event.accent}
+                  aria-labelledby={`m-team-${event.id}`}
+                >
+                  <h2 className="m-team-head" id={`m-team-${event.id}`}>
+                    <span className="m-team-name">{event.name}</span>
+                    <span className="m-team-size">{event.team}</span>
+                  </h2>
+                  {receipt ? (
+                    <p className="m-team-done">
+                      Registered · <strong>{receipt.id}</strong>
+                    </p>
+                  ) : (
+                    places(event.id, teams).map((p, i) => {
+                      const base = `team-${event.id}-${i}`;
+                      const err = teamErrors[event.id]?.[i] ?? {};
+                      const needed = i < event.size.min;
+                      return (
+                        <fieldset key={i} className="m-member">
+                          <legend className="sr-only">
+                            {event.name}, {placeLabel(event, i)}
+                          </legend>
+                          <span className="m-member-title" aria-hidden="true">
+                            {placeLabel(event, i)}
+                          </span>
+                          <Field
+                            id={`${base}-name`}
+                            label="Full name"
+                            required={needed}
+                            value={p.name}
+                            error={err.name}
+                            autoComplete="off"
+                            onChange={(v) => setPlayer(event.id, i, "name", v)}
+                          />
+                          <fieldset className="m-field">
+                            <legend className="m-label">
+                              Class {needed ? <Required /> : null}
+                            </legend>
+                            <div className="m-classes">
+                              {CLASSES.map((g) => (
+                                <label key={g} className="m-class">
+                                  <input
+                                    type="radio"
+                                    name={`${base}-grade`}
+                                    value={String(g)}
+                                    checked={p.grade === String(g)}
+                                    onChange={() => setPlayer(event.id, i, "grade", String(g))}
+                                    aria-invalid={err.grade ? true : undefined}
+                                    aria-describedby={
+                                      err.grade ? `m-error-${base}-grade` : undefined
+                                    }
+                                  />
+                                  <span>{g}</span>
+                                </label>
+                              ))}
+                            </div>
+                            <FieldError id={`m-error-${base}-grade`} message={err.grade} />
+                          </fieldset>
+                          <Field
+                            id={`${base}-discord`}
+                            label="Discord ID"
+                            value={p.discord}
+                            error={err.discord}
+                            autoComplete="off"
+                            onChange={(v) => setPlayer(event.id, i, "discord", v)}
+                          />
+                        </fieldset>
+                      );
+                    })
+                  )}
+                </section>
+              );
+            })}
           </div>
         ) : null}
 
@@ -522,23 +531,26 @@ export function MobileRegister({ preselectedEvent }: { preselectedEvent?: string
             <dl className="m-review">
               {(
                 [
-                  ["Lead", values.student || "—", 0],
-                  [
-                    "School",
-                    `${values.school || "—"}${values.grade ? ` · Class ${values.grade}` : ""}`,
-                    0,
-                  ],
-                  ["Email", values.email || "—", 0],
-                  ["Phone", values.phone || "—", 0],
-                  ["Discord", values.discord || "—", 0],
-                  [picked.length > 1 ? "Events" : "Event", pickedNames.join(", ") || "—", 1],
-                  ["Team", teamSize === 1 ? "Solo entry" : `${teamSize} people`, 2],
+                  ["School", contact.school || "—", 0],
+                  ["Email", contact.email || "—", 0],
+                  ["Phone", contact.phone || "—", 0],
+                  ["Events", listOf(chosen.map((e) => e.name)) || "—", 1],
+                  ...chosen.map(
+                    (e) =>
+                      [
+                        e.name,
+                        outcomes[e.id]
+                          ? `Registered · ${outcomes[e.id]!.id}`
+                          : listOf(teamNames(e.id, teams)) || "—",
+                        2,
+                      ] as const,
+                  ),
                 ] as const
               ).map(([key, value, target]) => (
                 <div key={key}>
                   <dt>{key}</dt>
                   <dd>
-                    <button type="button" onClick={() => goTo(target)}>
+                    <button type="button" onClick={() => goTo(target as Step)}>
                       {value}
                       <span className="sr-only"> (change)</span>
                     </button>
@@ -564,9 +576,20 @@ export function MobileRegister({ preselectedEvent }: { preselectedEvent?: string
           />
         </div>
 
-        {sendError ? (
+        {failures.length > 0 ? (
           <div className="m-alert" role="alert" tabIndex={-1} ref={notice}>
-            <strong>Not submitted.</strong> {sendError}
+            <strong>{anyIn ? "Not every team was submitted." : "Not submitted."}</strong>
+            {failures.map((f) => (
+              <span key={f.event || "all"} className="m-alert-line">
+                {f.event ? `${events.find((e) => e.id === f.event)?.name ?? f.event}: ` : ""}
+                {f.message}
+              </span>
+            ))}
+            {anyIn ? (
+              <span className="m-alert-line">
+                The teams marked registered are in. Submitting again sends only the rest.
+              </span>
+            ) : null}
           </div>
         ) : null}
 
@@ -666,6 +689,7 @@ function Field({
         name={id}
         type={type}
         className="m-input"
+        maxLength={MAX_TEXT}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy || undefined}
         required={required}

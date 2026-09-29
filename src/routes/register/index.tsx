@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef } from "react";
 import { MobileRegister } from "@/components/mobile/MobileRegister";
-import { RegisterFormBody, type RegisterDraft } from "@/components/register/RegisterFormBody";
+import type { RegisterDraft } from "@/components/register/logic";
+import { RegisterFormBody } from "@/components/register/RegisterFormBody";
 import { validateRegisterSearch } from "@/components/register/search";
 import { useLayout } from "@/lib/motion";
 import { seo } from "@/lib/seo";
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/register/")({
     seo({
       title: "Register",
       description:
-        "Register for Quantum V2.0. One form covers every event, for classes 9 to 12 at any participating school.",
+        "Register for Quantum V2.0. One form covers every event a school enters, with each team listed under its event, for classes 9 to 12.",
       path: "/register",
     }),
   component: RouteComponent,
@@ -33,11 +34,11 @@ export const Route = createFileRoute("/register/")({
 
 function RouteComponent() {
   const { event } = Route.useSearch();
-  // Outlives the desktop form, which a swap to the phone layout unmounts.
+  // Outlives both forms, either of which a swap between layouts unmounts.
   const draft = useRef<RegisterDraft | null>(null);
   return useLayout() === "desk" ? (
     <RegisterFormBody preselectedEvent={event} draft={draft} />
   ) : (
-    <MobileRegister preselectedEvent={event} />
+    <MobileRegister preselectedEvent={event} draft={draft} />
   );
 }

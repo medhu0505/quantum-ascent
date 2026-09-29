@@ -315,3 +315,27 @@ export async function submitRegistration(payload: RegistrationPayload): Promise<
   if (reply.ok && mirrorsToSheet()) mirrorToSheet(payload, reply.id);
   return reply;
 }
+
+/** One event's answer. `reply` is null when the server could not be reached. */
+export type EventOutcome = { event: string; reply: BackendReply | null };
+
+/**
+ * Submit several entries, one per event, in turn.
+ *
+ * Each is its own registration with its own id, so every event gets its own
+ * answer: a duplicate, a refusal or a dropped connection on one does not undo
+ * the others. Sending again is safe, because an event that already went
+ * through comes back as a duplicate carrying its original id.
+ */
+export async function submitEach(payloads: RegistrationPayload[]): Promise<EventOutcome[]> {
+  const outcomes: EventOutcome[] = [];
+  for (const payload of payloads) {
+    const event = payload.events[0] ?? "";
+    try {
+      outcomes.push({ event, reply: await submitRegistration(payload) });
+    } catch {
+      outcomes.push({ event, reply: null });
+    }
+  }
+  return outcomes;
+}

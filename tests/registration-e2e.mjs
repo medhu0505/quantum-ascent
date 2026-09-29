@@ -95,46 +95,69 @@ check(
   urls.filter((u) => u.includes("127.0.0.1:8181")).length === 0,
 );
 
-console.log("\n3. A real submit must reach the emulator, pass the rules and return an id\n");
+console.log(
+  "\n3. A real submit must reach the emulator, pass the rules and return an id per team\n",
+);
 
-const EMAIL = `aarav.${Date.now()}@example.com`;
+const EMAIL = `coordinator.${Date.now()}@example.com`;
 
+/** A school entering two events, each with its own team and Discord IDs. */
 async function fillForm() {
-  await page.fill("#field-student", "Aarav Sharma");
   await page.fill("#field-school", "Air Force Bal Bharati School");
-  await page.selectOption("#field-grade", "11");
   await page.fill("#field-email", EMAIL);
   await page.fill("#field-phone", "+91 98100 12345");
   await page.check("#field-event-quiz");
   await page.check("#field-event-pitch");
-  await page.click("button:has-text('Add a team member')");
-  await page.fill("#field-member-0-name", "Ishita Rao");
-  await page.selectOption("#field-member-0-grade", "10");
-  await page.fill("#field-member-0-email", "ishita@example.com");
+  await page.fill("#field-team-quiz-0-name", "Aarav Sharma");
+  await page.selectOption("#field-team-quiz-0-grade", "11");
+  await page.fill("#field-team-quiz-0-discord", "aarav_s");
+  await page.fill("#field-team-quiz-1-name", "Ishita Rao");
+  await page.selectOption("#field-team-quiz-1-grade", "10");
+  await page.fill("#field-team-quiz-1-discord", "ishita.rao");
+  await page.fill("#field-team-pitch-0-name", "Kabir Mehta");
+  await page.selectOption("#field-team-pitch-0-grade", "12");
+  await page.fill("#field-team-pitch-1-name", "Sara Ali");
+  await page.selectOption("#field-team-pitch-1-grade", "12");
 }
+
+/** The receipt's ids, one per team, in the order the events are listed. */
+const receiptIds = () =>
+  page.locator(".receipt-id").evaluateAll((els) => els.map((el) => el.textContent.trim()));
 
 await fillForm();
 await page.click("button[type=submit]");
 await page.waitForSelector(".notice-ok", { timeout: 25_000 });
 
 const receipt = await page.locator(".notice-ok").innerText();
-const id = receipt.match(/QV2-[0-9A-F]{8}/)?.[0] ?? "";
-check("the receipt carries a registration id", Boolean(id), id);
-check("the receipt reports a new registration", receipt.includes("Registration received"));
+const ids = await receiptIds();
+check(
+  "the receipt carries an id for each team",
+  ids.length === 2 && ids.every((i) => /^QV2-[0-9A-F]{8}$/.test(i)) && ids[0] !== ids[1],
+  ids.join(" "),
+);
+check("the receipt reports new registrations", receipt.includes("Registrations received"));
 check(
   "the request went to the emulator",
   urls.some((u) => u.includes("127.0.0.1:8181")),
 );
 
-console.log("\n4. The same entry submitted twice must come back as the same id, once\n");
+console.log("\n4. The same teams submitted twice must come back as the same ids, once\n");
 
 await page.goto(`${BASE}/register/form`, { waitUntil: "networkidle" });
 await fillForm();
 await page.click("button[type=submit]");
 await page.waitForSelector(".notice-ok", { timeout: 25_000 });
 const second = await page.locator(".notice-ok").innerText();
-check("the duplicate is recognised", second.includes("already registered"), second.split("\n")[0]);
-check("the duplicate returns the original id", second.includes(id), id);
+check(
+  "the duplicates are recognised",
+  second.includes("already registered"),
+  second.split("\n")[0],
+);
+check(
+  "the duplicates return the original ids",
+  JSON.stringify(await receiptIds()) === JSON.stringify(ids),
+  ids.join(" "),
+);
 
 const REST =
   "http://127.0.0.1:8181/v1/projects/demo-quantum/databases/(default)/documents/registrations";
@@ -146,27 +169,56 @@ check(
 );
 
 const docs = (await fetch(REST, ADMIN).then((r) => r.json())).documents ?? [];
-check("the emulator holds exactly one entry", docs.length === 1, `${docs.length} document(s)`);
-if (docs[0]) {
-  const f = docs[0].fields;
-  check("the stored id matches the receipt", f.id.stringValue === id);
-  check("the document id is the sha-256 key", /^[0-9a-f]{64}$/.test(docs[0].name.split("/").pop()));
-  check("the team size was recorded", f.teamSize.integerValue === "2", f.teamSize.integerValue);
+check(
+  "the emulator holds exactly one entry per team",
+  docs.length === 2,
+  `${docs.length} document(s)`,
+);
+const byEvent = Object.fromEntries(
+  docs.map((d) => [d.fields.events.arrayValue.values.map((v) => v.stringValue).join(","), d]),
+);
+const quiz = byEvent["quiz"]?.fields;
+const pitch = byEvent["pitch"]?.fields;
+check(
+  "each entry names exactly one event",
+  Boolean(quiz && pitch),
+  Object.keys(byEvent).join(" | "),
+);
+if (quiz && pitch) {
   check(
-    "both events were recorded",
-    f.events.arrayValue.values.map((v) => v.stringValue).join(",") === "quiz,pitch",
+    "the stored ids match the receipt",
+    quiz.id.stringValue === ids[0] && pitch.id.stringValue === ids[1],
+  );
+  check(
+    "the document ids are sha-256 keys",
+    docs.every((d) => /^[0-9a-f]{64}$/.test(d.name.split("/").pop())),
+  );
+  check(
+    "each team's size was recorded",
+    quiz.teamSize.integerValue === "2" && pitch.teamSize.integerValue === "2",
+  );
+  check(
+    "the team lead and the rest of the team were recorded with their Discord IDs",
+    quiz.student.stringValue === "Aarav Sharma" &&
+      quiz.discord.stringValue === "aarav_s" &&
+      quiz.members.arrayValue.values[0].mapValue.fields.name.stringValue === "Ishita Rao" &&
+      quiz.members.arrayValue.values[0].mapValue.fields.discord.stringValue === "ishita.rao",
+  );
+  check(
+    "a team with no Discord IDs is stored with them empty",
+    pitch.student.stringValue === "Kabir Mehta" && pitch.discord.stringValue === "",
   );
 }
 
 console.log("\n5. The honeypot must never reach the database\n");
 
 await page.goto(`${BASE}/register/form`, { waitUntil: "networkidle" });
-await page.fill("#field-student", "Bot");
 await page.fill("#field-school", "Nowhere");
-await page.selectOption("#field-grade", "9");
 await page.fill("#field-email", `bot.${Date.now()}@example.com`);
 await page.fill("#field-phone", "9810012345");
-await page.check("#field-event-quiz");
+await page.check("#field-event-online-gaming");
+await page.fill("#field-team-online-gaming-0-name", "Bot");
+await page.selectOption("#field-team-online-gaming-0-grade", "9");
 await page.evaluate(() => {
   const input = document.querySelector("#field-website");
   const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
@@ -175,13 +227,10 @@ await page.evaluate(() => {
 });
 await page.click("button[type=submit]");
 await page.waitForSelector(".notice-ok", { timeout: 25_000 });
-check(
-  "the bot is answered",
-  (await page.locator(".notice-ok").innerText()).includes("QV2-RECEIVED"),
-);
+check("the bot is answered", (await receiptIds()).includes("QV2-RECEIVED"));
 
 const after = await fetch(REST, ADMIN).then((r) => r.json());
-check("nothing was written", (after.documents ?? []).length === 1);
+check("nothing was written", (after.documents ?? []).length === 2);
 
 await browser.close();
 

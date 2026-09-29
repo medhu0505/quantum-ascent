@@ -3649,6 +3649,7 @@ button.screen:active {
 
   .room,
   .page,
+  .desk[data-tab],
   .lost {
     min-height: 0;
     padding: 0;
@@ -3657,9 +3658,15 @@ button.screen:active {
 
   .room-body,
   .page-inner,
+  .desk-panel,
   .lost-body {
     max-width: none;
     padding: 0;
+  }
+
+  /* A Resources tab prints as its page; the room it opened from does not. */
+  .desk[data-tab] .desk-frame {
+    display: none !important;
   }
 
   .screen,
@@ -3724,15 +3731,16 @@ button.screen:active {
  * The desk: Resources
  *
  * A photographed desk with the room's own interface built into it: its three
- * monitors are the destinations. Register used to be a second desk, one blank
- * screen as the door, until it became the form itself.
+ * monitors are FAQ, About and Contact. On /resources the room is the whole
+ * page. Choosing a monitor folds the room into a band, the neon sign over the
+ * three screens, and the tab opens underneath it on the same page. Register
+ * used to be a second desk, one blank screen as the door, until it became the
+ * form itself.
  * ------------------------------------------------------------------ */
 
-/* The room's header and the per-card blurbs. On a wide viewport the
-   photograph carries both — the neon on the wall names the room, the monitor
-   you are pointing at is self-evident — so these are here for screen readers
-   only. The phone layout below unhides them, because there it has no
-   photograph to carry anything. */
+/* The room's header and the per-screen blurbs. The photograph carries both,
+   the neon on the wall names the room and the monitor you are pointing at is
+   self-evident, so these are here for screen readers only. */
 .desk-head,
 .desk-screen-blurb {
   position: absolute;
@@ -3746,35 +3754,69 @@ button.screen:active {
   border: 0;
 }
 
+/*
+ * The fold. Folded, the window around the room keeps one band of the
+ * picture, from just above the neon sign to the front edge of the desk, and
+ * the room slides up inside it by what is cut off above. Both are fractions
+ * of the room's own height, so the band is the same slice of the picture at
+ * every width.
+ *
+ * Unfolded, the room sits in the middle of the screen, as it always has. The
+ * offset is worked out rather than left to a centring layout, because the
+ * fold has to animate it to the top, and a layout cannot be animated.
+ */
 .desk {
-  display: grid;
-  place-items: center;
+  --room-h: calc(min(100vw - 2 * var(--s-4), 96rem) * 720 / 1280);
+  --fold-top: 0.22;
+  --fold-height: 0.38;
   min-height: 100svh;
-  padding: var(--s-4);
+  padding: max(var(--s-4), (100svh - var(--room-h)) / 2) var(--s-4) var(--s-4);
   background: var(--background);
+  transition: padding-top var(--dur-5) var(--ease);
 }
 
-/* The frame carries the width and the positioning context; the room carries
-   the shape and the clipping. Keeping those apart is what lets the hotspots
-   sit absolutely over the picture on a desktop and flow out below it on a
-   phone, without a clipping box swallowing the fallback. */
+/* Folded: clear of the fixed chip band, where every page starts. */
+.desk[data-tab] {
+  padding-top: calc(var(--s-7) + var(--s-4));
+  padding-bottom: 0;
+}
+
+/* The frame carries the width and is what the room is measured against; the
+   window does the clipping; the room carries the picture and the screens
+   together, so the fold cannot move one without the other. */
 .desk-frame {
   position: relative;
   width: 100%;
   max-width: 96rem;
+  margin-inline: auto;
   container-type: inline-size;
+}
+
+.desk-window {
+  position: relative;
+  height: calc(100cqi * 720 / 1280);
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  transition: height var(--dur-5) var(--ease);
+}
+
+.desk[data-tab] .desk-window {
+  height: calc(100cqi * 720 / 1280 * var(--fold-height));
 }
 
 /* Locked to the photograph's own aspect. The screen hotspots are placed in
    percentages of this box, so the box has to be the same shape as the picture
-   inside it — otherwise object-fit crops, and every hotspot slides off the
+   inside it; otherwise object-fit crops, and every hotspot slides off the
    monitor it belongs to. */
 .desk-room {
   position: relative;
   width: 100%;
   aspect-ratio: 1280 / 720;
-  overflow: hidden;
-  border-radius: var(--radius-lg);
+  transition: transform var(--dur-5) var(--ease);
+}
+
+.desk[data-tab] .desk-room {
+  transform: translateY(calc(100cqi * 720 / 1280 * var(--fold-top) * -1));
 }
 
 .desk-plate {
@@ -3784,6 +3826,7 @@ button.screen:active {
   object-fit: cover;
 }
 
+.desk-nav,
 .desk-screens {
   position: absolute;
   inset: 0;
@@ -3816,7 +3859,9 @@ button.screen:active {
   text-shadow:
     0 0 10px oklch(0.84 0.13 215 / 0.9),
     0 1px 3px oklch(0.1 0.02 265 / 0.9);
-  transition: text-shadow var(--dur-2) var(--ease);
+  transition:
+    text-shadow var(--dur-2) var(--ease),
+    opacity var(--dur-2) var(--ease);
 }
 
 /* No fill, no ring, no glow shape on the screen element itself: a filled
@@ -3837,17 +3882,80 @@ button.screen:active {
     0 1px 3px oklch(0.1 0.02 265 / 0.9);
 }
 
-/* Narrow screens make each monitor about sixty pixels wide, which clears the
-   minimum target but is a mean thing to ask anyone to hit. Below this the
-   labels sit under the picture as a plain row of links instead, and the
-   monitors stop pretending to be buttons. */
-@media (max-width: 40rem) {
+/* Folded, the screens are the tabs. The open one is lit and underlined and
+   the other two dim until pointed at. The label is still the only thing that
+   changes: the glass stays glass. */
+.desk[data-tab] .desk-screen-label {
+  opacity: 0.6;
+}
+
+.desk[data-tab] .desk-screen:hover .desk-screen-label,
+.desk[data-tab] .desk-screen:focus-visible .desk-screen-label,
+.desk-screen[aria-current="page"] .desk-screen-label {
+  opacity: 1;
+}
+
+.desk-screen[aria-current="page"] .desk-screen-label {
+  text-shadow:
+    0 0 18px oklch(0.84 0.13 215),
+    0 0 36px oklch(0.84 0.13 215 / 0.55),
+    0 1px 3px oklch(0.1 0.02 265 / 0.9);
+}
+
+/* The underline stops where the letters do: letter-spacing leaves a gap after
+   the last one. */
+.desk-screen-label::after {
+  content: "";
+  display: block;
+  height: 2px;
+  margin: 0.5em 0.2em 0 0;
+  border-radius: 2px;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 10px var(--neon-cyan);
+  transform: scaleX(0);
+  transition: transform var(--dur-3) var(--ease);
+}
+
+.desk-screen[aria-current="page"] .desk-screen-label::after {
+  transform: scaleX(1);
+}
+
+/* The tab under the band: the same column, type and spacing as a page. */
+.desk-panel {
+  max-width: 52rem;
+  margin-inline: auto;
+  padding: var(--s-7) max(0px, var(--gutter) - var(--s-4)) var(--s-9);
+}
+
+/* The heading reveals itself; the rest follows it up, a beat behind the
+   fold, so the room settles before the reading starts. */
+.desk-panel-body {
+  animation: desk-panel-in var(--dur-4) var(--ease) 180ms both;
+}
+
+@keyframes desk-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+.faq-more {
+  margin-top: var(--s-7);
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .desk,
+  .desk-window,
+  .desk-room,
   .desk-screen,
-  .desk-screen-label {
+  .desk-screen-label,
+  .desk-screen-label::after {
     transition: none;
+  }
+
+  .desk-panel-body {
+    animation: none;
   }
 }
 
@@ -4710,13 +4818,11 @@ button.screen:active {
   /* The world, once, behind everything. Fixed rather than scrolled: these
      pages run several screens long and a cover-sized backdrop stretched down
      all of it turns the street into a smear. */
-  .page,
-  .desk {
+  .page {
     background: transparent;
   }
 
-  .page::before,
-  .desk::before {
+  .page::before {
     content: "";
     position: fixed;
     inset: 0;
@@ -4732,85 +4838,11 @@ button.screen:active {
     pointer-events: none;
   }
 
-  /* The room's photograph is the interior, and there is no interior here.
-     It was a 16:9 letterbox of a desk with the actual destinations listed
-     underneath it — the picture took the space and the links did the work. */
-  .desk-room {
-    display: none;
-  }
-
-  .desk {
-    min-height: 0;
-    padding: calc(var(--s-8) + var(--s-4)) var(--gutter) var(--s-9);
-    place-items: stretch;
-  }
-
-  .desk-frame {
-    margin-inline: auto;
-    max-width: 52rem;
-  }
-
-  /* Out of the photograph's coordinate space and into ordinary flow. This
-     used to live at 40rem while the rule hiding the photograph is at 48rem,
-     and between the two the links stayed absolutely positioned over a room
-     that was no longer there: measured 120x0 and 131x0 at 700px and 760px —
-     three destinations with no height, unreachable. One breakpoint now. */
-  .desk-screens {
-    position: static;
-    display: grid;
-    gap: var(--s-3);
-    margin-block-start: 0;
-  }
-
-  .desk-screens > li {
-    position: static;
-    /* Beats the percentage geometry the component sets inline, which is
-       measured off the photograph. */
-    width: auto !important;
-    height: auto !important;
-  }
-
-  .desk-head,
-  .desk-screen-blurb {
-    position: static;
-    width: auto;
-    height: auto;
-    margin: 0;
-    overflow: visible;
-    clip-path: none;
-    white-space: normal;
-  }
-
-  .desk-head {
-    margin-bottom: var(--section);
-  }
-
-  .desk-screen {
-    position: static;
-    display: grid;
-    gap: 0.2rem;
-    place-items: start;
-    text-align: left;
-  }
-
-  /* Sized against the card's own width by a container query, which on a
-     phone works out at the 0.7rem floor — eleven pixels of tracked-out caps
-     for the only thing on the card. */
-  .desk-screen-label {
-    font-size: var(--text-base);
-    letter-spacing: 0.12em;
-  }
-
-  .desk-screen-blurb {
-    font-size: var(--text-xs);
-    line-height: 1.35;
-    color: oklch(0.99 0 0 / 0.72);
-  }
-
-  /* One panel, three places: the room's destinations, the FAQ's questions,
-     and the form's events. Same build as a sign on the crossroads — accent
-     glass over the street, a neon edge, a bloom off it. */
-  .desk-screen,
+  /* One panel, two places: the FAQ's questions and the form's events. Same
+     build as a sign on the crossroads — accent glass over the street, a neon
+     edge, a bloom off it. The Resources desk is not here: it only renders
+     where the stage query matches, from 48rem up, so none of this width
+     reaches it. */
   .faq-item,
   .event-pick {
     border: 0;
@@ -4819,12 +4851,6 @@ button.screen:active {
     box-shadow:
       inset 0 0 0 1px color-mix(in oklab, var(--panel-accent) 48%, transparent),
       0 0 22px color-mix(in oklab, var(--panel-accent) 16%, transparent);
-  }
-
-  .desk-screen {
-    --panel-accent: var(--neon-cyan);
-    min-height: 3.5rem;
-    padding: var(--s-4) var(--s-5);
   }
 
   .faq {
@@ -4886,8 +4912,7 @@ button.screen:active {
     --border: oklch(1 0 0 / 16%);
   }
 
-  .page::before,
-  .desk::before {
+  .page::before {
     background:
       linear-gradient(
         180deg,
@@ -6106,6 +6131,79 @@ html[data-layout="phone"] body {
   margin: 0;
   font-size: 15px;
   line-height: 1.5;
+}
+
+/* A group of details under its own heading starts at the heading. */
+.m-h3 + .m-details {
+  margin-top: 0;
+}
+
+/* What a channel is for, under the link to it. */
+.m-detail-note {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--m-muted);
+}
+
+/* The day under each event's in-charges. */
+.m-contact-events .m-contact-day {
+  margin-top: 2px;
+  font-size: 12px;
+  color: oklch(0.99 0 0 / 0.66);
+}
+
+.m-contact-faculty {
+  margin: 12px 4px 0;
+  line-height: 1.6;
+}
+
+/* About's six events, each opening its own panel on the Events screen. The
+   bar down the edge is the event's colour, as it is everywhere else. */
+.m-res-events {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.m-res-events a {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 14px 16px 14px 18px;
+  border-radius: 4px;
+  color: var(--m-fg);
+  text-decoration: none;
+  background: color-mix(in oklab, var(--m-acc) 10%, oklch(0.16 0.03 265 / 0.8));
+  box-shadow:
+    inset 3px 0 0 0 var(--m-acc),
+    inset 0 0 0 1px oklch(1 0 0 / 0.08);
+}
+
+.m-res-event-name {
+  font: 600 15px/1.3 var(--font-display);
+}
+
+.m-res-event-note {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--m-muted);
+}
+
+/* The buttons that close a tab: where to go next. */
+.m-res-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 20px 4px 0;
+}
+
+.m-res-actions .m-brochure {
+  margin: 0;
 }
 
 /* ---- Register ------------------------------------------------------------ */

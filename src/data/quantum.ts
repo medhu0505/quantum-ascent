@@ -652,14 +652,14 @@ export const faqs = [
  * ------------------------------------------------------------------ */
 
 /**
- * Facts worth stating flat, above the prose. A note is the one line of detail
- * a bare number cannot carry on its own.
+ * Facts worth stating flat, above the prose, with the one line of detail a
+ * bare number cannot carry on its own.
  */
-export const festFacts: readonly { value: string; label: string; note?: string }[] = [
-  { value: String(events.length), label: "events" },
+export const festFacts: readonly { value: string; label: string; note: string }[] = [
+  { value: String(events.length), label: "events", note: "One championship" },
   { value: "2", label: "days", note: "8 Oct online · 9 Oct offline" },
-  { value: "9–12", label: "classes" },
-  { value: "100%", label: "student-run" },
+  { value: "9–12", label: "classes", note: "Open to Grades 9–12" },
+  { value: "100%", label: "student-run", note: "Faculty coordinate" },
 ];
 
 export const about = {
@@ -676,4 +676,94 @@ export const about = {
     heading: "The Championship & Scoring",
     line: "Six standalone events. One ultimate championship.",
   },
+} as const;
+
+/* ------------------------------------------------------------------ *
+ * Resources: the FAQ, About and Contact as one place.
+ *
+ * Both layouts show the same three tabs with the same content: the desk's
+ * three monitors on a wide screen, the tab bar on a phone. Anything either
+ * layout says about contacting the fest is here, so the two cannot drift.
+ * ------------------------------------------------------------------ */
+
+export type ResourceTab = "faq" | "about" | "contact";
+
+/**
+ * The tabs in order. Each is its own address, so a link or a reload opens
+ * on the right one, and the same three addresses answer on both layouts.
+ */
+export const resourceTabs = [
+  {
+    id: "faq",
+    to: "/faq",
+    label: "FAQ",
+    blurb: `${faqs.length} answers on eligibility, registration, fees and rules.`,
+  },
+  {
+    id: "about",
+    to: "/about",
+    label: "About",
+    blurb: "What Quantum is, how it is scored, and who runs it.",
+  },
+  {
+    id: "contact",
+    to: "/contact",
+    label: "Contact",
+    blurb: "Who to call about each event, and where the fest posts updates.",
+  },
+] as const satisfies readonly { id: ResourceTab; to: string; label: string; blurb: string }[];
+
+/** The tab an address opens on: /faq, /about and /contact, with or without a trailing slash. */
+export function resourceTabAt(pathname: string): ResourceTab | null {
+  const path = pathname.replace(/\/+$/, "");
+  return resourceTabs.find((tab) => tab.to === path)?.id ?? null;
+}
+
+/** The Contact tab's own title and the line that introduces it. */
+export const contactPage = {
+  title: "Contact",
+  lede: "Questions about an event go to its student in-charges, whose numbers are on this page. For live updates through both fest days, follow the WhatsApp community, Discord or Instagram.",
+  /** Under the event contacts: the teacher is named, never numbered. */
+  faculty: `The fest's teacher in charge is ${contact.name}. For anything about a particular event, its in-charges are the people to call.`,
+} as const;
+
+/** Where the fest posts its updates, and what each one is for. */
+export const updateChannels = [
+  {
+    id: "instagram",
+    label: "Instagram",
+    who: undefined,
+    value: contact.instagram,
+    href: contact.instagramUrl,
+    note: "Announcements, results and the highlight reel.",
+  },
+  {
+    id: "whatsapp",
+    label: "WhatsApp",
+    who: "community",
+    value: "Join the community",
+    href: contact.whatsappUrl,
+    note: "Live updates through both fest days, and news about the events you are in.",
+  },
+  {
+    id: "discord",
+    label: "Discord",
+    who: "server",
+    value: "Join the server",
+    href: contact.discordUrl,
+    note: "Updates about your own events, alongside the WhatsApp community.",
+  },
+] as const;
+
+/** What to do on the offline day, from the brochure. The FAQ says the same at more length. */
+export const onTheDay = `On ${FEST_DAYS.offline.label}, be at the school by 7:30 a.m.: the registration desk is open from 7:30 to 8:00 a.m. Bring your confirmation email, and come in school uniform with your teacher in-charge.`;
+
+/** The lines that send a visitor from one tab to the other when the answer is there. */
+export const resourceHints = {
+  /** At the foot of the FAQ. */
+  notAnswered:
+    "Not answered here? Call the in-charges of the event you are asking about. Their numbers are under Contact.",
+  /** At the foot of Contact. */
+  beforeYouCall:
+    "Most questions we get are already answered in the FAQ: who can enter, how entries are submitted, fees, and what you need to prepare.",
 } as const;

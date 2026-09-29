@@ -1,45 +1,39 @@
 import { Link } from "@tanstack/react-router";
 import { useId, useState } from "react";
-import { MobileShell, ScreenHead } from "@/components/mobile/MobileShell";
+import { MobileShell, ScreenHead, ScreenLink } from "@/components/mobile/MobileShell";
 import { Value } from "@/components/site/Bits";
 import {
   BROCHURE_URL,
   FEST_DATES,
-  FEST_DAYS,
   about,
-  contact,
+  contactPage,
+  eventDay,
   events,
   faqPage,
   faqs,
   festFacts,
   getScene,
   isTodo,
+  onTheDay,
+  resourceHints,
+  resourceTabs,
   school,
+  updateChannels,
+  type ResourceTab,
 } from "@/data/quantum";
 import { faqJsonLd } from "@/lib/structured-data";
 
 /**
  * Resources on a phone: the FAQ, About and Contact as three tabs of one
  * screen. Each tab is its own address, the same /faq, /about and /contact the
- * desktop site answers, so a link to one opens on it and the tab survives a
- * reload. Switching tabs replaces the address rather than pushing, and keeps
- * the scroll where it is.
+ * desk answers on a wide screen, so a link to one opens on it and the tab
+ * survives a reload. Switching tabs replaces the address rather than pushing,
+ * and keeps the scroll where it is.
+ *
+ * The desk shows the same sections in the same order, from the same data, in
+ * src/components/interiors/ResourcesPanels.tsx. A section added to one
+ * belongs in the other.
  */
-
-export type ResourceTab = "faq" | "about" | "contact";
-
-const TABS: { tab: ResourceTab; to: string; label: string }[] = [
-  { tab: "faq", to: "/faq", label: "FAQ" },
-  { tab: "about", to: "/about", label: "About" },
-  { tab: "contact", to: "/contact", label: "Contact" },
-];
-
-/** One more line under each fact, where a phone has the room to read it. */
-const FACT_NOTES: Record<string, string> = {
-  events: "One championship",
-  classes: "Open to Grades 9–12",
-  "student-run": "Faculty coordinate",
-};
 
 function Faq() {
   const [open, setOpen] = useState(0);
@@ -75,6 +69,15 @@ function Faq() {
           );
         })}
       </div>
+
+      <h3 className="m-h3">Still stuck?</h3>
+      <p className="m-muted m-prose">{resourceHints.notAnswered}</p>
+      <div className="m-res-actions">
+        <Link to="/contact" replace className="m-btn m-btn-ghost">
+          See the event contacts
+        </Link>
+      </div>
+
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd()) }}
@@ -95,7 +98,7 @@ function About() {
             <dd>
               <span className="m-fact-value m-gradient-text">{fact.value}</span>
               <span className="m-fact-label">{fact.label}</span>
-              <span className="m-fact-note">{fact.note ?? FACT_NOTES[fact.label]}</span>
+              <span className="m-fact-note">{fact.note}</span>
             </dd>
           </div>
         ))}
@@ -108,15 +111,33 @@ function About() {
       ))}
       <h3 className="m-h3">{about.scoring.heading}</h3>
       <p className="m-muted m-prose">{about.scoring.line}</p>
-      <p className="m-brochure">
+      <ul className="m-res-events">
+        {events.map((event) => (
+          <li key={event.id} data-accent={event.accent}>
+            <ScreenLink to="/events" search={{ event: event.id }}>
+              <span className="m-res-event-name">{event.name}</span>
+              <span className="m-res-event-note">{event.tagline}</span>
+            </ScreenLink>
+          </li>
+        ))}
+      </ul>
+      <div className="m-res-actions">
+        <ScreenLink to="/register" className="m-btn m-btn-accent" data-accent="magenta">
+          Register for the events
+        </ScreenLink>
+        <ScreenLink to="/events" className="m-btn m-btn-ghost">
+          Read the full event details
+        </ScreenLink>
         {isTodo(BROCHURE_URL) ? (
-          <Value value={BROCHURE_URL} label="Brochure" />
+          <p className="m-brochure">
+            <Value value={BROCHURE_URL} label="Brochure" />
+          </p>
         ) : (
           <a className="m-btn m-btn-ghost" href={BROCHURE_URL} download>
             Download the brochure
           </a>
         )}
-      </p>
+      </div>
     </>
   );
 }
@@ -132,10 +153,8 @@ const tel = (phone: string) => `tel:${phone.replace(/\s/g, "")}`;
 function Contact() {
   return (
     <>
-      <h2 className="m-h2 m-h2-lg m-tab-head">Contact</h2>
-      <p className="m-muted m-small m-tab-lede">
-        Questions about an event go to its student in-charges.
-      </p>
+      <h2 className="m-h2 m-h2-lg m-tab-head">{contactPage.title}</h2>
+      <p className="m-muted m-small m-tab-lede">{contactPage.lede}</p>
       <div className="m-contact">
         <p className="m-contact-who">
           <span className="m-contact-name">Event contacts</span>
@@ -153,15 +172,30 @@ function Contact() {
                   <a href={tel(person.phone)}>{person.phone}</a>
                 </dd>
               ))}
+              <dd className="m-contact-day">{eventDay(event)}</dd>
             </div>
           ))}
         </dl>
       </div>
+      <p className="m-muted m-small m-contact-faculty">{contactPage.faculty}</p>
+
+      <h3 className="m-h3">Updates</h3>
       <dl className="m-details">
-        <div>
-          <dt>Teacher in charge</dt>
-          <dd>{contact.name}</dd>
-        </div>
+        {updateChannels.map((channel) => (
+          <div key={channel.id}>
+            <dt>{channel.label}</dt>
+            <dd>
+              <a href={channel.href} target="_blank" rel="noreferrer">
+                {channel.value}
+              </a>
+              <span className="m-detail-note">{channel.note}</span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+
+      <h3 className="m-h3">Where it happens</h3>
+      <dl className="m-details">
         <div>
           <dt>Venue</dt>
           <dd>
@@ -176,40 +210,20 @@ function Contact() {
         </div>
         <div>
           <dt>On the day</dt>
-          <dd>
-            Be at the school by 7:30 a.m. on {FEST_DAYS.offline.label}. The registration desk is
-            open from 7:30 to 8:00 a.m.
-          </dd>
-        </div>
-        <div>
-          <dt>Instagram</dt>
-          <dd>
-            {isTodo(contact.instagram) ? (
-              <Value value={contact.instagram} label="Instagram" />
-            ) : (
-              <a href={contact.instagramUrl} target="_blank" rel="noreferrer">
-                {contact.instagram}
-              </a>
-            )}
-          </dd>
-        </div>
-        <div>
-          <dt>WhatsApp</dt>
-          <dd>
-            <a href={contact.whatsappUrl} target="_blank" rel="noreferrer">
-              Join the community
-            </a>
-          </dd>
-        </div>
-        <div>
-          <dt>Discord</dt>
-          <dd>
-            <a href={contact.discordUrl} target="_blank" rel="noreferrer">
-              Join the server
-            </a>
-          </dd>
+          <dd>{onTheDay}</dd>
         </div>
       </dl>
+
+      <h3 className="m-h3">Before you call</h3>
+      <p className="m-muted m-prose">{resourceHints.beforeYouCall}</p>
+      <div className="m-res-actions">
+        <Link to="/faq" replace className="m-btn m-btn-ghost">
+          Read the FAQ
+        </Link>
+        <ScreenLink to="/register" className="m-btn m-btn-accent" data-accent="magenta">
+          Register for the events
+        </ScreenLink>
+      </div>
     </>
   );
 }
@@ -220,14 +234,14 @@ export function MobileResources({ tab }: { tab: ResourceTab }) {
       <ScreenHead image={getScene("resources")!.view!} title="Resources" accent="violet" />
       <div className="m-pad m-resources">
         <nav className="m-tabs" aria-label="Resources">
-          {TABS.map((t) => (
+          {resourceTabs.map((t) => (
             <Link
-              key={t.tab}
+              key={t.id}
               to={t.to}
               replace
               resetScroll={false}
               className="m-tab"
-              aria-current={t.tab === tab ? "page" : undefined}
+              aria-current={t.id === tab ? "page" : undefined}
             >
               {t.label}
             </Link>

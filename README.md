@@ -267,8 +267,8 @@ match Firestore's.
 /events            Events interior — six screens, one per event
 /register          The registration form (/register/form forwards here)
 /team              Meet the Team interior
-/resources         Resources interior — FAQ, About, Contact
-/faq /about /contact
+/resources         Resources: the desk, its three monitors FAQ, About, Contact
+/faq /about /contact  The same room folded into a band, that tab open under it
 ```
 
 Those addresses are shared by two sites. A wide, landscape screen at least
@@ -277,6 +277,13 @@ upright, a narrowed laptop window, gets the phone app in `src/components/mobile`
 a street of cards, a dock along the bottom, events on a rail you swipe or drag,
 and registration in four steps. The two switch live on a resize or a rotation,
 and share the data, the validation and the registration backend.
+
+Resources is one screen on both sites. `src/routes/_resources.tsx` owns
+/resources, /faq, /about and /contact, so the screen stays mounted while the
+address moves between them: the desk folds rather than reloading, and the
+phone's tabs swap under a header that stays put. Both render the same
+sections from the same data in `src/data/quantum.ts`; a section added to
+`ResourcesPanels.tsx` belongs in `MobileResources.tsx` too.
 
 The public contacts are the event coordinators, with the numbers the brochure
 prints for them, on Contact in both layouts. The teacher in charge is named

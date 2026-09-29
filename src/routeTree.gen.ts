@@ -10,12 +10,13 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as ContactRouteImport } from './routes/contact'
+import { Route as ResourcesRouteImport } from './routes/_resources'
 import { Route as EventsRouteImport } from './routes/events'
-import { Route as FaqRouteImport } from './routes/faq'
-import { Route as ResourcesRouteImport } from './routes/resources'
 import { Route as TeamRouteImport } from './routes/team'
+import { Route as ResourcesAboutRouteImport } from './routes/_resources/about'
+import { Route as ResourcesContactRouteImport } from './routes/_resources/contact'
+import { Route as ResourcesFaqRouteImport } from './routes/_resources/faq'
+import { Route as ResourcesResourcesRouteImport } from './routes/_resources/resources'
 import { Route as RegisterIndexRouteImport } from './routes/register/index'
 import { Route as RegisterFormRouteImport } from './routes/register/form'
 
@@ -24,14 +25,8 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
+const ResourcesRoute = ResourcesRouteImport.update({
+  id: '/_resources',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EventsRoute = EventsRouteImport.update({
@@ -39,20 +34,30 @@ const EventsRoute = EventsRouteImport.update({
   path: '/events',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FaqRoute = FaqRouteImport.update({
-  id: '/faq',
-  path: '/faq',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResourcesRoute = ResourcesRouteImport.update({
-  id: '/resources',
-  path: '/resources',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
   path: '/team',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ResourcesAboutRoute = ResourcesAboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => ResourcesRoute,
+} as any)
+const ResourcesContactRoute = ResourcesContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => ResourcesRoute,
+} as any)
+const ResourcesFaqRoute = ResourcesFaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => ResourcesRoute,
+} as any)
+const ResourcesResourcesRoute = ResourcesResourcesRouteImport.update({
+  id: '/resources',
+  path: '/resources',
+  getParentRoute: () => ResourcesRoute,
 } as any)
 const RegisterIndexRoute = RegisterIndexRouteImport.update({
   id: '/register/',
@@ -67,35 +72,36 @@ const RegisterFormRoute = RegisterFormRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/contact': typeof ContactRoute
   '/events': typeof EventsRoute
-  '/faq': typeof FaqRoute
-  '/resources': typeof ResourcesRoute
   '/team': typeof TeamRoute
+  '/about': typeof ResourcesAboutRoute
+  '/contact': typeof ResourcesContactRoute
+  '/faq': typeof ResourcesFaqRoute
+  '/resources': typeof ResourcesResourcesRoute
   '/register/form': typeof RegisterFormRoute
   '/register/': typeof RegisterIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/contact': typeof ContactRoute
   '/events': typeof EventsRoute
-  '/faq': typeof FaqRoute
-  '/resources': typeof ResourcesRoute
   '/team': typeof TeamRoute
+  '/about': typeof ResourcesAboutRoute
+  '/contact': typeof ResourcesContactRoute
+  '/faq': typeof ResourcesFaqRoute
+  '/resources': typeof ResourcesResourcesRoute
   '/register/form': typeof RegisterFormRoute
   '/register': typeof RegisterIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
-  '/contact': typeof ContactRoute
+  '/_resources': typeof ResourcesRouteWithChildren
   '/events': typeof EventsRoute
-  '/faq': typeof FaqRoute
-  '/resources': typeof ResourcesRoute
   '/team': typeof TeamRoute
+  '/_resources/about': typeof ResourcesAboutRoute
+  '/_resources/contact': typeof ResourcesContactRoute
+  '/_resources/faq': typeof ResourcesFaqRoute
+  '/_resources/resources': typeof ResourcesResourcesRoute
   '/register/form': typeof RegisterFormRoute
   '/register/': typeof RegisterIndexRoute
 }
@@ -103,45 +109,43 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/events'
+    | '/team'
     | '/about'
     | '/contact'
-    | '/events'
     | '/faq'
     | '/resources'
-    | '/team'
     | '/register/form'
     | '/register/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/events'
+    | '/team'
     | '/about'
     | '/contact'
-    | '/events'
     | '/faq'
     | '/resources'
-    | '/team'
     | '/register/form'
     | '/register'
   id:
     | '__root__'
     | '/'
-    | '/about'
-    | '/contact'
+    | '/_resources'
     | '/events'
-    | '/faq'
-    | '/resources'
     | '/team'
+    | '/_resources/about'
+    | '/_resources/contact'
+    | '/_resources/faq'
+    | '/_resources/resources'
     | '/register/form'
     | '/register/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
-  ContactRoute: typeof ContactRoute
+  ResourcesRoute: typeof ResourcesRouteWithChildren
   EventsRoute: typeof EventsRoute
-  FaqRoute: typeof FaqRoute
-  ResourcesRoute: typeof ResourcesRoute
   TeamRoute: typeof TeamRoute
   RegisterFormRoute: typeof RegisterFormRoute
   RegisterIndexRoute: typeof RegisterIndexRoute
@@ -156,18 +160,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
+    '/_resources': {
+      id: '/_resources'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof ResourcesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/events': {
@@ -177,26 +174,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/faq': {
-      id: '/faq'
-      path: '/faq'
-      fullPath: '/faq'
-      preLoaderRoute: typeof FaqRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/resources': {
-      id: '/resources'
-      path: '/resources'
-      fullPath: '/resources'
-      preLoaderRoute: typeof ResourcesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/team': {
       id: '/team'
       path: '/team'
       fullPath: '/team'
       preLoaderRoute: typeof TeamRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_resources/about': {
+      id: '/_resources/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof ResourcesAboutRouteImport
+      parentRoute: typeof ResourcesRoute
+    }
+    '/_resources/contact': {
+      id: '/_resources/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ResourcesContactRouteImport
+      parentRoute: typeof ResourcesRoute
+    }
+    '/_resources/faq': {
+      id: '/_resources/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof ResourcesFaqRouteImport
+      parentRoute: typeof ResourcesRoute
+    }
+    '/_resources/resources': {
+      id: '/_resources/resources'
+      path: '/resources'
+      fullPath: '/resources'
+      preLoaderRoute: typeof ResourcesResourcesRouteImport
+      parentRoute: typeof ResourcesRoute
     }
     '/register/': {
       id: '/register/'
@@ -215,13 +226,28 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface ResourcesRouteChildren {
+  ResourcesAboutRoute: typeof ResourcesAboutRoute
+  ResourcesContactRoute: typeof ResourcesContactRoute
+  ResourcesFaqRoute: typeof ResourcesFaqRoute
+  ResourcesResourcesRoute: typeof ResourcesResourcesRoute
+}
+
+const ResourcesRouteChildren: ResourcesRouteChildren = {
+  ResourcesAboutRoute: ResourcesAboutRoute,
+  ResourcesContactRoute: ResourcesContactRoute,
+  ResourcesFaqRoute: ResourcesFaqRoute,
+  ResourcesResourcesRoute: ResourcesResourcesRoute,
+}
+
+const ResourcesRouteWithChildren = ResourcesRoute._addFileChildren(
+  ResourcesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
-  ContactRoute: ContactRoute,
+  ResourcesRoute: ResourcesRouteWithChildren,
   EventsRoute: EventsRoute,
-  FaqRoute: FaqRoute,
-  ResourcesRoute: ResourcesRoute,
   TeamRoute: TeamRoute,
   RegisterFormRoute: RegisterFormRoute,
   RegisterIndexRoute: RegisterIndexRoute,

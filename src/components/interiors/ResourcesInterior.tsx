@@ -60,8 +60,10 @@ export function ResourcesInterior({ tab }: { tab: ResourceTab | null }) {
 
   return (
     <>
-      <ExitToCrossroads />
-      <RegisterChip />
+      <nav className="chip-bar" aria-label="Shortcuts">
+        <ExitToCrossroads />
+        <RegisterChip />
+      </nav>
       <CrossroadsFooter variant="interior" />
       {tab ? <Beam /> : null}
 

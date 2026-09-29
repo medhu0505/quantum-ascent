@@ -5,6 +5,7 @@ import {
   type ChangeEvent,
   type FormEvent,
   type KeyboardEvent,
+  type MouseEvent,
   type RefObject,
 } from "react";
 import { PageShell } from "@/components/site/PageShell";
@@ -36,6 +37,10 @@ import {
  * event, so the same student entered twice is caught here rather than at the
  * registration desk.
  *
+ * The steps are listed along the top, and any step already reached can be
+ * gone back to from there. Going forward from the list runs the same checks
+ * the Next buttons do, so nothing can be skipped.
+ *
  * Each event goes to the backend as an entry of its own, with its own
  * registration id, so one event failing never costs the others and sending
  * again is always safe: an event that already went through comes back as a
@@ -59,6 +64,8 @@ type Step = 0 | 1 | 2;
  */
 export type RegisterDraft = {
   step: Step;
+  /** The furthest step reached, which the step list lets the visitor return to. */
+  reached: Step;
   values: TeacherFields;
   picked: string[];
   teams: Teams;
@@ -68,7 +75,12 @@ export type RegisterDraft = {
   done: boolean;
 };
 
-const STEP_TITLES = ["Teacher In-Charge and events", "Assign students", "Review and submit"];
+/** Each step's heading, and its short name in the step list. */
+const STEPS = [
+  { title: "Teacher In-Charge and events", short: "Teacher In-Charge" },
+  { title: "Assign students", short: "Students" },
+  { title: "Review and submit", short: "Review" },
+] as const;
 
 /** A student as the review and the tabs show them: "Aarav Sharma · Class 10". */
 const studentLine = (s: Student) => `${s.name.trim()} · Class ${s.grade}`;
@@ -85,6 +97,7 @@ export function RegisterFormBody({
   const saved = draft?.current ?? null;
 
   const [step, setStep] = useState<Step>(saved?.step ?? 0);
+  const [reached, setReached] = useState<Step>(saved?.reached ?? saved?.step ?? 0);
   const [values, setValues] = useState<TeacherFields>(
     saved?.values ?? { teacher: "", school: "", phone: "", email: "" },
   );
@@ -111,8 +124,10 @@ export function RegisterFormBody({
   const [website, setWebsite] = useState("");
 
   useEffect(() => {
-    if (draft) draft.current = { step, values, picked, teams, active, tried, outcomes, done };
-  }, [draft, step, values, picked, teams, active, tried, outcomes, done]);
+    if (draft) {
+      draft.current = { step, reached, values, picked, teams, active, tried, outcomes, done };
+    }
+  }, [draft, step, reached, values, picked, teams, active, tried, outcomes, done]);
 
   /**
    * Focus moves once the next render is on screen: to the step's heading when
@@ -157,6 +172,7 @@ export function RegisterFormBody({
 
   const openStep = (next: Step, focus = "register-step") => {
     setStep(next);
+    setReached((r) => (next > r ? next : r));
     focusLater(focus);
   };
 
@@ -179,26 +195,41 @@ export function RegisterFormBody({
     return null;
   };
 
-  const toTeams = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const found = validateTeacher(values, picked);
-    setErrors(found);
-    setTried((t) => ({ ...t, details: true }));
-    const bad = detailsProblem(found);
-    if (bad) return focusLater(bad);
-    if (!active || !picked.includes(active)) setActive(chosen[0]?.id ?? null);
-    openStep(1);
-  };
-
-  const toReview = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  /**
+   * Back is always allowed. Forward checks every step on the way, the same as
+   * the Next buttons, and stops at the first thing that needs fixing.
+   */
+  const goTo = (target: Step) => {
+    if (target <= step) {
+      if (target < step) openStep(target);
+      return;
+    }
+    if (step === 0) {
+      const found = validateTeacher(values, picked);
+      setErrors(found);
+      setTried((t) => ({ ...t, details: true }));
+      const bad = detailsProblem(found);
+      if (bad) return focusLater(bad);
+      if (!active || !picked.includes(active)) setActive(chosen[0]?.id ?? null);
+      if (target === 1) return openStep(1);
+    }
     setTried((t) => ({ ...t, teams: true }));
     const first = chosen.find((event) => !checks[event.id]?.done);
     if (first) {
       setActive(first.id);
-      return focusLater(firstProblem(first.id));
+      return step === 1 ? focusLater(firstProblem(first.id)) : openStep(1, firstProblem(first.id));
     }
     openStep(2);
+  };
+
+  const toTeams = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    goTo(1);
+  };
+
+  const toReview = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    goTo(2);
   };
 
   const submit = (e: FormEvent<HTMLFormElement>) => {
@@ -269,6 +300,12 @@ export function RegisterFormBody({
     focusLater(`tab-${target.id}`);
   };
 
+  /** An error summary's link moves focus to the field it names, not just the view. */
+  const focusField = (id: string) => (click: MouseEvent<HTMLAnchorElement>) => {
+    click.preventDefault();
+    focusLater(id);
+  };
+
   if (done) {
     const repeats = chosen.every((event) => {
       const reply = outcomes[event.id]?.reply;
@@ -307,7 +344,7 @@ export function RegisterFormBody({
           <div className="form-actions">
             <button
               type="button"
-              className="btn btn-accent btn-block"
+              className="btn btn-accent"
               onClick={() => {
                 setDone(false);
                 setOutcomes({});
@@ -315,12 +352,13 @@ export function RegisterFormBody({
                 setTeams({});
                 setActive(null);
                 setTried({ details: false, teams: false });
+                setReached(0);
                 openStep(0);
               }}
             >
               Register more events for this school
             </button>
-            <Link to="/events" className="btn btn-ghost btn-block" data-magnetic>
+            <Link to="/events" className="btn btn-ghost" data-magnetic>
               Back to the events
             </Link>
           </div>
@@ -337,7 +375,12 @@ export function RegisterFormBody({
   return (
     <PageShell
       title="Register"
-      lede={`Register your school's teams: enter the Teacher In-Charge's details, tick the events you are entering, then name the students for each one. A student can compete in only one event. Registrations close on ${REGISTRATION_CLOSES.label}.`}
+      // Said once, where it helps: the later steps have their own heading.
+      lede={
+        step === 0
+          ? `Your school's Teacher In-Charge registers all of its teams here, in three steps. Registrations close on ${REGISTRATION_CLOSES.label}.`
+          : undefined
+      }
       registerChip={false}
     >
       {!registrationOpen ? (
@@ -353,9 +396,11 @@ export function RegisterFormBody({
         </p>
       ) : null}
 
+      <Stepper step={step} reached={reached} onGo={goTo} />
+
       {step === 0 ? (
         <form className="form" onSubmit={toTeams} noValidate>
-          <StepHead step={0} />
+          <StepTitle step={0} />
 
           {tried.details && detailProblems > 0 ? (
             <div className="form-summary" role="alert">
@@ -367,20 +412,29 @@ export function RegisterFormBody({
               <ul>
                 {errorList.map((key) => (
                   <li key={key}>
-                    <a href={`#field-${key}`}>{errors[key]}</a>
+                    <a href={`#field-${key}`} onClick={focusField(`field-${key}`)}>
+                      {errors[key]}
+                    </a>
                   </li>
                 ))}
                 {errors.events ? (
                   <li>
-                    <a href={`#field-event-${events[0]!.id}`}>{errors.events}</a>
+                    <a
+                      href={`#field-event-${events[0]!.id}`}
+                      onClick={focusField(`field-event-${events[0]!.id}`)}
+                    >
+                      {errors.events}
+                    </a>
                   </li>
                 ) : null}
               </ul>
             </div>
           ) : null}
 
+          {/* The step's heading already says whose details these are, so the
+              group's name is for a screen reader moving between groups. */}
           <fieldset className="party party-fields">
-            <legend className="party-legend">Teacher In-Charge</legend>
+            <legend className="sr-only">Teacher In-Charge</legend>
             <div className="field-row">
               <Field
                 id="teacher"
@@ -406,7 +460,7 @@ export function RegisterFormBody({
                 id="phone"
                 label="Teacher In-Charge Phone Number"
                 type="tel"
-                hint="10 digits, reachable on both fest days. No +91 needed."
+                hint="10 digits, reachable on both fest days."
                 error={errors.phone}
                 value={values.phone}
                 onChange={set("phone")}
@@ -417,7 +471,7 @@ export function RegisterFormBody({
                 id="email"
                 label="Teacher In-Charge Gmail/Email"
                 type="email"
-                hint="Each event's confirmation and the reporting times go here."
+                hint="Each event's confirmation is sent here."
                 error={errors.email}
                 value={values.email}
                 onChange={set("email")}
@@ -430,11 +484,17 @@ export function RegisterFormBody({
           <fieldset
             className="field events-field"
             aria-invalid={errors.events ? true : undefined}
-            aria-describedby={errors.events ? "error-events hint-events" : "hint-events"}
+            aria-describedby={errors.events ? "hint-events error-events" : "hint-events"}
           >
-            <legend>
-              Events <RequiredMark />
-            </legend>
+            <legend>Events</legend>
+            <p id="hint-events" className="field-hint">
+              Tick every event your school is entering. A student can compete in only one event.{" "}
+              {/* A new tab, so reading up on an event never costs what has
+                  been typed here. */}
+              <Link to="/events" target="_blank" rel="noreferrer" className="field-link">
+                What each event involves<span className="sr-only"> (opens in a new tab)</span>
+              </Link>
+            </p>
             <ul className="event-picks">
               {events.map((e) => (
                 <li key={e.id}>
@@ -468,31 +528,20 @@ export function RegisterFormBody({
                 </li>
               ))}
             </ul>
-            <p id="hint-events" className="field-hint">
-              Tick every event your school is entering. Each one gets its own team on the next step,
-              and a student can compete in only one event.
-            </p>
             <FieldError id="error-events" message={errors.events} />
           </fieldset>
 
           <div className="form-actions">
-            <button type="submit" className="btn btn-accent btn-block">
+            <button type="submit" className="btn btn-accent">
               Next: assign students
             </button>
-            <Link to="/events" className="btn btn-ghost btn-block" data-magnetic>
-              Read the event details first
-            </Link>
           </div>
         </form>
       ) : null}
 
       {step === 1 && activeEvent ? (
         <form className="form" onSubmit={toReview} noValidate>
-          <StepHead step={1} />
-          <p className="field-hint">
-            Each event has exactly as many places as its team takes. Switch between events with the
-            tabs; what you enter on one stays there while you fill in the others.
-          </p>
+          <StepTitle step={1} />
 
           {tried.teams && incomplete.length > 0 ? (
             <div className="form-summary" role="alert">
@@ -570,11 +619,9 @@ export function RegisterFormBody({
           />
 
           <div className="form-actions">
-            <button type="submit" className="btn btn-accent btn-block">
+            <BackButton onClick={() => openStep(0)} />
+            <button type="submit" className="btn btn-accent">
               Review registration
-            </button>
-            <button type="button" className="btn btn-ghost btn-block" onClick={() => openStep(0)}>
-              Back to Teacher In-Charge and events
             </button>
           </div>
         </form>
@@ -582,11 +629,7 @@ export function RegisterFormBody({
 
       {step === 2 ? (
         <form className="form" onSubmit={submit} noValidate>
-          <StepHead step={2} />
-          <p className="field-hint">
-            Check which students are going to which event. Use Edit to change anything before you
-            submit.
-          </p>
+          <StepTitle step={2} />
 
           <section className="review-block" aria-labelledby="review-teacher">
             <div className="review-head">
@@ -645,9 +688,7 @@ export function RegisterFormBody({
                       Edit
                     </button>
                   </div>
-                  <p className="field-hint">
-                    {event.team} · {eventDay(event)}
-                  </p>
+                  <p className="field-hint">{eventDay(event)}</p>
                   <ol className="review-students">
                     {team.map((s, i) => (
                       <li key={i}>{studentLine(s)}</li>
@@ -707,21 +748,19 @@ export function RegisterFormBody({
             <p className="notice notice-ok" role="status" tabIndex={-1} id="register-checked">
               <strong>Your details are complete.</strong>
               <span>
-                Nothing has been submitted — entries are not open yet. Come back and submit when
-                they are, and keep this page open so you do not retype anything.
+                Nothing has been submitted, because entries are not open yet. Come back and submit
+                when they are, and keep this page open so you do not retype anything.
               </span>
             </p>
           ) : null}
 
           <div className="form-actions">
+            <BackButton onClick={() => openStep(1)} />
             <SubmitButton
               registrationOpen={registrationOpen}
               sending={sending}
               retry={failed.length}
             />
-            <button type="button" className="btn btn-ghost btn-block" onClick={() => openStep(1)}>
-              Back to the teams
-            </button>
           </div>
         </form>
       ) : null}
@@ -729,24 +768,79 @@ export function RegisterFormBody({
   );
 }
 
-/** "Step 2 of 3", and the step's own name as the heading focus lands on. */
-function StepHead({ step }: { step: Step }) {
+/**
+ * The three steps along the top. The current one is marked for assistive
+ * technology as well as by eye; any step already reached is a button back to
+ * it, and one not reached yet is plain text.
+ */
+function Stepper({
+  step,
+  reached,
+  onGo,
+}: {
+  step: Step;
+  reached: Step;
+  onGo: (target: Step) => void;
+}) {
   return (
-    <div className="form-step">
-      <p className="form-step-count">
-        Step {step + 1} of {STEP_TITLES.length}
-      </p>
-      <h2 className="form-step-title" id="register-step" tabIndex={-1} data-step-heading>
-        {STEP_TITLES[step]}
-      </h2>
-    </div>
+    <nav className="form-steps" aria-label="Registration steps">
+      <ol>
+        {STEPS.map((s, i) => {
+          const at = i as Step;
+          const state =
+            at === step ? "current" : at < step ? "done" : at <= reached ? "open" : "ahead";
+          const body = (
+            <>
+              <span className="form-steps-mark" aria-hidden="true">
+                {state === "done" ? "✓" : at + 1}
+              </span>
+              <span className="form-steps-name">{s.short}</span>
+              {state === "done" ? <span className="sr-only">, done</span> : null}
+            </>
+          );
+          return (
+            <li key={s.short} data-state={state}>
+              {state === "current" ? (
+                <span aria-current="step">{body}</span>
+              ) : state === "ahead" ? (
+                <span>{body}</span>
+              ) : (
+                <button type="button" onClick={() => onGo(at)}>
+                  {body}
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
+  );
+}
+
+/** The step's own name, which focus lands on when the step opens. */
+function StepTitle({ step }: { step: Step }) {
+  return (
+    <h2 className="form-step-title" id="register-step" tabIndex={-1} data-step-heading>
+      {STEPS[step].title}
+    </h2>
+  );
+}
+
+function BackButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button type="button" className="btn btn-ghost btn-back" onClick={onClick}>
+      <span aria-hidden="true">←</span> Back
+    </button>
   );
 }
 
 /**
- * One event's team: the places it takes, each a student's name and class.
- * There is no way to add or remove a place. The event decides how many
- * there are, and an optional place in an event with a range just says so.
+ * One event's team: the places it takes, numbered, each a student's name and
+ * class. There is no way to add or remove a place. The event decides how many
+ * there are, and a place it can do without says so.
+ *
+ * The column headings are drawn once, for the eye. Each field carries its own
+ * label as well, place number and all, for anyone who cannot see the columns.
  */
 function TeamPanel({
   eventId,
@@ -772,6 +866,8 @@ function TeamPanel({
   const event = events.find((e) => e.id === eventId)!;
   const list = places(eventId, teams);
   const solo = event.size.max === 1;
+  /** Only an event that takes a range has a place it can do without. */
+  const range = event.size.min < event.size.max;
   const short = check?.short ?? event.size.min;
 
   return (
@@ -787,49 +883,67 @@ function TeamPanel({
         {event.team} · {eventDay(event)}
       </p>
 
-      <fieldset className="party">
-        <legend className="sr-only">{solo ? "Participant" : "Team members"}</legend>
+      <fieldset className="places" data-range={range || undefined}>
+        <legend className="places-legend">{solo ? "Participant" : "Team members"}</legend>
+        <div className="place place-columns" aria-hidden="true">
+          <span />
+          <span>Full name</span>
+          <span>Class</span>
+          {range ? <span /> : null}
+        </div>
         {list.map((student, i) => {
           const errs = tried ? check?.places[i] : undefined;
-          const label = solo
-            ? "Participant"
-            : `Team member ${i + 1}${i >= event.size.min ? " (optional)" : ""}`;
+          const optional = i >= event.size.min;
+          const who = solo ? "Participant" : `Team member ${i + 1}`;
+          const nameId = `field-student-${eventId}-${i}-name`;
+          const gradeId = `field-student-${eventId}-${i}-grade`;
           return (
-            <div className="party-row" key={i}>
-              <div className="party-head">
-                <h4 className="party-title">{label}</h4>
-              </div>
-              <div className="party-grid party-grid-student">
-                <Field
-                  id={`student-${eventId}-${i}-name`}
-                  label="Student's full name"
-                  error={errs?.name}
+            <div className="place" key={i} data-optional={optional || undefined}>
+              <span className="place-n" aria-hidden="true">
+                {solo ? "" : `${i + 1}.`}
+              </span>
+              <div className="field">
+                <label className="sr-only" htmlFor={nameId}>
+                  {who}, full name{optional ? " (optional)" : ""}
+                </label>
+                <input
+                  id={nameId}
+                  name={`student-${eventId}-${i}-name`}
+                  type="text"
                   value={student.name}
                   onChange={onChange(eventId, i, "name")}
                   autoComplete="off"
+                  aria-invalid={errs?.name ? true : undefined}
+                  aria-describedby={errs?.name ? `error-student-${eventId}-${i}-name` : undefined}
                 />
-                <div className="field">
-                  <label htmlFor={`field-student-${eventId}-${i}-grade`}>Class</label>
-                  <select
-                    id={`field-student-${eventId}-${i}-grade`}
-                    name={`student-${eventId}-${i}-grade`}
-                    value={student.grade}
-                    onChange={onChange(eventId, i, "grade")}
-                    aria-invalid={errs?.grade ? true : undefined}
-                    aria-describedby={
-                      errs?.grade ? `error-student-${eventId}-${i}-grade` : undefined
-                    }
-                  >
-                    <option value="">Choose a class</option>
-                    {CLASSES.map((g) => (
-                      <option key={g} value={String(g)}>
-                        Class {g}
-                      </option>
-                    ))}
-                  </select>
-                  <FieldError id={`error-student-${eventId}-${i}-grade`} message={errs?.grade} />
-                </div>
+                <FieldError id={`error-student-${eventId}-${i}-name`} message={errs?.name} />
               </div>
+              <div className="field">
+                <label className="sr-only" htmlFor={gradeId}>
+                  {who}, class{optional ? " (optional)" : ""}
+                </label>
+                <select
+                  id={gradeId}
+                  name={`student-${eventId}-${i}-grade`}
+                  value={student.grade}
+                  onChange={onChange(eventId, i, "grade")}
+                  aria-invalid={errs?.grade ? true : undefined}
+                  aria-describedby={errs?.grade ? `error-student-${eventId}-${i}-grade` : undefined}
+                >
+                  <option value="">Choose a class</option>
+                  {CLASSES.map((g) => (
+                    <option key={g} value={String(g)}>
+                      Class {g}
+                    </option>
+                  ))}
+                </select>
+                <FieldError id={`error-student-${eventId}-${i}-grade`} message={errs?.grade} />
+              </div>
+              {range ? (
+                <span className="place-tag" aria-hidden="true">
+                  {optional ? "Optional" : ""}
+                </span>
+              ) : null}
             </div>
           );
         })}
@@ -847,7 +961,7 @@ function TeamPanel({
         </p>
         {next ? (
           <button type="button" className="btn btn-ghost" onClick={() => onNext(next.id)}>
-            Next event: {next.name} →
+            Next event: {next.name} <span aria-hidden="true">→</span>
           </button>
         ) : null}
       </div>
@@ -867,7 +981,7 @@ function SubmitButton({
   return (
     <button
       type="submit"
-      className={`btn btn-block ${registrationOpen ? "btn-accent" : "btn-ghost"}`}
+      className={`btn ${registrationOpen ? "btn-accent" : "btn-ghost"}`}
       disabled={sending}
       aria-busy={sending || undefined}
     >
@@ -882,24 +996,22 @@ function SubmitButton({
   );
 }
 
-function RequiredMark() {
-  return (
-    <span className="field-required">
-      <span aria-hidden="true">*</span>
-      <span className="sr-only">(required)</span>
-    </span>
-  );
-}
-
+/** Starts "Error:" for a screen reader, which cannot see that it is red. */
 function FieldError({ id, message }: { id: string; message?: string | undefined }) {
   if (!message) return null;
   return (
     <p id={id} className="field-error">
+      <span className="sr-only">Error: </span>
       {message}
     </p>
   );
 }
 
+/**
+ * A labelled text field. Every field on this form is required unless it says
+ * otherwise, so nothing is starred: `required` tells assistive technology,
+ * and the optional places are the ones that are marked.
+ */
 function Field({
   id,
   label,
@@ -925,9 +1037,7 @@ function Field({
 
   return (
     <div className="field">
-      <label htmlFor={`field-${id}`}>
-        {label} {required ? <RequiredMark /> : null}
-      </label>
+      <label htmlFor={`field-${id}`}>{label}</label>
       <input
         id={`field-${id}`}
         name={id}

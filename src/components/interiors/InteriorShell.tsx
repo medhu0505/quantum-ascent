@@ -35,8 +35,10 @@ export function InteriorShell({
 }) {
   return (
     <>
-      <ExitToCrossroads />
-      <RegisterChip />
+      <nav className="chip-bar" aria-label="Shortcuts">
+        <ExitToCrossroads />
+        <RegisterChip />
+      </nav>
       <CrossroadsFooter variant="interior" />
       <main id="main" className="room phase-enter" data-accent={scene.accent} data-room={scene.id}>
         {scene.view ? (

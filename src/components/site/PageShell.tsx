@@ -47,8 +47,10 @@ export function PageShell({
 }) {
   return (
     <>
-      <ExitToCrossroads />
-      {registerChip ? <RegisterChip /> : null}
+      <nav className="chip-bar" aria-label="Shortcuts">
+        <ExitToCrossroads />
+        {registerChip ? <RegisterChip /> : null}
+      </nav>
       <CrossroadsFooter variant="interior" />
 
       <Beam />
@@ -168,7 +170,9 @@ export function CrossroadsFooter({
   variant?: "crossroads" | "interior";
 }) {
   return (
-    <footer className="crossroads-footer" data-variant={variant}>
+    // A div, not a footer: SiteFooter is the page's footer, and a second
+    // would give assistive technology two contentinfo landmarks to choose from.
+    <div className="crossroads-footer" data-variant={variant}>
       <nav aria-label="Quick navigation" className="crossroads-footer-nav" data-variant={variant}>
         <ul>
           <li>
@@ -206,6 +210,6 @@ export function CrossroadsFooter({
           </li>
         </ul>
       </nav>
-    </footer>
+    </div>
   );
 }

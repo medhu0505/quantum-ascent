@@ -516,9 +516,10 @@ export const descentFilm = {
 export const contact = {
   /**
    * The teacher in charge. Her number is on Contact, under General inquiries,
-   * for anything that is not about one event; questions about an event go to
-   * its coordinators, whose numbers are on each event above. Her email is
-   * deliberately not in this file, so no page can print it.
+   * and in the footer, for anything that is not about one event; questions
+   * about an event go to its coordinators, whose numbers are on each event
+   * above. Her email is deliberately not in this file, so no page can print
+   * it.
    */
   name: "Anjali Rawlley",
   role: "Teacher in charge",

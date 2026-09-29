@@ -7,8 +7,11 @@ import {
   fest,
   getScene,
   isTodo,
+  scenes,
   school,
 } from "@/data/quantum";
+import { usePreloadWhenIdle } from "@/lib/preload";
+import { telHref } from "@/lib/utils";
 
 /**
  * The street: the phone app's crossroads.
@@ -49,9 +52,16 @@ function Street({
   );
 }
 
+/** The screens the street's cards open, and the photograph each opens on. */
+const SCREENS = scenes.filter((scene) => scene.href === undefined);
+const SCREEN_PATHS = SCREENS.map((scene) => scene.to);
+const SCREEN_VIEWS = SCREENS.flatMap((scene) => (scene.view ? [scene.view] : []));
+
 export function MobileStreet() {
   const brochure = getScene("brochure")!;
   const brochurePending = isTodo(BROCHURE_URL);
+  // A tap never hovers, so nothing else loads a screen before it is asked for.
+  usePreloadWhenIdle(SCREEN_PATHS, SCREEN_VIEWS);
 
   return (
     <MobileShell screen="street">
@@ -135,6 +145,9 @@ export function MobileStreet() {
           </p>
           <p className="m-muted">
             {contact.name} · {contact.role}
+          </p>
+          <p>
+            <a href={telHref(contact.phone)}>{contact.phone}</a>
           </p>
           <p>
             <ScreenLink to="/contact">Event contacts</ScreenLink>

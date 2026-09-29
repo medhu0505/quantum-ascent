@@ -19,6 +19,7 @@ import {
   updateChannels,
 } from "@/data/quantum";
 import { faqJsonLd } from "@/lib/structured-data";
+import { telHref } from "@/lib/utils";
 
 /**
  * The three tabs of Resources as the desk shows them, under the folded room.
@@ -174,9 +175,6 @@ export function AboutPanel() {
   );
 }
 
-/** The number as the brochure prints it on the page; the link dials the digits. */
-const tel = (phone: string) => `tel:${phone.replace(/\s/g, "")}`;
-
 const CHANNEL_ICONS = {
   instagram: Instagram,
   whatsapp: MessageCircle,
@@ -211,7 +209,7 @@ export function ContactPanel() {
                 {event.coordinators.map((person) => (
                   <li key={person.name}>
                     <span className="contact-person">{person.name}</span>
-                    <a href={tel(person.phone)}>{person.phone}</a>
+                    <a href={telHref(person.phone)}>{person.phone}</a>
                   </li>
                 ))}
               </ul>
@@ -235,7 +233,7 @@ export function ContactPanel() {
             <ul className="contact-people">
               <li>
                 <span className="contact-person">{contactPage.general.name}</span>
-                <a href={tel(contact.phone)}>{contact.phone}</a>
+                <a href={telHref(contact.phone)}>{contact.phone}</a>
               </li>
             </ul>
             <p className="channel-note">{contactPage.general.note}</p>

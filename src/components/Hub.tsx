@@ -189,8 +189,13 @@ function Sign({ scene }: { scene: Scene }) {
 /** Every room a board opens; a board that leaves the site has nothing to load. */
 const ROOMS = scenes.filter((scene) => scene.href === undefined).map((scene) => scene.to);
 
+/** The photograph each of those rooms opens on. */
+const ROOM_VIEWS = scenes.flatMap((scene) =>
+  scene.href === undefined && scene.view ? [scene.view] : [],
+);
+
 export function HubSigns({ inert }: { inert?: boolean }) {
-  usePreloadWhenIdle(ROOMS);
+  usePreloadWhenIdle(ROOMS, ROOM_VIEWS);
   return (
     <nav aria-label="Quantum V2.0 sections" inert={inert || undefined}>
       <ul className="hub-signs">

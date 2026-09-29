@@ -23,6 +23,7 @@ import {
   type ResourceTab,
 } from "@/data/quantum";
 import { faqJsonLd } from "@/lib/structured-data";
+import { telHref } from "@/lib/utils";
 
 /**
  * Resources on a phone: the FAQ, About and Contact as three tabs of one
@@ -143,9 +144,6 @@ function About() {
   );
 }
 
-/** The number as the brochure prints it on the page; the link dials the digits. */
-const tel = (phone: string) => `tel:${phone.replace(/\s/g, "")}`;
-
 /**
  * The event in-charges are the fest's public contacts, so they lead the tab.
  * The teacher in charge follows under General inquiries, in a card of the
@@ -170,7 +168,7 @@ function Contact() {
               {event.coordinators.map((person) => (
                 <dd key={person.name}>
                   <span>{person.name}</span>
-                  <a href={tel(person.phone)}>{person.phone}</a>
+                  <a href={telHref(person.phone)}>{person.phone}</a>
                 </dd>
               ))}
               <dd className="m-contact-day">{eventDay(event)}</dd>
@@ -190,7 +188,7 @@ function Contact() {
             <dt>{contact.role}</dt>
             <dd>
               <span>{contactPage.general.name}</span>
-              <a href={tel(contact.phone)}>{contact.phone}</a>
+              <a href={telHref(contact.phone)}>{contact.phone}</a>
             </dd>
           </div>
         </dl>

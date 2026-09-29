@@ -1293,7 +1293,7 @@
 /* ------------------------------------------------------------------ *
  * Phase-through transition
  *
- * The outgoing plate flies toward the sign that was clicked and blurs out,
+ * The outgoing plate flies toward the sign that was clicked and thins out,
  * so the cut reads as passing through the signboard rather than a page swap.
  * ------------------------------------------------------------------ */
 
@@ -1302,8 +1302,8 @@
    rendered underneath. See PhaseTransition.tsx.
 
    The browser's own crossfade adds the two pictures together, which suits a
-   plain fade and not these: here the next page comes up over a blown-out
-   frame, and adding light to it would burn it white. */
+   plain fade and not these: here the next page comes up over a frame still
+   flying past it, and adding one to the other would burn the overlap white. */
 html[data-phase="in"]::view-transition-old(root),
 html[data-phase="in"]::view-transition-new(root),
 html[data-phase="out"]::view-transition-old(root),
@@ -1311,19 +1311,27 @@ html[data-phase="out"]::view-transition-new(root) {
   mix-blend-mode: normal;
 }
 
-/* Into a room: the crossroads flies toward the board that was clicked and
-   blows out, and the room comes up through the blur. */
+/* Into a room: the crossroads flies toward the board that was clicked, and
+   once the board fills the screen the room comes up through it.
+
+   Transform and opacity only, here and on the way back. The move used to
+   blur and brighten the whole screen as it went, 16px of blur over a picture
+   the size of the viewport and drawn again every frame, with the room
+   running a blur of its own underneath: on a laptop's integrated graphics
+   that is the difference between a fly-through and a slideshow. A scale and
+   a fade are handed to the compositor as they are, with nothing drawn again,
+   and the picture scaled up that far softens on its own. */
 html[data-phase="in"]::view-transition-old(root) {
   transform-origin: var(--phase-x, 50%) var(--phase-y, 50%);
   animation: phase-plate-out var(--dur-scene) var(--ease-in) both;
 }
 
 html[data-phase="in"]::view-transition-new(root) {
-  animation: phase-arrive var(--dur-scene) var(--ease-in) both;
+  animation: phase-arrive var(--dur-scene) var(--ease-out) both;
 }
 
-/* Back out: the room gives way to the crossroads blown out and blurred, and
-   the crossroads settles onto its own pixels. It decelerates into place, so
+/* Back out: the room gives way to the crossroads coming back from close up,
+   and the crossroads settles onto its own pixels. It decelerates into place, so
    the last frame of the move is the page itself, standing still. */
 html[data-phase="out"]::view-transition-old(root) {
   animation: none;
@@ -1341,21 +1349,27 @@ html[data-phase="fade"]::view-transition-group(root) {
 @keyframes phase-plate-out {
   from {
     transform: scale(1);
-    filter: blur(0) brightness(1);
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
   }
   to {
     transform: scale(2.7);
-    filter: blur(16px) brightness(1.45);
+    opacity: 0;
   }
 }
 
+/* The room settles in as it shows, rather than landing on the last frame. */
 @keyframes phase-arrive {
   0%,
-  62% {
+  45% {
     opacity: 0;
+    transform: scale(1.04);
   }
   100% {
     opacity: 1;
+    transform: none;
   }
 }
 
@@ -1363,7 +1377,6 @@ html[data-phase="fade"]::view-transition-group(root) {
   from {
     opacity: 0;
     transform: scale(2.35);
-    filter: blur(14px) brightness(1.35);
   }
   30% {
     opacity: 1;
@@ -1371,24 +1384,31 @@ html[data-phase="fade"]::view-transition-group(root) {
   to {
     opacity: 1;
     transform: scale(1);
-    filter: blur(0) brightness(1);
   }
 }
 
+/* A room's own entrance, for a browser that navigates without a view
+   transition. With one, the transition is the entrance, and a second one
+   running underneath it only costs frames. It is cut to nothing rather than
+   taken off: an animation taken off starts again from the top when the
+   transition hands back and data-phase goes, and the room would blink out
+   and fade in a second time. One that already ran in no time stays over. */
 .phase-enter {
   animation: phase-enter var(--dur-scene) var(--ease-out) both;
+}
+
+html[data-phase] .phase-enter {
+  animation-duration: 0s;
 }
 
 @keyframes phase-enter {
   from {
     opacity: 0;
     transform: scale(1.03);
-    filter: blur(6px);
   }
   to {
     opacity: 1;
     transform: none;
-    filter: none;
   }
 }
 

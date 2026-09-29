@@ -4,6 +4,7 @@ import { BROCHURE_URL, contact, fest, isTodo, school } from "@/data/quantum";
 import { ExitToCrossroads, RegisterChip } from "@/components/site/Bits";
 import { Beam, Reveal } from "@/components/scene/Reveal";
 import { RevealText } from "@/components/scene/RevealText";
+import { telHref } from "@/lib/utils";
 
 /**
  * Layout for the conventional pages.
@@ -117,6 +118,9 @@ export function SiteFooter() {
             <p className="footer-heading">Contact</p>
             <p className="footer-line">
               {contact.name} · {contact.role}
+            </p>
+            <p className="footer-line">
+              <a href={telHref(contact.phone)}>{contact.phone}</a>
             </p>
             <p className="footer-line">
               <Link to="/contact">Event contacts</Link>

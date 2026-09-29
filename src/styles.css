@@ -5848,6 +5848,12 @@ html[data-layout="phone"] body {
   line-height: 1.6;
 }
 
+/* General inquiries: the same card as the event contacts, set off from the
+   line above it. */
+.m-contact-general {
+  margin-top: 18px;
+}
+
 /* About's six events, each opening its own panel on the Events screen. The
    bar down the edge is the event's colour, as it is everywhere else. */
 .m-res-events {

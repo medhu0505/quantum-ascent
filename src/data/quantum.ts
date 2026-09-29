@@ -515,12 +515,15 @@ export const descentFilm = {
 
 export const contact = {
   /**
-   * Named on the site, never numbered: her email and phone are deliberately
-   * not in this file, so no page can print them. Questions about an event go
-   * to its coordinators, whose numbers are on each event above.
+   * The teacher in charge. Her number is on Contact, under General inquiries,
+   * for anything that is not about one event; questions about an event go to
+   * its coordinators, whose numbers are on each event above. Her email is
+   * deliberately not in this file, so no page can print it.
    */
   name: "Anjali Rawlley",
   role: "Teacher in charge",
+  /** Written the way the brochure writes the in-charges' numbers. */
+  phone: "+91 98713 79429",
   /** The fest's own account: shown as the handle, linked to the profile. */
   instagram: "@quantum.afbbs",
   instagramUrl: "https://www.instagram.com/quantum.afbbs/",
@@ -727,8 +730,14 @@ export function resourceTabAt(pathname: string): ResourceTab | null {
 export const contactPage = {
   title: "Contact",
   lede: "Questions about an event go to its student in-charges, whose numbers are on this page. For live updates through both fest days, follow the WhatsApp community, Discord or Instagram.",
-  /** Under the event contacts: the teacher is named, never numbered. */
+  /** Under the event contacts. */
   faculty: `Teacher in-charge is Mrs. ${contact.name}. For information about a particular event, the event's in-charges are to be contacted.`,
+  /** Anything that is not about one event goes to the teacher in charge. */
+  general: {
+    heading: "General inquiries",
+    note: "For anything that is not about a particular event.",
+    name: `Mrs. ${contact.name}`,
+  },
 } as const;
 
 /** Where the fest posts its updates, and what each one is for. */

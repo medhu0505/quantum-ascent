@@ -6,6 +6,7 @@ import {
   BROCHURE_URL,
   FEST_DATES,
   about,
+  contact,
   contactPage,
   eventDay,
   events,
@@ -147,8 +148,8 @@ const tel = (phone: string) => `tel:${phone.replace(/\s/g, "")}`;
 
 /**
  * The event in-charges are the fest's public contacts, so they lead the tab.
- * The teacher in charge is named below them but not numbered: her own email
- * and phone are not published anywhere on the site.
+ * The teacher in charge follows under General inquiries, in a card of the
+ * same kind. Her email is not published anywhere on the site.
  */
 function Contact() {
   return (
@@ -178,6 +179,22 @@ function Contact() {
         </dl>
       </div>
       <p className="m-muted m-small m-contact-faculty">{contactPage.faculty}</p>
+
+      <div className="m-contact m-contact-general">
+        <p className="m-contact-who">
+          <span className="m-contact-name">{contactPage.general.heading}</span>
+          <span className="m-contact-role">{contactPage.general.note}</span>
+        </p>
+        <dl className="m-contact-events">
+          <div data-accent="violet">
+            <dt>{contact.role}</dt>
+            <dd>
+              <span>{contactPage.general.name}</span>
+              <a href={tel(contact.phone)}>{contact.phone}</a>
+            </dd>
+          </div>
+        </dl>
+      </div>
 
       <h3 className="m-h3">Updates</h3>
       <dl className="m-details">

@@ -260,9 +260,9 @@ sections from the same data in `src/data/quantum.ts`; a section added to
 `ResourcesPanels.tsx` belongs in `MobileResources.tsx` too.
 
 The public contacts are the event coordinators, with the numbers the brochure
-prints for them, on Contact in both layouts. The teacher in charge is named
-but not numbered: her email and phone are not in the site's data at all, so
-no page can print them.
+prints for them, on Contact in both layouts, and the teacher in charge, with
+her number, under General inquiries beside them. Her email is not in the
+site's data at all, so no page can print it.
 
 Two visual registers, deliberately opposed. Scenes (hero, hub, interiors) are
 full-bleed, neon and kinetic. The conventional pages are one quiet column at a

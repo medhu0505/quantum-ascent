@@ -28,13 +28,6 @@ export type Participant = {
 
 export type RegistrationPayload = {
   type: RegistrationType;
-  /**
-   * The school's teacher in-charge, on entries from the desktop form. That
-   * form sends one entry per event: the teacher's email and phone are the
-   * entry's contact, the first student fills `student` and `grade`, and the
-   * rest of the team are its `members`.
-   */
-  teacher?: string;
   student: string;
   school: string;
   grade: string;
@@ -155,8 +148,6 @@ function tooLong(value: string): boolean {
 /** The offending field name, or null when the payload is sound. */
 function firstProblem(payload: RegistrationPayload): string | null {
   if (!TYPES.includes(payload.type)) return "type";
-  if (payload.teacher !== undefined && (!payload.teacher || tooLong(payload.teacher)))
-    return "teacher";
   if (!payload.student || tooLong(payload.student)) return "student";
   if (!payload.school || tooLong(payload.school)) return "school";
   if (!CLASSES.includes(payload.grade)) return "grade";
@@ -243,7 +234,7 @@ async function submitToFirestore(payload: RegistrationPayload): Promise<BackendR
     import("firebase/firestore/lite"),
   ]);
 
-  const record: Record<string, unknown> = {
+  const record = {
     id,
     type: payload.type,
     student: payload.student,
@@ -259,34 +250,12 @@ async function submitToFirestore(payload: RegistrationPayload): Promise<BackendR
     members: payload.members,
     teamSize: payload.members.length + 1,
     createdAt: serverTimestamp(),
-    ...(payload.teacher ? { teacher: payload.teacher } : {}),
   };
 
-  const write = (data: Record<string, unknown>) =>
-    withTimeout(setDoc(doc(db, REGISTRATIONS, key), data));
-
   try {
-    await write(record);
+    await withTimeout(setDoc(doc(db, REGISTRATIONS, key), record));
     return { ok: true, id };
-  } catch (first) {
-    let error = first;
-
-    // Rules deployed before `teacher` existed refuse any document carrying
-    // it, the same way they refuse a duplicate. Written again without it, a
-    // new entry lands and a duplicate is refused a second time, so the two
-    // cases still come apart below. The mirror still sends the teacher's name
-    // to the sheet. Once firestore.rules with the field is deployed, this
-    // second write only ever happens for a duplicate.
-    if (errorCode(first) === "permission-denied" && "teacher" in record) {
-      const { teacher: _teacher, ...without } = record;
-      try {
-        await write(without);
-        return { ok: true, id };
-      } catch (second) {
-        error = second;
-      }
-    }
-
+  } catch (error) {
     const code = errorCode(error);
 
     // The rules allow create and deny update, so writing over an existing
@@ -345,28 +314,4 @@ export async function submitRegistration(payload: RegistrationPayload): Promise<
   const reply = await submitToFirestore(payload);
   if (reply.ok && mirrorsToSheet()) mirrorToSheet(payload, reply.id);
   return reply;
-}
-
-/** What happened to one event's entry. `reply` is null when the server could not be reached. */
-export type EventOutcome = { event: string; reply: BackendReply | null };
-
-/**
- * Submit several entries, one per event, in turn.
- *
- * Each is its own registration with its own id, so every event gets its own
- * answer: a duplicate, a refusal or a dropped connection on one does not
- * undo the others. Sending again is safe, because an event that already went
- * through comes back as a duplicate carrying its original id.
- */
-export async function submitEach(payloads: RegistrationPayload[]): Promise<EventOutcome[]> {
-  const outcomes: EventOutcome[] = [];
-  for (const payload of payloads) {
-    const event = payload.events[0] ?? "";
-    try {
-      outcomes.push({ event, reply: await submitRegistration(payload) });
-    } catch {
-      outcomes.push({ event, reply: null });
-    }
-  }
-  return outcomes;
 }

@@ -100,10 +100,10 @@ service cloud.firestore {
      * error, and an error denies the write. A missing field fails on the
      * check that reads it.
      *
-     * `teacher` is the one optional field: the desktop form sends the
-     * school's teacher in-charge with each of its per-event entries, and the
-     * phone form and every entry written before it do not. It is tested with
-     * `in` before it is read, for the same reason.
+     * `teacher` is the one optional field: an entry may name the school's
+     * teacher in-charge. Neither form sends it now; a step-by-step desktop
+     * form that registered each event separately did. It is tested with `in`
+     * before it is read, for the same reason.
      */
     function registrationOk(key, data) {
       return data.keys().hasOnly(['id', 'type', 'student', 'school', 'grade', 'email',

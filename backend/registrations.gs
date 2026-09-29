@@ -522,7 +522,7 @@ function validate_(body) {
   if (lead.discord && !DISCORD.test(lead.discord)) throw new Invalid('discord');
   lead.events = events_(body);
   if (lead.events.length === 0) throw new Invalid('events');
-  // Optional: the desktop form sends it, the phone form and older entries do not.
+  // Optional: neither form sends it now, but an entry may still name a teacher.
   lead.teacher = text_(body.teacher);
 
   const raw = Array.isArray(body.members) ? body.members : [];
@@ -849,7 +849,7 @@ function previewConfirmationEmail() {
   sendConfirmation_(lead, members, 'QV2-PREVIEW', stamp_(new Date()));
 }
 
-/** The same specimen as the desktop form sends it: from a teacher in-charge, one event. */
+/** A specimen of an entry that names a teacher in-charge, for one event. */
 function previewTeacherConfirmationEmail() {
   const lead = {
     type: 'school',

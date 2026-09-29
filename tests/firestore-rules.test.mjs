@@ -152,9 +152,9 @@ describe("a valid registration", () => {
 });
 
 /**
- * The desktop form's entries: one per event, from a school's teacher
- * in-charge, whose email and phone are the entry's contact while the first
- * student is its lead.
+ * An entry that names the school's teacher in-charge: one event, the
+ * teacher's email and phone as its contact, the first student as its lead.
+ * Neither form sends one now; the rules still accept it.
  */
 describe("a teacher in-charge's entry", () => {
   const teacherEntry = (overrides = {}) =>

@@ -30,20 +30,14 @@ more — what is left is copy a visitor reads.
 
 Event copy, FAQ answers and the About editorial are final — no placeholders there.
 
-Five things outside this file are also outstanding, and none of them are code:
+Four things outside this file are also outstanding, and none of them are code:
 
-- **The rules need deploying** (`npm run firebase:rules`) so Firestore stores the
-  Teacher In-Charge's name with each entry from the desktop form. Until they are,
-  those entries still land: the rules deployed now refuse the extra field, and
-  the form writes the entry again without it (see "What the forms send").
-- **The Apps Script needs redeploying** (see "Changing the script" below), for
-  the brochure's event names and for the teacher's name. Until it is,
-  confirmation emails and the sheet's tabs still say Quiz, Film Making, Ad
-  Shoot, Online Gaming and Pitch, and the sheet has no teacher column. The event
+- **The Apps Script needs redeploying** for the brochure's event names (see
+  "Changing the script" below). Until it is, confirmation emails and the sheet's
+  tabs still say Quiz, Film Making, Ad Shoot, Online Gaming and Pitch. The event
   ids did not change, so entries keep flowing either way. Once redeployed, the
   script renames each old tab the first time it writes to it, rows and
-  protection intact; running `setup` renames all of them at once. The two
-  deploys can happen in either order.
+  protection intact; running `setup` renames all of them at once.
 
 - **Every row in the sheet is a test entry** and has to go before entries open —
   from the sheet *and* from Firestore's `registrations` collection, because both
@@ -67,18 +61,11 @@ Seven tabs, in this order, and the file opens on the first:
 - **Registrations** — every entry, one row each. The record of truth, and the
   only tab the duplicate check reads.
 - **The Q Factor, Take Two, Mirage.exe, Surprise, Ryoken, Innopreneur** — one
-  per event, each a complete list for whoever is running that event. A phone
-  entry in three events appears on three tabs. That is deliberate, not a
-  duplicate. The desktop form sends each event as an entry of its own, so its
-  rows are one per event from the start. Until
+  per event, each a complete list for whoever is running that event. An entry in
+  three events appears on three tabs. That is deliberate, not a duplicate. Until
   the brochure named them these were Quiz, Film Making, Ad Shoot, Surprise,
   Online Gaming and Pitch, and the ids the site sends still are: `quiz`,
   `film-making`, `ad-shoot`, `surprise`, `online-gaming`, `pitch`.
-
-Desktop entries also carry a **Teacher in-charge** column. It is found by its
-header rather than at a fixed position, and created past the last column
-anything was ever written in, so it never lands in a column the organisers
-added for their own notes.
 
 Anything after those seven is left over — Google's default `Sheet1`, and two
 per-school tabs from before the layout changed. Nothing writes to them. They can
@@ -127,24 +114,13 @@ registration Firestore already accepted.
 
 ### What the forms send
 
-The **desktop form** registers a school. Its Teacher In-Charge ticks the events,
-names a team for each (exactly as many places as the event takes, checked
-against each other so no student is in two events), reviews it, and submits.
-Each event then goes as an entry of its own, with its own `QV2-` ID: the
-teacher's email and phone are the entry's contact, the first student is its
-lead, the rest are its members, and the teacher's name rides along as
-`teacher`. One event failing never costs the others, and sending again is
-safe, because an event already through comes back as a duplicate with its
-original ID.
+Both forms register one team: its lead, the events it is entering and the rest
+of the team, the desktop form on one page and the phone form in four steps.
 
-That shape is the one the rules have always accepted, plus `teacher`. Rules
-deployed before `teacher` existed refuse any document carrying it, so on that
-refusal the form writes the same entry again without it: a new entry lands,
-and a duplicate is refused a second time and reported as one. The emulator
-tests run the form against both versions of the rules.
-
-The **phone form** still registers one team with a lead, which can enter
-several events at once.
+The rules and the Apps Script also accept an optional `teacher`, from a
+step-by-step desktop form that registered a school through its Teacher
+In-Charge, one entry per event. That form was taken back out; neither form
+sends the field now, and entries without it are what they always were.
 
 ### Firebase
 
@@ -218,9 +194,7 @@ shape is discarded and an ID is minted as before.
 ### The confirmation email
 
 Every accepted **new** entry is emailed to the address on the form, carrying the
-ID, the events, the lead's details and the rest of the team. A desktop entry
-greets the Teacher In-Charge and lists the whole team from 1, and since each
-event is its own entry, each event gets its own email. It is sent from the
+ID, the events, the lead's details and the rest of the team. It is sent from the
 Apps Script because that is the only part of the registration path running on a
 server the organisers own: the browser cannot send mail without shipping a
 provider's key in the bundle, and both the Firebase "Trigger Email" extension and
@@ -247,7 +221,7 @@ arbitrary address. `MAIL_FROM_NAME` sets the display name. Replies go to the own
 until `MAIL_REPLY_TO` is set — do that when the fest has its own address.
 
 `previewConfirmationEmail()` sends one specimen to whoever runs it from the editor,
-and `previewTeacherConfirmationEmail()` one as the desktop form sends it.
+and `previewTeacherConfirmationEmail()` one for an entry that names a teacher.
 It is not reachable over the web, and it writes no row, so the template can be
 checked in a real client without putting a test entry in the organisers' sheet.
 

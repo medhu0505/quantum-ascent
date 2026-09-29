@@ -45,7 +45,7 @@ const STEPS = [
     title: "Team lead",
     lede: `Enter the team lead's details. Each student can compete in only one event, so a school fills this in once for each team. Entries close on ${REGISTRATION_CLOSES.label}.`,
   },
-  { label: "Event", title: "Pick the event", lede: "Tick the event this team is entering." },
+  { label: "Event", title: "Pick the event", lede: "Select the event this team is entering for." },
   {
     label: "Team",
     title: "The team",

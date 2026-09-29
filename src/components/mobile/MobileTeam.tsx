@@ -1,7 +1,7 @@
 import { MobileShell, ScreenHead } from "@/components/mobile/MobileShell";
 import { crewCards } from "@/components/site/crew";
 import { Carousel360 } from "@/components/ui/image-fan-carousel";
-import { crew, getScene, listOf } from "@/data/quantum";
+import { crew, getScene, listOf, teamClosing } from "@/data/quantum";
 
 /**
  * Meet the Team on a phone. The deck is the desktop site's own: the ring of
@@ -41,11 +41,7 @@ export function MobileTeam() {
             </ul>
           </section>
         ))}
-        <p className="m-muted m-small m-closing">
-          Quantum is student-run end to end. Students write the quiz, judge the prelims, cut the
-          highlight reel, run the brackets and staff the help desk. Faculty coordinate and nothing
-          more.
-        </p>
+        <p className="m-muted m-small m-closing">{teamClosing}</p>
       </div>
     </MobileShell>
   );

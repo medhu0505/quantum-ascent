@@ -488,7 +488,8 @@ export function RegisterFormBody({
           >
             <legend>Events</legend>
             <p id="hint-events" className="field-hint">
-              Tick every event your school is entering. A student can compete in only one event.{" "}
+              Select every event your school is entering for. A student can compete in only one
+              event.{" "}
               {/* A new tab, so reading up on an event never costs what has
                   been typed here. */}
               <Link to="/events" target="_blank" rel="noreferrer" className="field-link">

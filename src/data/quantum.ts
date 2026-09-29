@@ -583,11 +583,15 @@ export const crew: CrewSection[] = [
       { role: "Creative Team", names: ["Sudeeti", "Anushri", "Shagun", "Vidisha"] },
       {
         role: "Social Media Team",
-        names: ["Anamta", "Ananya", "Mannat", "Majesta", "Amrita", "Vihaan"],
+        names: ["Anamta", "Ananya", "Vihaan"],
       },
     ],
   },
 ];
+
+/** The last line on Meet the Team, on both layouts. */
+export const teamClosing =
+  "Quantum is student-run end to end. Students write the quiz, judge the prelims, cut the highlight reel, run the brackets and staff the help desk. Faculty is in-charge of coordination.";
 
 /** "A", "A and B", "A, B and C". */
 export function listOf(items: readonly string[]): string {
@@ -611,39 +615,39 @@ const eventNames = (mode: EventMode) =>
 export const faqs = [
   {
     q: "Who is eligible to participate in Quantum V2.0?",
-    a: "Students in classes 9 to 12. Every event is open to all four classes, and each school can enter one team per event. Team sizes differ from event to event and are listed on the Events page.",
+    a: "Students from classes 9 to 12. Every event is open to all four classes, and each school can enter one team per event. Team sizes differ from event to event and are listed on the Events page.",
   },
   {
     q: "When is Quantum V2.0, and when do registrations close?",
-    a: `Registrations close on ${REGISTRATION_CLOSES.label}. The online events, ${eventNames("online")}, run on ${FEST_DAYS.online.label}. The offline events, ${eventNames("offline")}, run at ${school.name} on ${FEST_DAYS.offline.label}.`,
+    a: `Registrations close on ${REGISTRATION_CLOSES.label}. The online events, ${eventNames("online")}, will take place on ${FEST_DAYS.online.label}. The offline events, ${eventNames("offline")}, run at ${school.name} on ${FEST_DAYS.offline.label}.`,
   },
   {
-    q: "Can individual students register, or must entries go through schools?",
-    a: "Entries go through schools, and every team's points count toward its school's overall championship. The school's teacher in-charge registers its teams, one per event, and comes with the students on the offline day.",
+    q: "Can individual students register?",
+    a: "No. Entries must go through schools. Every team's points count toward its school's overall championship. The school's teacher in-charge registers its teams, one per event, and comes with the students on the offline day.",
   },
   {
     q: "Can a student take part in more than one event?",
-    a: "No. Each student can compete in only one event, so a school entering several events needs a different team for each.",
+    a: "No. Each student can compete in only one event, so a school entering several events needs a team comprising of different students for each event.",
   },
   {
     q: "Is there any registration fee?",
     a: "No. Entry to Quantum V2.0 is completely free for all invited schools and confirmed delegations.",
   },
   {
-    q: "What should schools know before the offline day?",
-    a: `Schools must reach ${school.name} by 7:30 a.m. on ${FEST_DAYS.offline.label}, and the registration desk is open from 7:30 to 8:00 a.m. Participants come in their school uniforms with a teacher in charge, and every school stays for both the opening and closing ceremonies. Arriving late can cut into preparation or performance time, and in some events it means disqualification.`,
+    q: "Important information to know before Quantum",
+    a: `Schools must reach ${school.name} by 7:30 a.m. on ${FEST_DAYS.offline.label}, and the registration desk will be open from 7:30 to 8:00 a.m. Participants to come in school uniforms with a teacher in charge. Every school is required to stay for both the opening and closing ceremonies. Arriving late can cut into preparation or performance time and can lead to disqualification.`,
   },
   {
     q: "Where will updates and announcements be shared?",
-    a: `On the Quantum WhatsApp community, the Discord server and Instagram at ${contact.instagram}, as well as on this website. Join the WhatsApp community and the Discord server for updates about your events; both links are on the Contact page.`,
+    a: `On the Quantum WhatsApp community, the Discord server and Instagram at ${contact.instagram}, as well as on this website. Join the WhatsApp community and the Discord server for updates about your events; both links are on the Contact page. All links have been provided in the brochure.`,
   },
   {
     q: "What equipment or software do participants need to prepare?",
-    a: `The host school does not provide internet access. ${getEvent("ad-shoot")!.name} is shot and edited on your own devices, so bring them with their chargers, and ${getEvent("online-gaming")!.name} players need their game, controls and connection working before their match. Whether phones, AI tools or other technology are allowed is set by each event's own rules.`,
+    a: `The host school does not provide internet access. ${getEvent("ad-shoot")!.name} is to be shot and edited on your own devices, so bring them with their chargers, and ${getEvent("online-gaming")!.name} players need their game, controls and connection working before their match. Whether phones, AI tools or other technology are allowed is set by each event's own rules.`,
   },
   {
     q: "How are ties and disputes resolved?",
-    a: "All entries and submissions undergo blinded evaluation under structured judging rubrics. In the event of a points tie or technical dispute, the decision of the AFBBS Organising Committee and judging panel is absolute and final.",
+    a: "All entries and submissions undergo blinded evaluation under structured judging rubrics. In the event of a points tie or technical dispute, the decision of the AFBBS Organising Committee and judging panel is absolute and binding.",
   },
 ];
 
@@ -659,7 +663,7 @@ export const festFacts: readonly { value: string; label: string; note: string }[
   { value: String(events.length), label: "events", note: "One championship" },
   { value: "2", label: "days", note: "8 Oct online · 9 Oct offline" },
   { value: "9–12", label: "classes", note: "Open to Grades 9–12" },
-  { value: "100%", label: "student-run", note: "Faculty coordinate" },
+  { value: "100%", label: "student-run", note: "Faculty is in-charge of coordination." },
 ];
 
 export const about = {
@@ -668,7 +672,7 @@ export const about = {
   intro: {
     heading: "The Descent into Excellence",
     body: [
-      "Organised by the Computer Club of Air Force Bal Bharati School, Quantum is an inter-school technology symposium designed to test the limits of modern digital literacy and technical problem-solving. Across six events, school teams take on a two-stage quiz, an online short film, a recreation of a game's home screen, a Brawlhalla bracket, an innovation pitch and one event that stays sealed until the day.",
+      "Organised by the Computer Club of Air Force Bal Bharati School, Quantum is an inter-school technology symposium designed to test the limits of modern digital literacy and technical problem-solving. Across six events, all teams take on a two-stage quiz, an online short film, a recreation of a game's home screen, a Brawlhalla bracket, an innovation pitch and one event that stays sealed until the final day.",
       "Following its debut edition, Quantum V2.0 raises the benchmark with more rigorous prompts, refined tournament brackets, and a cyber-kinetic competitive atmosphere.",
     ],
   },
@@ -724,7 +728,7 @@ export const contactPage = {
   title: "Contact",
   lede: "Questions about an event go to its student in-charges, whose numbers are on this page. For live updates through both fest days, follow the WhatsApp community, Discord or Instagram.",
   /** Under the event contacts: the teacher is named, never numbered. */
-  faculty: `The fest's teacher in charge is ${contact.name}. For anything about a particular event, its in-charges are the people to call.`,
+  faculty: `Teacher in-charge is Mrs. ${contact.name}. For information about a particular event, the event's in-charges are to be contacted.`,
 } as const;
 
 /** Where the fest posts its updates, and what each one is for. */
@@ -756,7 +760,7 @@ export const updateChannels = [
 ] as const;
 
 /** What to do on the offline day, from the brochure. The FAQ says the same at more length. */
-export const onTheDay = `On ${FEST_DAYS.offline.label}, be at the school by 7:30 a.m.: the registration desk is open from 7:30 to 8:00 a.m. Bring your confirmation email, and come in school uniform with your teacher in-charge.`;
+export const onTheDay = `On ${FEST_DAYS.offline.label}, be at the school by 7:30 a.m.: the registration desk will be open from 7:30 to 8:00 a.m. Bring your confirmation email, and come in school uniform. Come with your respective teacher in-charges.`;
 
 /** The lines that send a visitor from one tab to the other when the answer is there. */
 export const resourceHints = {

@@ -1,7 +1,7 @@
 import { InteriorShell } from "@/components/interiors/InteriorShell";
 import { Reveal } from "@/components/scene/Reveal";
 import { crewCards } from "@/components/site/crew";
-import { crew, getScene, listOf } from "@/data/quantum";
+import { crew, getScene, listOf, teamClosing } from "@/data/quantum";
 import { Carousel360 } from "@/components/ui/image-fan-carousel";
 
 /**
@@ -18,11 +18,7 @@ export function TeamInterior() {
   const scene = getScene("team")!;
 
   return (
-    <InteriorShell
-      scene={scene}
-      leadBelow
-      lead="Quantum is student-run end to end. Students write the quiz, judge the prelims, cut the highlight reel, run the brackets and staff the help desk. Faculty coordinate and nothing more."
-    >
+    <InteriorShell scene={scene} leadBelow lead={teamClosing}>
       <Carousel360 images={crewCards} />
 
       <h2 className="page-subhead">The full crew</h2>

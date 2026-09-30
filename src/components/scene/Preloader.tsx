@@ -119,7 +119,8 @@ export function Preloader() {
     <div className="preloader" data-done={done || undefined} aria-hidden={done || undefined}>
       <div className="preloader-inner">
         <p className="preloader-mark">
-          {fest.name} <span className="text-gradient-neon">{fest.edition}</span>
+          <span className="text-gradient-neon">{fest.name}</span>
+          <span className="sr-only"> {fest.edition}</span>
         </p>
         <p className="preloader-school">{school.name}</p>
         <p className="preloader-count" role="status" aria-live="polite">

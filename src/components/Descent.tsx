@@ -579,9 +579,12 @@ export function Descent() {
           {/* Outside the stage on purpose: when the descent collapses, the
               title leads the page instead of landing on the billboards. */}
           <div ref={titleRef} className="descent-title">
+            {/* One word, in the neon gradient. The edition stays in the
+                heading for a screen reader, which reads the fest's full name,
+                and is left off the screen, as it is on the phone's street. */}
             <h1>
-              <span className="descent-title-word">{fest.name}</span>
-              <span className="descent-title-word text-gradient-neon">{fest.edition}</span>
+              <span className="descent-title-word text-gradient-neon">{fest.name}</span>
+              <span className="sr-only"> {fest.edition}</span>
             </h1>
             <p className="descent-title-school">{school.name}</p>
           </div>

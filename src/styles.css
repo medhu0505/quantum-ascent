@@ -3459,9 +3459,6 @@ button.screen:active {
   align-items: center;
   margin: 0;
   font-weight: 700;
-  /* 0.92 rather than a tighter figure: QUANTUM has no descenders but V2.0's
-     numerals sit on a different optical line, and anything under 0.9 makes
-     the two words collide. */
   line-height: 0.92;
   font-size: var(--text-4xl);
   text-transform: uppercase;
@@ -3471,13 +3468,6 @@ button.screen:active {
   display: block;
   letter-spacing: -0.02em;
   filter: drop-shadow(0 0 34px oklch(0.84 0.13 215 / 0.45));
-}
-
-/* The edition line is the shorter of the two, so it carries the tracking
-   that stops the lockup reading as an accident of word length. */
-.descent-title-word + .descent-title-word {
-  letter-spacing: 0.1em;
-  text-indent: 0.1em;
 }
 
 .descent-title-school {

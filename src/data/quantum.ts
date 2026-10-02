@@ -520,8 +520,12 @@ export const contact = {
    * about an event go to its coordinators, whose numbers are on each event
    * above. Her email is deliberately not in this file, so no page can print
    * it.
+   *
+   * The name is written the way the organisers address her, honorific and
+   * all, so every page that prints it prints the same thing: the footers, the
+   * Contact page and the crew on Meet the Team.
    */
-  name: "Anjali Rawlley",
+  name: "Mrs. Anjali Rawlley",
   role: "Teacher in charge",
   /** Written the way the brochure writes the in-charges' numbers. */
   phone: "+91 98713 79429",
@@ -587,7 +591,7 @@ export const crew: CrewSection[] = [
       { role: "Creative Team", names: ["Sudeeti", "Anushri", "Shagun", "Vidisha"] },
       {
         role: "Social Media Team",
-        names: ["Anamta", "Ananya", "Vihaan"],
+        names: ["Anamta", "Ananya", "Mannat", "Majesta", "Amrita", "Vihaan"],
       },
     ],
   },
@@ -732,12 +736,12 @@ export const contactPage = {
   title: "Contact",
   lede: "Questions about an event go to its student in-charges, whose numbers are on this page. For live updates through both fest days, follow the WhatsApp community, Discord or Instagram.",
   /** Under the event contacts. */
-  faculty: `Teacher in-charge is Mrs. ${contact.name}. For information about a particular event, the event's in-charges are to be contacted.`,
+  faculty: `Teacher in-charge is ${contact.name}. For information about a particular event, the event's in-charges are to be contacted.`,
   /** Anything that is not about one event goes to the teacher in charge. */
   general: {
     heading: "General inquiries",
     note: "For anything that is not about a particular event.",
-    name: `Mrs. ${contact.name}`,
+    name: contact.name,
   },
 } as const;
 

@@ -1,18 +1,18 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useCallback, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useState } from "react";
 import { MobileShell, ScreenHead, ScreenLink } from "@/components/mobile/MobileShell";
-import { railStop, useDragScroll } from "@/components/mobile/useDragScroll";
+import { Carousel_003 } from "@/components/ui/skiper-ui/skiper49";
 import { FEST_DAYS, REGISTRATION_CLOSES, eventDay, events, getScene } from "@/data/quantum";
 
 /**
- * Events on a phone: the six as a rail of cards you swipe, or drag with a
- * mouse, with the one at rest opened out underneath: who can enter, how the
- * rounds run, and the way into registering for it.
+ * Events on a phone: the six as a coverflow of cards you swipe, or drag with
+ * a mouse, with the one at the front opened out underneath: who can enter,
+ * how the rounds run, and the way into registering for it.
  *
- * The event at rest is mirrored into `?event=<id>`, the same address the
+ * The event at the front is mirrored into `?event=<id>`, the same address the
  * desktop rail uses, so a single event can be linked to from either. History
- * is replaced, not pushed: swiping along a rail should not fill up the back
- * button.
+ * is replaced, not pushed: swiping along the carousel should not fill up the
+ * back button.
  */
 
 const count = (i: number) =>
@@ -20,69 +20,20 @@ const count = (i: number) =>
 
 export function MobileEvents({ initial }: { initial?: string | undefined }) {
   const navigate = useNavigate();
-  const rail = useRef<HTMLDivElement | null>(null);
   const landed = events.findIndex((e) => e.id === initial);
   const [active, setActive] = useState(landed < 0 ? 0 : landed);
   const event = events[active] ?? events[0]!;
 
-  const mirror = useCallback(
-    (index: number) => {
-      const id = events[index]?.id;
-      if (!id) return;
-      void navigate({ to: "/events", search: { event: id }, replace: true, resetScroll: false });
-    },
-    [navigate],
-  );
-
   const settle = useCallback(
     (index: number) => {
+      if (index === active) return;
+      const id = events[index]?.id;
+      if (!id) return;
       setActive(index);
-      mirror(index);
+      void navigate({ to: "/events", search: { event: id }, replace: true, resetScroll: false });
     },
-    [mirror],
+    [active, navigate],
   );
-
-  useDragScroll(rail, settle);
-
-  // Arrive on the event in the address, already at rest, before first paint.
-  // Only on arrival: after that the rail owns its position.
-  const arrival = useRef(landed);
-  useLayoutEffect(() => {
-    const el = rail.current;
-    if (el && arrival.current > 0) el.scrollLeft = railStop(el, arrival.current);
-  }, []);
-
-  const go = (index: number) => {
-    const el = rail.current;
-    if (!el) return;
-    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    el.scrollTo({ left: railStop(el, index), behavior: still ? "auto" : "smooth" });
-    settle(index);
-  };
-
-  // Which card is at rest, read off the scroll position as it moves.
-  const onScroll = () => {
-    const el = rail.current;
-    if (!el || el.dataset["dragging"] !== undefined) return;
-    const first = el.children[0] as HTMLElement | undefined;
-    const second = el.children[1] as HTMLElement | undefined;
-    if (!first) return;
-    const step = second ? second.offsetLeft - first.offsetLeft : first.offsetWidth;
-    const index = Math.max(0, Math.min(events.length - 1, Math.round(el.scrollLeft / step)));
-    if (index !== active) settle(index);
-  };
-
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
-      e.preventDefault();
-      const next = Math.max(
-        0,
-        Math.min(events.length - 1, active + (e.key === "ArrowRight" ? 1 : -1)),
-      );
-      go(next);
-      (rail.current?.children[next] as HTMLElement | undefined)?.focus();
-    }
-  };
 
   return (
     <MobileShell screen="events">
@@ -95,24 +46,17 @@ export function MobileEvents({ initial }: { initial?: string | undefined }) {
         </span>
       </div>
 
-      <div
-        ref={rail}
-        className="m-rail"
-        role="group"
-        aria-roledescription="carousel"
-        aria-label="The six events"
-        onScroll={onScroll}
-        onKeyDown={onKeyDown}
-      >
-        {events.map((e, i) => (
-          <button
-            key={e.id}
-            type="button"
+      <Carousel_003
+        items={events}
+        index={active}
+        onIndexChange={settle}
+        getKey={(e) => e.id}
+        label="The six events"
+        renderItem={(e, i) => (
+          <div
             className="m-event-card"
             data-accent={e.accent}
             aria-current={i === active || undefined}
-            aria-label={`${e.name}, ${count(i)}`}
-            onClick={() => go(i)}
           >
             <span className="m-lines" aria-hidden="true" />
             <span className="m-event-num" aria-hidden="true">
@@ -122,9 +66,9 @@ export function MobileEvents({ initial }: { initial?: string | undefined }) {
             <span className="m-event-name">{e.name}</span>
             <span className="m-event-tag">{e.tagline}</span>
             <span className="m-event-desc">{e.description}</span>
-          </button>
-        ))}
-      </div>
+          </div>
+        )}
+      />
 
       <div className="m-dots" role="group" aria-label="Choose an event">
         {events.map((e, i) => (
@@ -135,7 +79,7 @@ export function MobileEvents({ initial }: { initial?: string | undefined }) {
             data-accent={e.accent}
             aria-label={e.name}
             aria-current={i === active || undefined}
-            onClick={() => go(i)}
+            onClick={() => settle(i)}
           />
         ))}
       </div>

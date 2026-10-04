@@ -3592,14 +3592,27 @@ button.screen:active {
     height: 100dvh;
   }
 
-  /* Clear of the moon, over the sky-to-skyline transition, with the beam
-     running behind it. */
+  /* Below the moon, over the sky-to-skyline transition, with the beam running
+     behind it. The moon is a fixed place in the film's first frame, whose
+     lower edge is 44.6% of the way down, so the title is set from the film's
+     own box (the same 16:9 box .hub-stage draws, centred in the hub) rather
+     than from a percentage of the hub, which put it back over the moon on
+     every window that was not exactly the shape it was tuned on. The 0.1em
+     takes the line box's spare space above the capitals off, so the gap is
+     measured to the letters. */
+  .descent-pin .hub {
+    --film-w: min(100vw, calc(100dvh * 16 / 9), 1720px);
+    --film-h: calc(var(--film-w) * 9 / 16);
+    --moon-bottom: calc((100dvh - var(--film-h)) / 2 + var(--film-h) * 0.446);
+  }
+
   .descent-title {
-    top: 33%;
+    --title-size: clamp(2.5rem, min(19dvh, 12vw), 10rem);
+    top: calc(var(--moon-bottom) + var(--film-h) * 0.035 - var(--title-size) * 0.1);
   }
 
   .descent-title h1 {
-    font-size: clamp(2.5rem, min(19dvh, 12vw), 10rem);
+    font-size: var(--title-size);
   }
 
   .descent-title-school {

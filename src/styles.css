@@ -4287,8 +4287,7 @@ button.screen:active {
   margin-block-end: var(--s-7);
 }
 
-:root:not([data-js="on"]) [role="tablist"],
-:root:not([data-js="on"]) .sq-arrow {
+:root:not([data-js="on"]) [role="tablist"] {
   display: none !important;
 }
 
@@ -4317,33 +4316,6 @@ button.screen:active {
 
 :root:not([data-js="on"]) .faq-mark {
   display: none;
-}
-
-/* The rail's own controls take the site's focus treatment rather than the
-   utility ring classes they shipped with, which resolve to nothing here and
-   left a keyboard user with no idea which panel they were on. */
-.sq-tab:focus-visible,
-.sq-arrow:focus-visible,
-.sq-action:focus-visible {
-  outline: 2px solid var(--neon-cyan);
-  outline-offset: 3px;
-}
-
-.sq-tab:focus-visible {
-  outline-offset: -3px;
-}
-
-/* The featured rail above the event screens. */
-/* Sits opposite the rail's arrows, in the space that was empty beside them.
-   Says how to drive the row, which on a phone is not otherwise discoverable:
-   the arrows are there, but the swipe is the thing a thumb reaches for. */
-.sq-hint {
-  margin: 0;
-  min-width: 0;
-  font-size: var(--text-xs);
-  line-height: 1.35;
-  color: var(--muted-foreground);
-  text-wrap: balance;
 }
 
 .rail {
@@ -4418,34 +4390,9 @@ button.screen:active {
   background: color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 78%, transparent);
 }
 
-/* Below this the viewport cannot spare the width for a 16:9 open card and
-   four columns beside it — the columns collapse to slivers and the strip runs
-   off the edge of the clip. Squaring the card frees roughly a third of the
-   width back into the columns. */
-@media (max-width: 40rem) {
-  .rail {
-    --sq-aspect: 1;
-  }
-
-  /* Even squared off, there is not enough room left for four columns to
-     shade into each other: the shares landed at 30, 22, 8, 22 and 22 pixels,
-     which reads as a ragged set of bars rather than cards waiting their
-     turn, and the 8px one was a link nobody could hit. One width for all of
-     them is both tidier and a real target.
-
-     The width has to beat an inline style, because the component computes
-     each card's width from shares of the room it assumes it has. */
-  .rail [role="tab"][aria-selected="false"] {
-    width: 2rem !important;
-  }
-}
-
-/* ---- The entry, painted on the open panel ------------------------- *
+/* ---- The entry, painted on the card -------------------------------- *
  * The panels are lit gradients with nothing in them, so the copy goes on the
- * panel rather than under the rail. Every line is laid out against the open
- * card's width (--sq-open) and never against the card itself, so a card being
- * squeezed toward a slat slides its words out of view instead of re-wrapping
- * them on every frame of the slide.
+ * panel itself.
  * ------------------------------------------------------------------ */
 
 .rail-caption {
@@ -4485,34 +4432,181 @@ button.screen:active {
   text-shadow: 0 1px 10px rgb(0 0 0 / 0.7);
 }
 
-/* Wide enough to carry the caption: the paragraph under the rail stays in the
-   DOM, because it is what the row's live region reads out when the open event
-   changes, but it is not painted twice. */
-@media (min-width: 40.0625rem) {
-  .sq-summary {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    border: 0;
+/* ---- The events stack --------------------------------------------- *
+ * Cards slide up over each other as the page scrolls (Skiper 17). The stage
+ * is sticky inside a track as tall as the scrub, and the script only turns
+ * the scroll position into the cards' movement. Without script, or under
+ * reduced motion, none of that applies and the cards are a plain list.
+ * ------------------------------------------------------------------ */
+
+.stack {
+  --stack-top: 5.5rem;
+  --stack-step: 70vh;
+  position: relative;
+}
+
+.stack-stage {
+  display: grid;
+  gap: var(--s-3);
+}
+
+.stack-frame {
+  display: grid;
+  gap: var(--s-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stack-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: var(--s-5);
+  padding: clamp(1.25rem, 3cqi, 2.5rem);
+  border-radius: 1.5rem;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.12);
+}
+
+.stack-card:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 3px;
+}
+
+.stack-caption {
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.stack-count {
+  margin-block-end: auto;
+  font-family: var(--font-display, inherit);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: oklch(1 0 0 / 0.7);
+}
+
+.stack-side {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--s-4);
+  min-width: 0;
+  align-self: end;
+  padding: var(--s-4) var(--s-5);
+  border-radius: 1rem;
+  background: oklch(0.1 0.03 265 / 0.55);
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.12);
+  backdrop-filter: blur(8px);
+}
+
+.stack-side .btn {
+  align-self: flex-start;
+}
+
+.stack-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s-2);
+}
+
+.stack-nav-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  padding: 0.45rem 0.9rem;
+  border: 0;
+  border-radius: 999px;
+  background: oklch(1 0 0 / 0.06);
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.12);
+  color: var(--muted-foreground);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color 200ms,
+    background 200ms,
+    box-shadow 200ms;
+}
+
+.stack-nav-item:hover {
+  color: var(--foreground);
+}
+
+.stack-nav-item[aria-current] {
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 22%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 70%, transparent);
+}
+
+.stack-nav-item:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 3px;
+}
+
+.stack-nav-num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
+}
+
+.stack-hint {
+  display: none;
+  margin: 0;
+  text-align: center;
+  font-size: var(--text-xs);
+  color: var(--muted-foreground);
+}
+
+/* Not much room beside the card for a second column. */
+@container (max-width: 44rem) {
+  .stack-card {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
-/* The card is square here (see --sq-aspect above), and the whole caption was
-   dropped on the grounds that it is "mostly picture". There is no picture:
-   there are no event photographs and there will not be any before the fest
-   runs, so the panel is a lit gradient. What a phone actually got was a blank
-   coloured square taking the top third of the page with the event's name
-   nowhere on it.
-   The name and the tagline go back on. The description does not — it would
-   not fit a square at this size, and it is already in the paragraph under the
-   rail, which is also what the live region reads out on a change. */
-@media (max-width: 40rem) {
-  .rail-blurb {
-    display: none;
+/* position: sticky needs a room that clips without becoming a scroll box. */
+.room[data-room="events"] {
+  overflow: clip;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-js="on"] .stack {
+    --stack-stage-h: min(38rem, calc(100svh - var(--stack-top) - 1rem));
+    height: calc(var(--stack-stage-h) + (var(--stack-cards) - 1) * var(--stack-step));
+  }
+
+  :root[data-js="on"] .stack-stage {
+    position: sticky;
+    top: var(--stack-top);
+    height: var(--stack-stage-h);
+    grid-template-rows: minmax(0, 1fr) auto auto;
+  }
+
+  :root[data-js="on"] .stack-frame {
+    position: relative;
+    display: block;
+    min-height: 0;
+    overflow: hidden;
+    border-radius: 1.5rem;
+  }
+
+  :root[data-js="on"] .stack-card {
+    position: absolute;
+    inset: 0;
+  }
+
+  /* In front from the start, the rest waiting below the frame until the
+     script has put them there. */
+  :root[data-js="on"] .stack-card:not(:first-child) {
+    opacity: 0;
+  }
+
+  :root[data-js="on"] .stack-hint {
+    display: block;
   }
 }
 

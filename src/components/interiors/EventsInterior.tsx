@@ -4,27 +4,20 @@ import { Route } from "@/routes/events";
 import { InteriorShell } from "@/components/interiors/InteriorShell";
 import { Reveal } from "@/components/scene/Reveal";
 import { FEST_DAYS, REGISTRATION_CLOSES, eventDay, events, getScene } from "@/data/quantum";
-import { SqueezeCarousel, type SqueezeSlide } from "@/components/ui/carousel-squeeze";
+import { StickyCard002, type StackCard } from "@/components/ui/skiper-ui/skiper17";
 
 /**
- * Events: one rail carrying all six.
+ * Events: the six as a stack of cards.
  *
- * This was a rail of summaries above a wall of expandable screens, which meant
- * every event was written twice and the same six names had to be read twice
- * before anything could be compared. The rail now carries the whole entry —
- * tagline, description, team size, the round-by-round format and the
- * registration link — so there is one place per event rather than two, and
- * opening one closes the last without anything collapsing under the scroll
- * position.
+ * Each card carries the whole entry — tagline, description, who can enter,
+ * when, the round-by-round format and the registration link — so there is one
+ * place per event. Scrolling slides the next card up over the last. A row of
+ * buttons under the stack reaches any of them directly, and is the way in for
+ * a keyboard.
  *
- * The open event is mirrored into `?event=<id>` so a single event can be
- * linked to and shared. History is replaced rather than pushed: stepping along
- * a carousel should not fill up the back button.
- *
- * Name, tagline and description are painted onto the open panel; entry, format
- * and the registration link sit under the rail. The same words stay in the
- * paragraph below as well, where the live region reads them out on a change
- * and where a viewport too narrow for a caption falls back to them.
+ * The event in front is mirrored into `?event=<id>` so a single event can be
+ * linked to and shared. History is replaced rather than pushed: scrolling
+ * through the stack should not fill up the back button.
  */
 
 /**
@@ -48,7 +41,7 @@ export function EventsInterior() {
   const { event: fromUrl } = Route.useSearch();
   const navigate = useNavigate();
 
-  // Read once, at mount. The carousel owns its position from then on, and the
+  // Read once, at mount. The stack owns its position from then on, and the
   // URL is rewritten in place rather than pushed, so there are no history
   // entries for a later read to disagree with.
   const landed = events.findIndex((e) => e.id === fromUrl);
@@ -58,48 +51,55 @@ export function EventsInterior() {
   // through the router. It keeps its href, so it is still a real link to
   // right-click, copy or open in a new tab — the click is simply intercepted
   // so choosing an event does not reload the whole document.
-  const rail = useMemo<SqueezeSlide[]>(
+  const cards = useMemo<StackCard[]>(
     () =>
-      events.map((event) => ({
+      events.map((event, i) => ({
         id: event.id,
-        title: `${event.name}. ${event.tagline}`,
-        description: event.description,
+        name: event.name,
+        accent: event.accent,
         background: PANEL[event.accent] ?? PANEL_CYAN,
-        // Painted on the panel itself rather than read underneath it. The
-        // panels are lit gradients with nothing in them, so all that space was
-        // going to waste while the entry it belongs to sat below the rail.
-        caption: (
-          <span className="rail-caption" data-accent={event.accent}>
-            <span className="rail-mark">{event.name}</span>
-            <span className="rail-tagline">{event.tagline}</span>
-            <span className="rail-blurb">{event.description}</span>
-          </span>
+        content: (
+          <>
+            <div className="rail-caption stack-caption" data-accent={event.accent}>
+              <span className="stack-count" aria-hidden="true">
+                {String(i + 1).padStart(2, "0")} / {String(events.length).padStart(2, "0")}
+              </span>
+              <h3 className="rail-mark">{event.name}</h3>
+              <p className="rail-tagline">{event.tagline}</p>
+              <p className="rail-blurb">{event.description}</p>
+            </div>
+            <div className="stack-side" data-accent={event.accent}>
+              <div className="rail-detail">
+                <p className="rail-team">
+                  <span className="rail-team-label">Entry</span>
+                  {event.team}
+                </p>
+                <p className="rail-team">
+                  <span className="rail-team-label">When</span>
+                  {eventDay(event)}
+                </p>
+                <h4 className="rail-format-title">How it runs</h4>
+                <ol className="rail-format">
+                  {event.format.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ol>
+              </div>
+              <a
+                href={`/register?event=${event.id}`}
+                className="btn btn-accent"
+                data-magnetic
+                onClick={(e) => {
+                  if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+                  e.preventDefault();
+                  void navigate({ to: "/register", search: { event: event.id } });
+                }}
+              >
+                Register for {event.name}
+              </a>
+            </div>
+          </>
         ),
-        details: (
-          <div className="rail-detail" data-accent={event.accent}>
-            <p className="rail-team">
-              <span className="rail-team-label">Entry</span>
-              {event.team}
-            </p>
-            <p className="rail-team">
-              <span className="rail-team-label">When</span>
-              {eventDay(event)}
-            </p>
-            <h3 className="rail-format-title">How it runs</h3>
-            <ol className="rail-format">
-              {event.format.map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ol>
-          </div>
-        ),
-        action: `Register for ${event.name}`,
-        href: `/register?event=${event.id}`,
-        onAction: (e) => {
-          if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-          e.preventDefault();
-          void navigate({ to: "/register", search: { event: event.id } });
-        },
       })),
     [navigate],
   );
@@ -128,20 +128,12 @@ export function EventsInterior() {
         <h2 id="rail-head" className="page-subhead">
           The six events
         </h2>
-        <SqueezeCarousel
-          slides={rail}
-          defaultIndex={start}
+        <StickyCard002
+          cards={cards}
+          startIndex={start}
           onIndexChange={onIndexChange}
           label="The six events"
-          hint="Swipe, or use the arrows, to switch events"
-          height="clamp(180px, 30cqi, 320px)"
-          /* The tail cards are links. At the component's 8px default they
-             were 8px-wide click targets carrying no readable edge — a pair
-             of hairlines at the end of the row rather than cards waiting
-             their turn. */
-          slatWidth={26}
-          accent="var(--neon-cyan)"
-          accentForeground="#05070d"
+          hint="Scroll to move through the events"
         />
       </section>
 

@@ -1436,6 +1436,22 @@ html[data-phase] .phase-enter {
   isolation: isolate;
 }
 
+/* The glow at the top of a room is sized as a share of the room, and the team
+   directory made this room about four times taller, which would have stretched
+   the glow down the page and lit the ring differently. It keeps the size it
+   had, 55% of the 1581px the room measured before the directory. */
+@media screen {
+  .room[data-room="team"] {
+    background:
+      radial-gradient(
+        90% calc(1581px * 0.55) at 50% 0%,
+        color-mix(in oklab, var(--accent-hue) 14%, transparent),
+        transparent 70%
+      ),
+      var(--ink);
+  }
+}
+
 /* The window. Its view is a real frame of the descent, so the interior sits
    in the same city the visitor just fell through. */
 .room-window {
@@ -1728,79 +1744,230 @@ button.screen:active {
   text-wrap: pretty;
 }
 
-/* ---- The crew wall ------------------------------------------------- */
+/* ---- The team directory -------------------------------------------- *
+ * Under the ring on Meet the Team, on both layouts: a heading for each team
+ * and a portrait card for each person in it (see TeamDirectory). The columns
+ * come from the width the directory is given rather than the screen: as many
+ * as fit, never more than four, so a team of six or seven breaks four and two
+ * or four and three, not five and one.
+ * ------------------------------------------------------------------ */
 
-.frame-wall {
+.dir {
+  --dir-gap: clamp(0.75rem, 2.2vw, 1.5rem);
+  /* The widest a card gets. */
+  --dir-card: 12rem;
+  container-type: inline-size;
   display: grid;
-  gap: var(--s-4);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: clamp(2rem, 5vw, var(--s-7));
 }
 
-.frame {
+.m-pad > .dir {
+  margin-top: 14px;
+}
+
+.dir-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.dir-team {
+  max-width: calc(4 * var(--dir-card) + 3 * var(--dir-gap));
+}
+
+/* A neon diamond before the name and a line of light running out after it. */
+.dir-heading {
   display: flex;
   align-items: center;
-  gap: var(--s-4);
-  margin: 0;
-  padding: var(--s-4) var(--s-2) var(--s-4) 0;
-  border-top: 1px solid var(--rule);
-  background: none;
-}
-
-.frame-plate {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 2.75rem;
-  aspect-ratio: 1;
-  border-radius: 999px;
-  background: oklch(0.2 0.03 265);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 28%, transparent);
-}
-
-.frame-initial {
-  width: 1.1rem;
-  height: 1.1rem;
-  border-radius: 999px;
-  background: color-mix(in oklab, var(--accent-hue) 45%, transparent);
-  box-shadow: 0 0.7rem 0 -0.15rem color-mix(in oklab, var(--accent-hue) 45%, transparent);
-  opacity: 0.5;
-}
-
-.frame figcaption {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-1);
-}
-
-.frame-role {
-  order: -1;
+  gap: var(--s-3);
+  margin: 0 0 var(--s-4);
   font-family: var(--font-display);
-  font-size: var(--text-sm);
+  font-size: var(--text-lg);
   font-weight: 700;
   line-height: 1.15;
-  text-wrap: balance;
 }
 
-.frame-name {
-  font-size: var(--text-xs);
-  color: var(--muted-foreground);
+.dir-heading::before {
+  content: "";
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  background: var(--accent-hue);
+  box-shadow: 0 0 0.75rem color-mix(in oklab, var(--accent-hue) 80%, transparent);
+  transform: rotate(45deg);
 }
 
-/* The wall in three parts, the way the brochure groups the crew. */
-.crew-heading {
-  margin: var(--s-6) 0 var(--s-3);
+.dir-heading::after {
+  content: "";
+  flex: 1;
+  min-width: var(--s-4);
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--accent-hue) 55%, transparent),
+    transparent
+  );
+}
+
+.dir-tag {
   color: var(--muted-foreground);
-  font-size: var(--text-xs);
+  font-size: var(--text-micro);
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
-.crew-section:first-of-type .crew-heading {
-  margin-top: var(--s-2);
+/* Two to a row at the narrowest a phone gets, then as many as fit. Cards fill
+   the width on a phone; on a wide screen they stop at a size and sit left. */
+.dir-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 8.25rem), 1fr));
+  gap: var(--dir-gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@container (min-width: 40rem) {
+  .dir-grid {
+    grid-template-columns: repeat(auto-fill, minmax(10.5rem, var(--dir-card)));
+  }
+}
+
+.dir-grid > li {
+  display: flex;
+}
+
+/* The same lit glass as the console screens, with a portrait slot on top and
+   the name on a plate beneath it. */
+.dir-card {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--accent-hue) 13%, transparent),
+      transparent 55%
+    ),
+    oklch(0.185 0.032 267 / 0.9);
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.07),
+    inset 0 0 0 1px var(--rule),
+    var(--elev-2);
+  transition:
+    transform var(--dur-2) var(--ease),
+    box-shadow var(--dur-2) var(--ease);
+}
+
+@media (hover: hover) {
+  .dir-card:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      inset 0 1px 0 oklch(1 0 0 / 0.12),
+      inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 70%, transparent),
+      0 0 40px -6px color-mix(in oklab, var(--accent-hue) 34%, transparent),
+      var(--elev-3);
+  }
+}
+
+/* The portrait. One shape, 4:5, whether it holds a picture or the
+   placeholder, and a picture is cropped to fill it, never stretched. */
+.dir-slot {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      120% 140% at 22% 12%,
+      color-mix(in oklab, var(--accent-hue) 42%, transparent),
+      transparent 68%
+    ),
+    linear-gradient(
+      160deg,
+      color-mix(in oklab, var(--accent-hue) 24%, oklch(0.2 0.04 265)),
+      oklch(0.14 0.03 265)
+    );
+}
+
+.dir-slot img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Faces sit in the upper part of a portrait. */
+  object-position: 50% 20%;
+}
+
+/* The figure is lit from the top and dissolves toward the bottom edge, a
+   hologram waiting for its picture. */
+.dir-silhouette {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: color-mix(in oklab, var(--accent-hue) 46%, transparent);
+  filter: drop-shadow(0 0 0.7rem color-mix(in oklab, var(--accent-hue) 40%, transparent));
+  -webkit-mask-image: linear-gradient(180deg, #000 30%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 30%, transparent 100%);
+}
+
+/* Scan lines over the placeholder, the same ones the console screens carry;
+   a real picture goes without them. */
+.dir-slot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, oklch(1 0 0 / 0.045) 0 1px, transparent 1px 3px);
+}
+
+.dir-slot[data-photo]::before {
+  display: none;
+}
+
+/* Corner brackets framing the slot, picture or not. */
+.dir-slot::after {
+  --bracket: color-mix(in oklab, var(--accent-hue) 75%, transparent);
+  content: "";
+  position: absolute;
+  inset: 0.55rem;
+  z-index: 3;
+  pointer-events: none;
+  background:
+    linear-gradient(var(--bracket), var(--bracket)) 0 0 / 0.9rem 1px no-repeat,
+    linear-gradient(var(--bracket), var(--bracket)) 0 0 / 1px 0.9rem no-repeat,
+    linear-gradient(var(--bracket), var(--bracket)) 100% 0 / 0.9rem 1px no-repeat,
+    linear-gradient(var(--bracket), var(--bracket)) 100% 0 / 1px 0.9rem no-repeat,
+    linear-gradient(var(--bracket), var(--bracket)) 0 100% / 0.9rem 1px no-repeat,
+    linear-gradient(var(--bracket), var(--bracket)) 0 100% / 1px 0.9rem no-repeat,
+    linear-gradient(var(--bracket), var(--bracket)) 100% 100% / 0.9rem 1px no-repeat,
+    linear-gradient(var(--bracket), var(--bracket)) 100% 100% / 1px 0.9rem no-repeat;
+}
+
+.dir-name {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: var(--s-3);
+  border-top: 1px solid var(--rule);
+  background: oklch(0.12 0.026 265 / 0.5);
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
 }
 
 /* Scene chips. Fixed so they stay reachable from anywhere in a long room —
@@ -2172,23 +2339,6 @@ button.screen:active {
 
 .notice-ok strong {
   color: var(--foreground);
-}
-
-/* Inside a frame the pending name is stated quietly: the summary count above
-   the wall already makes the gap unmissable, and eight red boxes bury the
-   roles, which are the real content until the roster lands. */
-.frame .todo {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--muted-foreground);
-  font-family: var(--font-sans);
-  font-weight: 400;
-  font-size: var(--text-xs);
-}
-
-.frame .todo > [aria-hidden] {
-  color: color-mix(in oklab, var(--destructive) 35%, var(--foreground));
 }
 
 /* Marks a value the organisers have not supplied yet. Visible on purpose:
@@ -3739,7 +3889,8 @@ button.screen:active {
   a.screen:hover,
   button.screen:hover,
   a.screen:focus-visible,
-  button.screen:focus-visible {
+  button.screen:focus-visible,
+  .dir-card:hover {
     transform: none;
   }
 
@@ -3808,7 +3959,7 @@ button.screen:active {
   }
 
   .screen,
-  .frame,
+  .dir-card,
   .channels li,
   .about-list li,
   .facts > div {
@@ -3823,6 +3974,31 @@ button.screen:active {
   .screen::before,
   .sign-face::after {
     display: none;
+  }
+
+  /* A team that has not been scrolled to yet would print blank. */
+  .dir-team {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .dir-slot {
+    background: #eee !important;
+  }
+
+  .dir-name {
+    border-top-color: #bbb;
+    background: none;
+  }
+
+  .dir-slot::before,
+  .dir-slot::after {
+    display: none;
+  }
+
+  .dir-silhouette {
+    fill: #bbb;
+    filter: none;
   }
 
   /* The rail shows one event at a time by stacking all six in a single grid
@@ -5653,66 +5829,6 @@ html[data-layout="phone"] body {
 .m-deck {
   margin-top: 18px;
   overflow: hidden;
-}
-
-.m-crew {
-  margin: 10px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.m-crew li {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 14px 8px 14px 0;
-  border-top: 1px solid oklch(1 0 0 / 0.1);
-}
-
-.m-crew-avatar {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 999px;
-  background: oklch(0.2 0.03 265);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--m-acc) 28%, transparent);
-}
-
-/* A head and shoulders, drawn in two circles. */
-.m-crew-avatar span {
-  width: 17px;
-  height: 17px;
-  margin-top: -8px;
-  border-radius: 999px;
-  background: color-mix(in oklab, var(--m-acc) 45%, transparent);
-  box-shadow: 0 11px 0 -2px color-mix(in oklab, var(--m-acc) 45%, transparent);
-  opacity: 0.5;
-}
-
-.m-crew-text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.m-crew-role {
-  font: 700 15px/1.15 var(--font-display);
-}
-
-.m-crew-name {
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--m-muted);
-}
-
-.m-crew-heading {
-  margin: 28px 4px 0;
-}
-
-.m-crew-section:first-of-type .m-crew-heading {
-  margin-top: 16px;
 }
 
 .m-closing {

@@ -180,7 +180,6 @@ export function Carousel360({
   return (
     <div
       className="fan"
-      style={{ "--fan-count": count } as React.CSSProperties}
       data-dragging={dragging || undefined}
       role="group"
       aria-roledescription="carousel"

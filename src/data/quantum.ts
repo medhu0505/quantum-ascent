@@ -552,19 +552,18 @@ export const contact = {
  *
  * The brochure names people by team rather than by title, and most of them by
  * first name only, so the crew is kept that way rather than dressed up as an
- * org chart the brochure does not give. The pages take each group apart and
- * show every person on their own, with a picture of their own once there is
- * one (see components/site/crew.ts); the group is what they are listed under.
+ * org chart the brochure does not give. `photo` is for a group picture once
+ * there is one; until then the group's card shows its initials.
  */
-export type CrewGroup = { role: string; names: string[] };
+export type CrewGroup = { role: string; names: string[]; photo?: string };
 
 export type CrewSection = {
   heading: string;
   /**
-   * Said after the group's role on a person's own card, which has no heading
-   * over it to say what the role is: "The Q Factor coordinator".
+   * Said after a group's role wherever it stands alone, off the page that
+   * gives it its heading: "The Q Factor coordinators", on the ring's card.
    */
-  member?: string;
+  noun?: string;
   groups: CrewGroup[];
 };
 
@@ -575,7 +574,7 @@ export const crew: CrewSection[] = [
   },
   {
     heading: "Event coordinators",
-    member: "coordinator",
+    noun: "coordinators",
     groups: events.map((event) => ({
       role: event.name,
       names: event.coordinators.map((c) => c.name),

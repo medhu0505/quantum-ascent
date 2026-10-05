@@ -1756,17 +1756,8 @@ button.screen:active {
   width: 2.75rem;
   aspect-ratio: 1;
   border-radius: 999px;
-  overflow: hidden;
   background: oklch(0.2 0.03 265);
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 28%, transparent);
-}
-
-/* Faces sit in the upper part of a portrait, so the crop leans that way. */
-.frame-plate img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 50% 20%;
 }
 
 .frame-initial {
@@ -1784,7 +1775,8 @@ button.screen:active {
   gap: var(--s-1);
 }
 
-.frame-name {
+.frame-role {
+  order: -1;
   font-family: var(--font-display);
   font-size: var(--text-sm);
   font-weight: 700;
@@ -1792,7 +1784,7 @@ button.screen:active {
   text-wrap: balance;
 }
 
-.frame-role {
+.frame-name {
   font-size: var(--text-xs);
   color: var(--muted-foreground);
 }
@@ -4108,10 +4100,6 @@ button.screen:active {
 /* ---- 3D ring ---- */
 
 .fan {
-  /* A thumbnail's side. A ring of eleven or fewer has room for the full size;
-     more of them shrink in proportion, so thirty-odd cards still sit side by
-     side round the ring instead of piling onto each other. */
-  --fan-thumb: clamp(2.5rem, calc(9cqi * min(1, 11 / var(--fan-count, 11))), 6rem);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -4173,10 +4161,9 @@ button.screen:active {
 
 .fan-thumb img {
   display: block;
-  width: var(--fan-thumb);
-  height: var(--fan-thumb);
+  width: clamp(3rem, 9cqi, 6rem);
+  height: clamp(3rem, 9cqi, 6rem);
   object-fit: cover;
-  object-position: 50% 20%;
 }
 
 .fan-centre {
@@ -4210,7 +4197,6 @@ button.screen:active {
   width: clamp(11rem, 34cqi, 20rem);
   height: clamp(11rem, 34cqi, 20rem);
   object-fit: cover;
-  object-position: 50% 20%;
 }
 
 .fan-centre-card figcaption {
@@ -4278,8 +4264,8 @@ button.screen:active {
 .fan-blank {
   display: grid;
   place-items: center;
-  width: var(--fan-thumb);
-  height: var(--fan-thumb);
+  width: clamp(3rem, 9cqi, 6rem);
+  height: clamp(3rem, 9cqi, 6rem);
   background:
     radial-gradient(
       120% 120% at 30% 15%,
@@ -5690,16 +5676,8 @@ html[data-layout="phone"] body {
   width: 44px;
   height: 44px;
   border-radius: 999px;
-  overflow: hidden;
   background: oklch(0.2 0.03 265);
   box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--m-acc) 28%, transparent);
-}
-
-.m-crew-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 50% 20%;
 }
 
 /* A head and shoulders, drawn in two circles. */
@@ -5719,11 +5697,11 @@ html[data-layout="phone"] body {
   gap: 4px;
 }
 
-.m-crew-name {
+.m-crew-role {
   font: 700 15px/1.15 var(--font-display);
 }
 
-.m-crew-role {
+.m-crew-name {
   font-size: 13px;
   line-height: 1.45;
   color: var(--m-muted);

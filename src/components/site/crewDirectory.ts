@@ -1,4 +1,4 @@
-import { crew, events, type Accent } from "@/data/quantum";
+import { contact, crew, events, type Accent } from "@/data/quantum";
 
 /**
  * The detailed crew directory under Meet the Team's ring: one team after
@@ -35,13 +35,20 @@ const pictureOf = new Map(
   ]),
 );
 
-export type DirectoryPerson = { name: string; photo?: string };
+export type DirectoryPerson = {
+  name: string;
+  /** Only where the site already publishes one: the coordinators and the teacher in charge. */
+  phone?: string;
+  photo?: string;
+};
 
 export type DirectoryTeam = {
   id: string;
   heading: string;
   /** What the team's people are, where the data says: "Coordinators". */
   tag?: string;
+  /** One person's part in it, said on their own profile: "Event coordinator". */
+  role: string;
   accent: Accent;
   people: DirectoryPerson[];
 };
@@ -53,6 +60,11 @@ const ACCENTS: readonly Accent[] = ["cyan", "magenta", "violet"];
  * with the teacher in charge. Otherwise each group is a team under its own
  * name, an event or an organising team. An event keeps the accent the rest of
  * the site gives it; the others take them in turn.
+ *
+ * A number is on a person's card only where the site already prints it: an
+ * event's coordinators have theirs on the Events and Contact pages, and the
+ * teacher in charge has hers on Contact and in the footers. Nobody else has
+ * one in the data, and no email is here at all.
  */
 export const crewDirectory: DirectoryTeam[] = crew.flatMap((section) => {
   const alone = section.groups.length === 1;
@@ -61,15 +73,21 @@ export const crewDirectory: DirectoryTeam[] = crew.flatMap((section) => {
     const tag = alone
       ? group.role
       : section.noun && `${section.noun.charAt(0).toUpperCase()}${section.noun.slice(1)}`;
+    // "Event coordinators" and "Organising teams" are the sections' plurals.
+    const role = alone ? group.role : section.heading.replace(/s$/, "");
     const event = events.find((e) => e.name === group.role);
     return {
       id: slugOf(heading),
       heading,
       ...(tag ? { tag } : {}),
+      role,
       accent: event?.accent ?? ACCENTS[index % ACCENTS.length] ?? "cyan",
       people: group.names.map((name) => {
         const photo = pictureOf.get(slugOf(name));
-        return { name, ...(photo ? { photo } : {}) };
+        const phone =
+          event?.coordinators.find((c) => c.name === name)?.phone ??
+          (name === contact.name ? contact.phone : undefined);
+        return { name, ...(phone ? { phone } : {}), ...(photo ? { photo } : {}) };
       }),
     };
   });

@@ -1757,12 +1757,23 @@ button.screen:active {
   /* The widest a card gets. */
   --dir-card: 12rem;
   container-type: inline-size;
+}
+
+.dir-teams {
   display: grid;
   gap: clamp(2rem, 5vw, var(--s-7));
 }
 
 .m-pad > .dir {
   margin-top: 14px;
+}
+
+/* One line above the first team: the cards open. */
+.dir-hint {
+  margin: 0 0 var(--s-5);
+  color: var(--muted-foreground);
+  font-size: var(--text-xs);
+  letter-spacing: 0.02em;
 }
 
 .dir-defs {
@@ -1840,16 +1851,25 @@ button.screen:active {
 }
 
 /* The same lit glass as the console screens, with a portrait slot on top and
-   the name on a plate beneath it. */
+   the name on a plate beneath it. A card is a button: it opens the person's
+   profile. */
 .dir-card {
   position: relative;
+  isolation: isolate;
   flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
   margin: 0;
+  padding: 0;
+  border: 0;
   overflow: hidden;
   border-radius: var(--radius-lg);
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   background:
     linear-gradient(
       180deg,
@@ -1866,6 +1886,34 @@ button.screen:active {
     box-shadow var(--dur-2) var(--ease);
 }
 
+/* The light a card catches under the pointer. It sits above the portrait and
+   is only ever shown to a mouse; --mx and --my are the pointer's place on the
+   card, set by TeamDirectory. */
+.dir-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    circle at var(--mx, 50%) var(--my, 0%),
+    oklch(1 0 0 / 0.17),
+    transparent 58%
+  );
+  transition: opacity var(--dur-2) var(--ease);
+}
+
+.dir-card:focus-visible {
+  outline: 2px solid var(--accent-hue);
+  outline-offset: 3px;
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.12),
+    inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 70%, transparent),
+    0 0 40px -6px color-mix(in oklab, var(--accent-hue) 34%, transparent),
+    var(--elev-3);
+}
+
 @media (hover: hover) {
   .dir-card:hover {
     transform: translateY(-4px);
@@ -1877,10 +1925,28 @@ button.screen:active {
   }
 }
 
+/* With a mouse the card also turns toward the pointer, a few degrees, and
+   catches the light where it is. --rx and --ry are zero until the pointer has
+   moved over it, so it lifts first and leans once it is followed. Touch has no
+   hover to describe, and reduced motion keeps the card still. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .dir-card:hover {
+    transform: perspective(60rem) translateY(-4px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition:
+      transform var(--dur-1) var(--ease),
+      box-shadow var(--dur-2) var(--ease);
+  }
+
+  .dir-card:hover::after {
+    opacity: 1;
+  }
+}
+
 /* The portrait. One shape, 4:5, whether it holds a picture or the
    placeholder, and a picture is cropped to fill it, never stretched. */
 .dir-slot {
   position: relative;
+  display: block;
   aspect-ratio: 4 / 5;
   overflow: hidden;
   background:
@@ -1968,6 +2034,196 @@ button.screen:active {
   text-align: center;
   text-wrap: balance;
   overflow-wrap: anywhere;
+}
+
+/* ---- A person's profile --------------------------------------------- *
+ * The native dialog, so focus is held inside it, Escape closes it and the
+ * page behind it cannot be reached. It carries the accent of the team whose
+ * card opened it. No `display` here: that would show a closed dialog.
+ * ------------------------------------------------------------------ */
+
+.dir-dialog {
+  box-sizing: border-box;
+  width: min(100vw - 2rem, 40rem);
+  max-width: none;
+  max-height: min(100dvh - 2rem, 44rem);
+  margin: auto;
+  padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 0;
+  border-radius: var(--radius-lg);
+  color: var(--foreground);
+  background:
+    linear-gradient(
+      160deg,
+      color-mix(in oklab, var(--accent-hue) 16%, transparent),
+      transparent 55%
+    ),
+    oklch(0.165 0.03 266 / 0.97);
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.1),
+    inset 0 0 0 1px color-mix(in oklab, var(--accent-hue) 45%, var(--rule)),
+    0 0 70px -12px color-mix(in oklab, var(--accent-hue) 38%, transparent),
+    var(--elev-3);
+}
+
+.dir-dialog::backdrop {
+  background: oklch(0.07 0.025 265 / 0.74);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+/* The page behind stays put while a profile is open, without its scrollbar
+   going and the page shifting sideways. The backdrop does not reach the strip
+   the scrollbar leaves, so the canvas there takes the backdrop's own colour
+   rather than showing the page's, undimmed. */
+html:has(.dir-dialog[open]) {
+  overflow: hidden;
+  scrollbar-gutter: stable;
+  background-color: oklch(0.07 0.025 265);
+}
+
+/* The pointer's ring is drawn under a modal dialog, and the system pointer is
+   hidden while the ring runs, so there would be no pointer at all. */
+:root[data-cursor="on"] .dir-dialog {
+  cursor: auto;
+}
+
+:root[data-cursor="on"] .dir-dialog a,
+:root[data-cursor="on"] .dir-dialog button {
+  cursor: pointer;
+}
+
+.dir-profile {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, min(12rem, 32dvh)) minmax(0, 1fr);
+  gap: var(--s-5);
+  align-items: center;
+  padding: var(--s-5);
+}
+
+.dir-profile .dir-slot {
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+
+.dir-profile-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s-2);
+  min-width: 0;
+  /* Clear of the close button when the name runs long. */
+  padding-inline-end: var(--s-6);
+}
+
+.dir-profile-team {
+  margin: 0;
+  color: var(--accent-hue);
+  font-size: var(--text-micro);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.dir-profile-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: 1.1;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.dir-profile-role {
+  margin: 0 0 var(--s-3);
+  color: var(--muted-foreground);
+  font-size: var(--text-sm);
+}
+
+.dir-close {
+  position: absolute;
+  top: var(--s-3);
+  right: var(--s-3);
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  color: var(--foreground);
+  background: oklch(1 0 0 / 0.06);
+  box-shadow: inset 0 0 0 1px var(--rule);
+  cursor: pointer;
+  transition: background var(--dur-2) var(--ease);
+}
+
+.dir-close:hover,
+.dir-close:focus-visible {
+  background: oklch(1 0 0 / 0.14);
+}
+
+.dir-close:focus-visible {
+  outline: 2px solid var(--accent-hue);
+  outline-offset: 2px;
+}
+
+/* A narrow dialog stacks: the portrait on top, centred, the words under it. */
+@media (max-width: 30rem) {
+  .dir-profile {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    text-align: center;
+  }
+
+  .dir-profile .dir-slot {
+    width: min(56%, 13rem, 30dvh);
+  }
+
+  .dir-profile-body {
+    align-items: center;
+    padding-inline-end: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dir-dialog[open] {
+    animation: dir-pop var(--dur-3) var(--ease);
+  }
+
+  .dir-dialog[open]::backdrop {
+    animation: dir-fade var(--dur-3) var(--ease);
+  }
+}
+
+@keyframes dir-pop {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.97);
+  }
+}
+
+@keyframes dir-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* No shadows or tints in forced colours, so a card and the dialog get edges. */
+@media (forced-colors: active) {
+  .dir-card,
+  .dir-dialog {
+    border: 1px solid CanvasText;
+  }
+
+  .dir-card:focus-visible {
+    outline: 2px solid Highlight;
+  }
 }
 
 /* Scene chips. Fixed so they stay reachable from anywhere in a long room —
@@ -3992,8 +4248,15 @@ button.screen:active {
   }
 
   .dir-slot::before,
-  .dir-slot::after {
+  .dir-slot::after,
+  .dir-card::after {
     display: none;
+  }
+
+  /* The cards open a profile on screen; on paper they are the list. */
+  .dir-hint,
+  .dir-dialog {
+    display: none !important;
   }
 
   .dir-silhouette {

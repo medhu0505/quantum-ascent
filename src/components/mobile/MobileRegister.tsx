@@ -26,8 +26,9 @@ import { REGISTRATION_CLOSES, events, listOf } from "@/data/quantum";
 import { isRegistrationOpen } from "@/lib/registrations";
 
 /**
- * Registering on a phone, in four steps: the school, the events, a team for
- * each of those events, and a last look before it is sent.
+ * Registering on a phone, in four steps: the school and its teacher in-charge,
+ * the events, a team for each of those events, and a last look before it is
+ * sent.
  *
  * One long form is a lot of scrolling on a phone, and an error at the top is
  * out of sight by the time the button at the bottom is pressed. Split into
@@ -45,7 +46,7 @@ const STEPS = [
   {
     label: "School",
     title: "Your school",
-    lede: `Enter your school's details. Registrations close on ${REGISTRATION_CLOSES.label}.`,
+    lede: `Enter your school's details and its teacher in-charge. Registrations close on ${REGISTRATION_CLOSES.label}.`,
   },
   {
     label: "Events",
@@ -81,7 +82,7 @@ export function MobileRegister({
     // A teams step with no events picked would be an empty screen.
     return (saved.step >= 2 && saved.picked.length === 0 ? 1 : saved.step) as Step;
   });
-  const [contact, setContact] = useState<Contact>(saved?.contact ?? EMPTY_CONTACT);
+  const [contact, setContact] = useState<Contact>({ ...EMPTY_CONTACT, ...saved?.contact });
   const [picked, setPicked] = useState<string[]>(
     saved?.picked ?? (preselectedEvent ? [preselectedEvent] : []),
   );
@@ -402,6 +403,42 @@ export function MobileRegister({
               autoComplete="tel"
               onChange={(v) => setField("phone", v)}
             />
+            <fieldset className="m-group">
+              <legend className="m-group-title">Teacher in-charge</legend>
+              <Field
+                id="teacher"
+                label="Teacher's name"
+                required
+                hint="The teacher who will bring the teams on the day."
+                value={contact.teacher}
+                error={errors.teacher}
+                autoComplete="off"
+                onChange={(v) => setField("teacher", v)}
+              />
+              <Field
+                id="teacherPhone"
+                label="Teacher's phone"
+                type="tel"
+                inputMode="tel"
+                required
+                hint="10 digits. No +91 needed."
+                value={contact.teacherPhone}
+                error={errors.teacherPhone}
+                autoComplete="off"
+                onChange={(v) => setField("teacherPhone", v)}
+              />
+              <Field
+                id="teacherEmail"
+                label="Teacher's email"
+                type="email"
+                inputMode="email"
+                required
+                value={contact.teacherEmail}
+                error={errors.teacherEmail}
+                autoComplete="off"
+                onChange={(v) => setField("teacherEmail", v)}
+              />
+            </fieldset>
           </div>
         ) : null}
 
@@ -534,6 +571,9 @@ export function MobileRegister({
                   ["School", contact.school || "—", 0],
                   ["Email", contact.email || "—", 0],
                   ["Phone", contact.phone || "—", 0],
+                  ["Teacher in-charge", contact.teacher || "—", 0],
+                  ["Teacher's phone", contact.teacherPhone || "—", 0],
+                  ["Teacher's email", contact.teacherEmail || "—", 0],
                   ["Events", listOf(chosen.map((e) => e.name)) || "—", 1],
                   ...chosen.map(
                     (e) =>

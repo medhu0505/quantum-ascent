@@ -8,22 +8,49 @@ import { submitEach, type BackendReply, type RegistrationPayload } from "@/lib/r
  * into what is sent, so an entry means the same thing whichever screen it was
  * typed on.
  *
- * A school registers on one form: whom to write to and call, the events it is
- * entering, and under each of those events, that event's team. Every student
- * on a team has a name, a class and a Discord ID. A student can compete in
- * only one event, so the same student turning up under a second event is
- * caught here rather than at the registration desk.
+ * A school registers on one form: whom to write to and call, the teacher
+ * in-charge who brings the teams, the events it is entering, and under each of
+ * those events, that event's team. Every student on a team has a name, a
+ * class and a Discord ID. A student can compete in only one event, so the same
+ * student turning up under a second event is caught here rather than at the
+ * registration desk.
  */
 
-/** Whom the organisers write to and call about every team on the form. */
-export type Contact = { school: string; email: string; phone: string };
+/**
+ * Whom the organisers write to and call about every team on the form, and the
+ * school's teacher in-charge, who comes with the teams on the day. The
+ * teacher's three are all asked for, and all sent, on every entry.
+ */
+export type Contact = {
+  school: string;
+  email: string;
+  phone: string;
+  teacher: string;
+  teacherPhone: string;
+  teacherEmail: string;
+};
 
 /** `events` is the event checkboxes, which are a list rather than a field. */
 export type ContactErrors = Partial<Record<keyof Contact | "events", string>>;
 
-export const CONTACT_ORDER: (keyof Contact)[] = ["school", "email", "phone"];
+/** The order the fields stand in on the page, which is the order a bad one is found in. */
+export const CONTACT_ORDER: (keyof Contact)[] = [
+  "school",
+  "email",
+  "phone",
+  "teacher",
+  "teacherPhone",
+  "teacherEmail",
+];
 
-export const EMPTY_CONTACT: Contact = { school: "", email: "", phone: "" };
+export const EMPTY_CONTACT: Contact = {
+  school: "",
+  email: "",
+  phone: "",
+  teacher: "",
+  teacherPhone: "",
+  teacherEmail: "",
+};
 
 /** One place on an event's team. */
 export type Player = { name: string; grade: string; discord: string };
@@ -77,6 +104,15 @@ export function validateContact(values: Contact, picked: string[]): ContactError
   else if (!EMAIL.test(values.email.trim())) errors.email = "That email address is not valid.";
   if (!values.phone.trim()) errors.phone = "Enter a phone number we can reach during the fest.";
   else if (!indianPhone(values.phone)) errors.phone = "Enter a 10-digit phone number.";
+  if (!values.teacher.trim()) errors.teacher = "Enter the teacher in-charge's name.";
+  if (!values.teacherPhone.trim())
+    errors.teacherPhone = "Enter the teacher in-charge's phone number.";
+  else if (!indianPhone(values.teacherPhone))
+    errors.teacherPhone = "Enter a 10-digit phone number for the teacher in-charge.";
+  if (!values.teacherEmail.trim())
+    errors.teacherEmail = "Enter the teacher in-charge's email address.";
+  else if (!EMAIL.test(values.teacherEmail.trim()))
+    errors.teacherEmail = "The teacher in-charge's email address is not valid.";
   if (picked.length === 0) errors.events = "Choose at least one event to enter.";
   return errors;
 }
@@ -180,8 +216,9 @@ export function teamNames(eventId: string, teams: Teams): string[] {
 
 /**
  * One entry per event, as the backend takes them. The contact's email and
- * phone are every entry's, the first place is its team lead, and the rest are
- * its members, each with a Discord ID. That is the shape both backends have
+ * phone and the teacher in-charge's name, phone and email are every entry's,
+ * the first place is its team lead, and the rest are its members, each with a
+ * Discord ID. That is the shape both backends have
  * always accepted, so nothing on the server had to change for teams to be
  * split by event. Optional places left empty are dropped, and each entry names
  * exactly one event, so the same email and event always make the same entry
@@ -196,6 +233,9 @@ export function buildPayloads(
   const school = contact.school.trim();
   const email = contact.email.trim();
   const phone = indianPhone(contact.phone) ?? contact.phone.trim();
+  const teacher = contact.teacher.trim();
+  const teacherPhone = indianPhone(contact.teacherPhone) ?? contact.teacherPhone.trim();
+  const teacherEmail = contact.teacherEmail.trim();
   return events
     .filter((event) => picked.includes(event.id))
     .map((event): RegistrationPayload => {
@@ -211,6 +251,9 @@ export function buildPayloads(
         school,
         email,
         phone,
+        teacher,
+        teacherPhone,
+        teacherEmail,
         events: [event.id],
         members: rest.map((p) => ({
           name: p.name,
@@ -239,6 +282,9 @@ const FIELD_WORDS: Record<string, string> = {
   school: "school",
   email: "email",
   phone: "phone",
+  teacher: "teacher in-charge's name",
+  teacherPhone: "teacher in-charge's phone",
+  teacherEmail: "teacher in-charge's email",
   events: "events",
 };
 

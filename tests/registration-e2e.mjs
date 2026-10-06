@@ -101,11 +101,19 @@ console.log(
 
 const EMAIL = `coordinator.${Date.now()}@example.com`;
 
+/** The teacher in-charge, who every entry carries. */
+async function fillTeacher() {
+  await page.fill("#field-teacher", "Meera Iyer");
+  await page.fill("#field-teacherPhone", "+91 98100 54321");
+  await page.fill("#field-teacherEmail", "meera.iyer@example.com");
+}
+
 /** A school entering two events, each with its own team and Discord IDs. */
 async function fillForm() {
   await page.fill("#field-school", "Air Force Bal Bharati School");
   await page.fill("#field-email", EMAIL);
   await page.fill("#field-phone", "+91 98100 12345");
+  await fillTeacher();
   await page.check("#field-event-quiz");
   await page.check("#field-event-pitch");
   await page.fill("#field-team-quiz-0-name", "Aarav Sharma");
@@ -208,14 +216,46 @@ if (quiz && pitch) {
     "a team with no Discord IDs is stored with them empty",
     pitch.student.stringValue === "Kabir Mehta" && pitch.discord.stringValue === "",
   );
+  check(
+    "every entry carries the teacher in-charge's name, phone and email",
+    [quiz, pitch].every(
+      (f) =>
+        f.teacher?.stringValue === "Meera Iyer" &&
+        f.teacherPhone?.stringValue === "9810054321" &&
+        f.teacherEmail?.stringValue === "meera.iyer@example.com",
+    ),
+  );
 }
 
-console.log("\n5. The honeypot must never reach the database\n");
+console.log("\n5. Without the teacher in-charge, nothing is sent\n");
+
+await page.goto(`${BASE}/register/form`, { waitUntil: "networkidle" });
+await page.fill("#field-school", "Nowhere");
+await page.fill("#field-email", `noteacher.${Date.now()}@example.com`);
+await page.fill("#field-phone", "9810012345");
+await page.check("#field-event-online-gaming");
+await page.fill("#field-team-online-gaming-0-name", "Kiran");
+await page.selectOption("#field-team-online-gaming-0-grade", "9");
+await page.click("button[type=submit]");
+const summary = await page.locator(".form-summary").innerText();
+check(
+  "the form asks for all three of the teacher's details",
+  /teacher in-charge's name/i.test(summary) &&
+    /teacher in-charge's phone/i.test(summary) &&
+    /teacher in-charge's email/i.test(summary),
+);
+check(
+  "and nothing reached the database",
+  ((await fetch(REST, ADMIN).then((r) => r.json())).documents ?? []).length === 2,
+);
+
+console.log("\n6. The honeypot must never reach the database\n");
 
 await page.goto(`${BASE}/register/form`, { waitUntil: "networkidle" });
 await page.fill("#field-school", "Nowhere");
 await page.fill("#field-email", `bot.${Date.now()}@example.com`);
 await page.fill("#field-phone", "9810012345");
+await fillTeacher();
 await page.check("#field-event-online-gaming");
 await page.fill("#field-team-online-gaming-0-name", "Bot");
 await page.selectOption("#field-team-online-gaming-0-grade", "9");

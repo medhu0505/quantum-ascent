@@ -116,28 +116,39 @@ registration Firestore already accepted.
 
 ### What the forms send
 
-Both forms register a school: whom to write to and call, the events it is
-entering, and under each of those events that event's team, with every student's
-name, class and Discord ID (the Discord ID is optional). The desktop form does it
-on one page, each event a section of its own; the phone form does it in four
-steps. A student can compete in only one event, so the forms refuse the same
-name and class under two events.
+Both forms register a school: whom to write to and call, the school's teacher
+in-charge (name, phone and email, all asked for), the events it is entering, and
+under each of those events that event's team, with every student's name, class
+and Discord ID (the Discord ID is optional). The desktop form does it on one
+page, each event a section of its own; the phone form does it in four steps. A
+student can compete in only one event, so the forms refuse the same name and
+class under two events.
 
 Each event goes to the backend as an entry of its own, in the shape both
 backends have always taken, so neither needed a change or a redeploy for this:
 
 - the team's first student is the entry's lead (`student`, `grade`, `discord`),
   and the rest are its `members`, each with its `discord`;
-- `school`, `email` and `phone` are the school's, the same on every entry;
+- `school`, `email` and `phone` are the school's, the same on every entry, and
+  so are `teacher`, `teacherPhone` and `teacherEmail`, the teacher in-charge's;
 - `events` names that one event, and `type` is `school`.
 
 So each team gets its own registration ID, the duplicate check is one entry per
 email per event, and an event that fails can be sent again without resending the
 ones that went through. The Apps Script mails one confirmation per entry.
 
-The rules and the Apps Script also accept an optional `teacher`, from an earlier
-step-by-step form. Neither form sends it: the rules deployed in production
-predate the field and would refuse an entry that carries it.
+`teacher`, `teacherPhone` and `teacherEmail` are optional in the rules and the
+Apps Script, each checked when it is there, so an entry from a page opened before
+the form asked for them is still taken. The forms always send all three.
+
+**Deploy the rules and the script with this release** (`npm run firebase:rules`,
+and a new version of the Apps Script). Rules deployed before the teacher's
+fields existed refuse an entry that carries them, and `registrations.ts` reads a
+refused write as a duplicate. So it tries once more without the three fields:
+until the rules are deployed, Firestore holds each entry without the teacher's
+details (the browser console says so), and only the sheet has them, through the
+Apps Script, once that is deployed too. Neither is lost silently, but the
+teacher's details live in one place until both are.
 
 ### Firebase
 
@@ -168,7 +179,7 @@ unauthenticated. They enforce three things rather than assume them:
   cannot pick its own id and write the same entrant a thousand times.
 - **Every field.** Type, class, email, phone, Discord handle, event list,
   length caps, each of the five possible team members, and the optional
-  `teacher`.
+  teacher in-charge's name, phone and email.
 
 The visible `QV2-XXXXXXXX` ID is the first eight digits of that same hash, so a
 resubmit is answered with the original ID having read nothing back.
@@ -177,7 +188,10 @@ Rules are capped at 1000 expression evaluations per request. The checks in
 `firestore.rules` are inlined and repetitive for that reason — a factored
 version of exactly the same checks exceeded the cap on a five-member team, and
 failed only for the largest teams. `tests/firestore-rules.test.mjs` submits that
-worst case deliberately.
+worst case deliberately. The teacher's three fields use some of that room: all
+six events with four full members and a full teacher still fit, and a fifth
+member beside one does not. No event takes a team of six, so no form sends it,
+and the test file holds both edges.
 
 **App Check** is the control the rules cannot be. Rules see the shape of a
 write, never its sender, so nothing above stops a script filling the collection
@@ -202,7 +216,11 @@ and is the only thing that writes to it. The form POSTs JSON to
 anything else, and appends one row to the `Registrations` tab. It returns a
 `QV2-XXXXXXXX` ID. If the same email registers again for the same event, the
 script returns the original ID and adds no row. It also neutralises formula
-injection and ignores anything that fills in the hidden `website` field.
+injection and ignores anything that fills in the hidden `website` field. The
+teacher in-charge goes in three columns, **Teacher in-charge**, **Teacher
+phone** and **Teacher email**, each found by its header and added past the last
+column the first time it is needed, so a column an organiser added is never
+written over.
 
 Mirrored entries arrive carrying the ID Firestore already issued, and the script
 takes it rather than minting a second one, so a registration does not end up with
@@ -212,11 +230,13 @@ shape is discarded and an ID is minted as before.
 ### The confirmation email
 
 Every accepted **new** entry is emailed to the address on the form, carrying the
-ID, the events, the lead's details and the rest of the team. It is sent from the
-Apps Script because that is the only part of the registration path running on a
-server the organisers own: the browser cannot send mail without shipping a
-provider's key in the bundle, and both the Firebase "Trigger Email" extension and
-Cloud Functions require the Blaze plan, which this project is deliberately not on.
+ID, the events, the lead's details, the teacher in-charge's and the rest of the
+team. It goes to the contact's email on the form, not the teacher's. It is sent
+from the Apps Script because that is the only part of the registration path
+running on a server the organisers own: the browser cannot send mail without
+shipping a provider's key in the bundle, and both the Firebase "Trigger Email"
+extension and Cloud Functions require the Blaze plan, which this project is
+deliberately not on.
 
 Three properties are deliberate:
 

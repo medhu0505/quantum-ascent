@@ -30,8 +30,9 @@ import {
 /**
  * The registration form.
  *
- * One page, for a school. At the top, whom the organisers write to and call.
- * Under it the six events, each its own section: ticking one opens that
+ * One page, for a school. At the top, whom the organisers write to and call,
+ * and the teacher in-charge who brings the teams. Under that the six events,
+ * each its own section: ticking one opens that
  * event's team right beneath it, with exactly as many places as the event
  * takes, and every place asks for a name, a class and a Discord ID. A student
  * can compete in only one event, so the same student under two events is
@@ -62,7 +63,7 @@ export function RegisterFormBody({
   // Read by the initial states only: after the first render the form owns it.
   const saved = draft?.current ?? null;
 
-  const [contact, setContact] = useState<Contact>(saved?.contact ?? EMPTY_CONTACT);
+  const [contact, setContact] = useState<Contact>({ ...EMPTY_CONTACT, ...saved?.contact });
   const [picked, setPicked] = useState<string[]>(
     saved?.picked ?? (preselectedEvent ? [preselectedEvent] : []),
   );
@@ -249,7 +250,7 @@ export function RegisterFormBody({
   return (
     <PageShell
       title="Register"
-      lede={`Enter your school's details, then select every event your school is entering for and list its team under it. Registrations close on ${REGISTRATION_CLOSES.label}.`}
+      lede={`Enter your school's details and its teacher in-charge, then select every event your school is entering for and list its team under it. Registrations close on ${REGISTRATION_CLOSES.label}.`}
       registerChip={false}
     >
       {!registrationOpen ? (
@@ -325,6 +326,43 @@ export function RegisterFormBody({
               value={contact.phone}
               onChange={setField("phone")}
               autoComplete="tel"
+              required
+            />
+          </div>
+        </fieldset>
+
+        <fieldset className="form-block">
+          <legend className="form-block-title">Teacher in-charge</legend>
+          <Field
+            id="teacher"
+            label="Teacher's name"
+            hint="The teacher who will bring the teams on the day."
+            error={errors.teacher}
+            value={contact.teacher}
+            onChange={setField("teacher")}
+            autoComplete="off"
+            required
+          />
+          <div className="field-row">
+            <Field
+              id="teacherPhone"
+              label="Teacher's phone"
+              type="tel"
+              hint="10 digits. No +91 needed."
+              error={errors.teacherPhone}
+              value={contact.teacherPhone}
+              onChange={setField("teacherPhone")}
+              autoComplete="off"
+              required
+            />
+            <Field
+              id="teacherEmail"
+              label="Teacher's email"
+              type="email"
+              error={errors.teacherEmail}
+              value={contact.teacherEmail}
+              onChange={setField("teacherEmail")}
+              autoComplete="off"
               required
             />
           </div>

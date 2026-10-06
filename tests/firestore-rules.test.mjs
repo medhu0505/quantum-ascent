@@ -151,20 +151,53 @@ describe("a valid registration", () => {
   });
 });
 
+/** Every field at its limit, all six events, a teacher, and `members` full members. */
+function worstCase({ members }) {
+  const full = (name, n) => ({
+    name: name.padEnd(120, "."),
+    grade: "12",
+    phone: `+91 98${n}00 12345`,
+    discord: `handle_${n}`.padEnd(37, "x"),
+    email: `${name.toLowerCase()}.${n}@example.com`,
+  });
+  return entry({
+    events: ["quiz", "film-making", "ad-shoot", "surprise", "online-gaming", "pitch"],
+    members: ["Ishita", "Dev", "Nikhil", "Sara", "Ravi"]
+      .slice(0, members)
+      .map((n, i) => full(n, i + 1)),
+    data: {
+      type: "school",
+      teacher: "T".repeat(120),
+      teacherPhone: "9".repeat(120),
+      teacherEmail: `${"t".repeat(107)}@example.com`,
+      student: "A".repeat(120),
+      school: "B".repeat(120),
+      discord: "c".repeat(37),
+    },
+  });
+}
+
 /**
- * An entry that names the school's teacher in-charge: one event, the
- * teacher's email and phone as its contact, the first student as its lead.
- * Neither form sends one now; the rules still accept it.
+ * An entry that names the school's teacher in-charge: their name, phone and
+ * email beside the contact the confirmation goes to. Both forms send all
+ * three; the rules take any of them on its own, so an entry from a page that
+ * was open before they existed still goes through, and check each one that is
+ * there.
  */
 describe("a teacher in-charge's entry", () => {
+  const teacher = {
+    teacher: "Meera Iyer",
+    teacherPhone: "+91 98100 54321",
+    teacherEmail: "meera.iyer@example.com",
+  };
   const teacherEntry = (overrides = {}) =>
     entry({
       ...overrides,
       members: overrides.members ?? [member({ name: "Rohan Gupta", grade: "11" })],
-      data: { type: "school", teacher: "Meera Iyer", discord: "", ...overrides.data },
+      data: { type: "school", ...teacher, discord: "", ...overrides.data },
     });
 
-  it("is accepted with the teacher's name", async () => {
+  it("is accepted with the teacher's name, phone and email", async () => {
     await assertSucceeds(write(teacherEntry()));
   });
 
@@ -177,54 +210,61 @@ describe("a teacher in-charge's entry", () => {
     await assertSucceeds(write(entry()));
   });
 
+  it("still accepts a teacher's name on its own", async () => {
+    const { key, data } = teacherEntry();
+    const { teacherPhone: _phone, teacherEmail: _email, ...nameOnly } = data;
+    await assertSucceeds(write({ key, data: nameOnly }));
+  });
+
   it("takes the same email once per event", async () => {
-    const email = `teacher-${randomUUID()}@example.com`;
+    const email = `contact-${randomUUID()}@example.com`;
     await assertSucceeds(write(teacherEntry({ email, events: ["quiz"] })));
     await assertSucceeds(write(teacherEntry({ email, events: ["pitch"] })));
     await assertFails(write(teacherEntry({ email, events: ["quiz"] })));
   });
 
   const rejected = {
-    "an empty teacher": "",
-    "an over-long teacher": "x".repeat(121),
-    "a teacher that is not a string": 42,
-    "a teacher that is a list": ["Meera Iyer"],
+    "an empty teacher": { teacher: "" },
+    "an over-long teacher": { teacher: "x".repeat(121) },
+    "a teacher that is not a string": { teacher: 42 },
+    "a teacher that is a list": { teacher: ["Meera Iyer"] },
+    "a teacher phone with too few digits": { teacherPhone: "98100" },
+    "a teacher phone that is words": { teacherPhone: "call the school" },
+    "a teacher phone that is a number": { teacherPhone: 9810054321 },
+    "an over-long teacher phone": { teacherPhone: "9".repeat(121) },
+    "a teacher email with no domain": { teacherEmail: "meera@localhost" },
+    "a teacher email with a space": { teacherEmail: "meera iyer@example.com" },
+    "a teacher email that is a list": { teacherEmail: ["meera@example.com"] },
+    "an over-long teacher email": { teacherEmail: `${"x".repeat(120)}@example.com` },
   };
-  for (const [label, value] of Object.entries(rejected)) {
+  for (const [label, fields] of Object.entries(rejected)) {
     it(`rejects ${label}`, async () => {
-      await assertFails(write(teacherEntry({ data: { teacher: value } })));
+      await assertFails(write(teacherEntry({ data: fields })));
     });
   }
 
+  it("rejects a field the rules do not know, beside the teacher's", async () => {
+    await assertFails(write(teacherEntry({ data: { teacherRole: "Principal" } })));
+  });
+
+  /**
+   * The same worst case as above, with the teacher's three fields at their
+   * limits too, and four members, a team of five. The largest team any event
+   * takes is four, so a form never sends more than three members.
+   */
   it("accepts the most expensive entry the form can produce, with a teacher", async () => {
-    const full = (name, n) => ({
-      name: name.padEnd(120, "."),
-      grade: "12",
-      phone: `+91 98${n}00 12345`,
-      discord: `handle_${n}`.padEnd(37, "x"),
-      email: `${name.toLowerCase()}.${n}@example.com`,
-    });
-    await assertSucceeds(
-      write(
-        entry({
-          events: ["quiz", "film-making", "ad-shoot", "surprise", "online-gaming", "pitch"],
-          members: [
-            full("Ishita", 1),
-            full("Dev", 2),
-            full("Nikhil", 3),
-            full("Sara", 4),
-            full("Ravi", 5),
-          ],
-          data: {
-            type: "school",
-            teacher: "T".repeat(120),
-            student: "A".repeat(120),
-            school: "B".repeat(120),
-            discord: "c".repeat(37),
-          },
-        }),
-      ),
-    );
+    await assertSucceeds(write(worstCase({ members: 4 })));
+  });
+
+  /**
+   * The edge of the 1000-evaluation cap, written down so nobody finds it by
+   * accident: a full teacher costs enough that a lead and five full members
+   * no longer fit under it. That is a team of six, which no event takes, so
+   * no form sends one. If the rules are ever made cheaper this will start to
+   * pass, and the test can go.
+   */
+  it("refuses a lead and five full members beside a full teacher, which no form sends", async () => {
+    await assertFails(write(worstCase({ members: 5 })));
   });
 });
 

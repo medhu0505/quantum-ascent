@@ -100,17 +100,29 @@ service cloud.firestore {
      * error, and an error denies the write. A missing field fails on the
      * check that reads it.
      *
-     * `teacher` is the one optional field: an entry may name the school's
-     * teacher in-charge. Neither form sends it now; a step-by-step desktop
-     * form that registered each event separately did. It is tested with `in`
-     * before it is read, for the same reason.
+     * `teacher`, `teacherPhone` and `teacherEmail` are the optional fields: an
+     * entry may name the school's teacher in-charge. Both forms send all
+     * three. They are optional here, and checked when present, so an entry
+     * from a page that was open before they existed is still taken. Each is
+     * tested with `in` before it is read, for the same reason.
+     *
+     * The three fields use up part of the 1000-evaluation cap above. All six
+     * events with four full members and a full teacher still fit; five
+     * members beside one do not. No event takes a team of six, so no form
+     * sends that, and tests/firestore-rules.test.mjs holds both edges.
      */
     function registrationOk(key, data) {
       return data.keys().hasOnly(['id', 'type', 'student', 'school', 'grade', 'email',
           'emailLower', 'phone', 'discord', 'events', 'members', 'teamSize', 'createdAt',
-          'teacher'])
+          'teacher', 'teacherPhone', 'teacherEmail'])
         && (!('teacher' in data)
           || (data.teacher is string && data.teacher.size() > 0 && data.teacher.size() <= 120))
+        && (!('teacherPhone' in data)
+          || (data.teacherPhone is string && data.teacherPhone.size() <= 120
+            && data.teacherPhone.replace('[^0-9]', '').size() >= 10))
+        && (!('teacherEmail' in data)
+          || (data.teacherEmail is string && data.teacherEmail.size() <= 120
+            && data.teacherEmail.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$')))
         && data.type in ['individual', 'school']
         && data.student is string && data.student.size() > 0 && data.student.size() <= 120
         && data.school is string && data.school.size() > 0 && data.school.size() <= 120

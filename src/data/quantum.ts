@@ -591,7 +591,7 @@ export const crew: CrewSection[] = [
       { role: "Creative Team", names: ["Sudeeti", "Anushri", "Shagun", "Vidisha"] },
       {
         role: "Social Media Team",
-        names: ["Anamta", "Ananya", "Mannat", "Majesta", "Amrita", "Vihaan"],
+        names: ["Vihaan", "Amrita", "Ananya", "Majesta", "Anamta", "Mannat"],
       },
     ],
   },

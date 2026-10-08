@@ -2152,7 +2152,8 @@ html:has(.dir-dialog[open]) {
   }
 
   .dir-profile .dir-slot > img,
-  .dir-profile .dir-slot > .dir-silhouette {
+  .dir-profile .dir-slot > .dir-silhouette,
+  .dir-profile .dir-slot > .dir-ripple {
     transform: translate(calc(var(--px, 0) * -12px), calc(var(--py, 0) * -10px)) scale(1.1);
     transition: transform var(--dur-2) var(--ease);
   }

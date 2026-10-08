@@ -110,6 +110,10 @@ export function TeamDirectory() {
 
   const [canRipple, setCanRipple] = useState(false);
   const [ripple, setRipple] = useState<{ key: string; src: string } | null>(null);
+  // The open profile's portrait ripples too, with a finger as well as a mouse.
+  const [profileRipple, setProfileRipple] = useState<string | null>(null);
+  const shown = useRef<DirectoryPerson | null>(null);
+  shown.current = open?.person ?? null;
   const hovered = useRef<string | null>(null);
   const letGo = useRef(0);
 
@@ -149,6 +153,18 @@ export function TeamDirectory() {
     letGo.current = window.setTimeout(() => {
       setRipple((r) => (r?.key === key ? null : r));
     }, 700);
+  };
+
+  const wake = (e: PointerEvent<HTMLDivElement>) => {
+    if (!open || profileRipple || window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+      return;
+    const person = open.person;
+    const accent = getComputedStyle(e.currentTarget).getPropertyValue("--accent-hue").trim();
+    portraitTexture(person.photo, accent || "oklch(0.84 0.13 215)")
+      .then((src) => {
+        if (shown.current === person) setProfileRipple((now) => now ?? src);
+      })
+      .catch(() => {});
   };
 
   // The dialog is only ever opened by a card, and only by this.
@@ -191,6 +207,11 @@ export function TeamDirectory() {
                     data-cursor-label="Open"
                     onClick={(e) => {
                       invoker.current = e.currentTarget;
+                      // The card's canvas goes, so the profile can have the one.
+                      window.clearTimeout(letGo.current);
+                      hovered.current = null;
+                      setRipple(null);
+                      setProfileRipple(null);
                       setOpen({ team, person });
                     }}
                     onPointerEnter={(e) => enter(e, team, person)}
@@ -220,6 +241,7 @@ export function TeamDirectory() {
         data-accent={open?.team.accent}
         onClose={() => {
           setOpen(null);
+          setProfileRipple(null);
           invoker.current?.focus();
         }}
         onPointerDown={(e) => {
@@ -234,7 +256,13 @@ export function TeamDirectory() {
         }}
       >
         {open ? (
-          <div className="dir-profile" onPointerMove={parallax} onPointerLeave={settle}>
+          <div
+            className="dir-profile"
+            onPointerMove={parallax}
+            onPointerLeave={settle}
+            onPointerDown={wake}
+            onPointerEnter={wake}
+          >
             <button
               type="button"
               className="dir-close"
@@ -243,7 +271,7 @@ export function TeamDirectory() {
             >
               <X size={16} aria-hidden="true" />
             </button>
-            <Portrait person={open.person} />
+            <Portrait person={open.person} ripple={profileRipple ?? undefined} />
             <div className="dir-profile-body">
               <p className="dir-profile-team">{listOf(teams.map((t) => t.heading))}</p>
               <h3 id="dir-profile-name" className="dir-profile-name">

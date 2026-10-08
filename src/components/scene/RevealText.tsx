@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ElementType } from "react";
+import { useEffect, useRef, useState, type ComponentType, type ElementType } from "react";
 
 /**
  * Masked line reveal.
@@ -18,7 +18,7 @@ import { useEffect, useRef, useState, type ElementType } from "react";
  * heading is real text to a crawler and to a reader with JS off.
  */
 export function RevealText({
-  as: Tag = "span",
+  as: As = "span",
   text,
   className = "",
   delay = 0,
@@ -29,6 +29,7 @@ export function RevealText({
   /** Seconds before the first line moves. */
   delay?: number;
 }) {
+  const Tag = As as ComponentType<Record<string, unknown>>;
   const ref = useRef<HTMLElement | null>(null);
   const [lines, setLines] = useState<string[] | null>(null);
   const [shown, setShown] = useState(false);

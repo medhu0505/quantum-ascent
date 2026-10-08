@@ -2036,6 +2036,60 @@ button.screen:active {
   overflow-wrap: anywhere;
 }
 
+/* The ripple strip between the ring and the directory. */
+.team-ripple {
+  position: relative;
+  aspect-ratio: 16 / 7;
+  margin-block: var(--s-6);
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--ink);
+  box-shadow:
+    inset 0 0 0 1px var(--rule),
+    var(--elev-2);
+}
+
+.team-ripple > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.m-pad > .team-ripple {
+  aspect-ratio: 16 / 9;
+  margin-block: 0 var(--s-5);
+}
+
+/* Each letter of a TextRepel paints its own slice of one gradient: the size is
+   the whole text's width and the offset the letter's place in it. */
+.repel-gradient {
+  background-image: var(--repel-gradient, var(--grad-neon));
+  background-repeat: no-repeat;
+  background-size: var(--rl-w, 100%) 100%;
+  background-position: calc(var(--rl-x, 0px) * -1) 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.m-hero-title {
+  --repel-gradient: var(--m-gradient);
+}
+
+/* Letters of the home title answer the pointer; only the letters, not the
+   row they sit in, so the signs under the title stay reachable. */
+.descent-title [data-text-repel] {
+  pointer-events: auto;
+}
+
+@media print {
+  .team-ripple {
+    display: none;
+  }
+}
+
 /* ---- A person's profile --------------------------------------------- *
  * The native dialog, so focus is held inside it, Escape closes it and the
  * page behind it cannot be reached. It carries the accent of the team whose

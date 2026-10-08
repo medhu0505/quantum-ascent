@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type ElementType, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ComponentType,
+  type ElementType,
+  type ReactNode,
+} from "react";
 
 /**
  * Scroll-triggered entrance.
@@ -13,7 +20,7 @@ import { useEffect, useRef, useState, type ElementType, type ReactNode } from "r
  * entirely and the content is simply present.
  */
 export function Reveal({
-  as: Tag = "div",
+  as: As = "div",
   delay = 0,
   className = "",
   children,
@@ -25,6 +32,9 @@ export function Reveal({
   className?: string;
   children: ReactNode;
 } & Record<string, unknown>) {
+  // Typed loosely on purpose: three.js adds its own elements to JSX, which turns
+  // a dynamic tag into `never` for the compiler.
+  const Tag = As as ComponentType<Record<string, unknown>>;
   const ref = useRef<HTMLElement | null>(null);
   const [shown, setShown] = useState(false);
 

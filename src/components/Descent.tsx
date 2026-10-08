@@ -3,6 +3,7 @@ import { useRouter } from "@tanstack/react-router";
 import { Ambient } from "@/components/scene/Ambient";
 import { HubPlate, HubSigns } from "@/components/Hub";
 import { fest, school, descentFilm, timeline } from "@/data/quantum";
+import { TextRepel } from "@/components/ui/text-repel";
 import { clamp, progress, usePrefersReducedMotion, useStageLayout } from "@/lib/motion";
 
 /**
@@ -583,10 +584,24 @@ export function Descent() {
                 heading for a screen reader, which reads the fest's full name,
                 and is left off the screen, as it is on the phone's street. */}
             <h1>
-              <span className="descent-title-word text-gradient-neon">{fest.name}</span>
-              <span className="sr-only"> {fest.edition}</span>
+              <span className="sr-only">
+                {fest.name} {fest.edition}
+              </span>
+              <span className="descent-title-word" aria-hidden="true">
+                <TextRepel
+                  text={fest.name}
+                  letterClassName="repel-gradient"
+                  radius={150}
+                  strength={60}
+                />
+              </span>
             </h1>
-            <p className="descent-title-school">{school.name}</p>
+            <p className="descent-title-school">
+              <span className="sr-only">{school.name}</span>
+              <span aria-hidden="true">
+                <TextRepel text={school.name} radius={90} strength={26} />
+              </span>
+            </p>
           </div>
 
           <div className="hub-stage" ref={stageRef}>

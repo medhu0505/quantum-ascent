@@ -10,6 +10,7 @@ import {
   scenes,
   school,
 } from "@/data/quantum";
+import { TextRepel } from "@/components/ui/text-repel";
 import { usePreloadWhenIdle } from "@/lib/preload";
 import { telHref } from "@/lib/utils";
 
@@ -79,11 +80,30 @@ export function MobileStreet() {
         <div className="m-hero-text">
           <p className="m-eyebrow">{fest.kind}</p>
           <h1 className="m-hero-title">
-            <span className="m-gradient-text">{fest.name}</span>
-            <span className="sr-only"> {fest.edition}</span>
+            <span className="sr-only">
+              {fest.name} {fest.edition}
+            </span>
+            <span aria-hidden="true">
+              <TextRepel
+                text={fest.name}
+                letterClassName="repel-gradient"
+                radius={110}
+                strength={44}
+              />
+            </span>
           </h1>
           <p className="m-hero-school">
-            {school.name} · {school.city}
+            <span className="sr-only">
+              {school.name} · {school.city}
+            </span>
+            <span aria-hidden="true">
+              <TextRepel
+                text={`${school.name} · ${school.city}`}
+                className="!justify-start"
+                radius={70}
+                strength={20}
+              />
+            </span>
           </p>
         </div>
       </header>

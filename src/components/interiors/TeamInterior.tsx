@@ -19,7 +19,6 @@ export function TeamInterior() {
     <InteriorShell scene={scene} leadBelow lead={teamClosing}>
       <Carousel360 images={crewCards} />
 
-
       <h2 className="page-subhead">The full crew</h2>
 
       <TeamDirectory />

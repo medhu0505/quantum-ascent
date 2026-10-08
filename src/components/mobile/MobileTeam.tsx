@@ -1,6 +1,5 @@
 import { MobileShell, ScreenHead } from "@/components/mobile/MobileShell";
 import { crewCards } from "@/components/site/crew";
-import { TeamRipple } from "@/components/site/TeamRipple";
 import { TeamDirectory } from "@/components/site/TeamDirectory";
 import { Carousel360 } from "@/components/ui/image-fan-carousel";
 import { getScene, teamClosing } from "@/data/quantum";
@@ -21,7 +20,6 @@ export function MobileTeam() {
       </div>
 
       <div className="m-pad">
-        <TeamRipple />
         <h2 className="m-h2 m-h2-lg">The full crew</h2>
         <TeamDirectory />
         <p className="m-muted m-small m-closing">{teamClosing}</p>

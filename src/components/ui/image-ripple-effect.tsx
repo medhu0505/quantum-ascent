@@ -182,6 +182,7 @@ function RippleScene({
   const prevMouseRef = React.useRef({ x: 0, y: 0 });
   const currentWaveRef = React.useRef(0);
 
+  const materialRef = React.useRef<THREE.ShaderMaterial>(null);
   const uniformsRef = React.useRef({
     uDisplacement: { value: null as THREE.Texture | null },
     uTexture: { value: null as THREE.Texture | null },
@@ -192,10 +193,16 @@ function RippleScene({
   const fboBase = useFBO(Math.max(width, 1), Math.max(height, 1), {
     depthBuffer: false,
     stencilBuffer: false,
+    // drei defaults to half-float targets, which some GPUs cannot render to;
+    // eight bits are plenty for a picture and a ripple mask.
+    type: THREE.UnsignedByteType,
   });
   const fboTexture = useFBO(Math.max(width, 1), Math.max(height, 1), {
     depthBuffer: false,
     stencilBuffer: false,
+    // drei defaults to half-float targets, which some GPUs cannot render to;
+    // eight bits are plenty for a picture and a ripple mask.
+    type: THREE.UnsignedByteType,
   });
 
   const imageCamera = React.useMemo(
@@ -348,9 +355,16 @@ function RippleScene({
       }
     });
 
-    uniformsRef.current.uTexture.value = fboTexture.texture;
-    uniformsRef.current.uDisplacement.value = fboBase.texture;
-    uniformsRef.current.winResolution.value.set(width, height).multiplyScalar(pixelRatio);
+    // The material holds its own copy of the uniforms (R3F clones the object
+    // passed as a prop), so they are written there; writing to the ref alone
+    // left the shader sampling an empty texture and the canvas blank.
+    const uniforms = materialRef.current?.uniforms ?? uniformsRef.current;
+    uniforms["uTexture"]!.value = fboTexture.texture;
+    uniforms["uDisplacement"]!.value = fboBase.texture;
+    uniforms["uStrength"]!.value = distortionStrength;
+    (uniforms["winResolution"]!.value as THREE.Vector2)
+      .set(width, height)
+      .multiplyScalar(pixelRatio);
 
     gl.setRenderTarget(fboBase);
     gl.clear();
@@ -367,6 +381,7 @@ function RippleScene({
     <mesh>
       <planeGeometry args={[Math.max(width, 1), Math.max(height, 1), 1, 1]} />
       <shaderMaterial
+        ref={materialRef}
         vertexShader={vertexShader}
         fragmentShader={fragmentShader}
         transparent

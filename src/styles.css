@@ -2036,30 +2036,10 @@ button.screen:active {
   overflow-wrap: anywhere;
 }
 
-/* The ripple strip between the ring and the directory. */
-.team-ripple {
-  position: relative;
-  aspect-ratio: 16 / 7;
-  margin-block: var(--s-6);
-  overflow: hidden;
-  border-radius: var(--radius-lg);
-  background: var(--ink);
-  box-shadow:
-    inset 0 0 0 1px var(--rule),
-    var(--elev-2);
-}
-
-.team-ripple > img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.m-pad > .team-ripple {
-  aspect-ratio: 16 / 9;
-  margin-block: 0 var(--s-5);
+/* The rippling picture over a card's portrait while the mouse is on it: under
+   the scan lines and the brackets, over the picture or the placeholder. */
+.dir-ripple {
+  z-index: 1;
 }
 
 /* Each letter of a TextRepel paints its own slice of one gradient: the size is
@@ -2082,12 +2062,6 @@ button.screen:active {
    row they sit in, so the signs under the title stay reachable. */
 .descent-title [data-text-repel] {
   pointer-events: auto;
-}
-
-@media print {
-  .team-ripple {
-    display: none;
-  }
 }
 
 /* ---- A person's profile --------------------------------------------- *

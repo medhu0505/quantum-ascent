@@ -55,6 +55,25 @@ function release(e: PointerEvent<HTMLButtonElement>) {
   for (const name of ["--mx", "--my", "--rx", "--ry"]) e.currentTarget.style.removeProperty(name);
 }
 
+/**
+ * The profile's portrait in depth: --px and --py run from -1 to 1 across the
+ * profile, and the stylesheet moves the picture, its frame and its ground by
+ * different amounts against them. Touch steers it too, while a finger drags.
+ */
+function parallax(e: PointerEvent<HTMLDivElement>) {
+  const el = e.currentTarget;
+  const box = el.getBoundingClientRect();
+  const x = ((e.clientX - box.left) / box.width) * 2 - 1;
+  const y = ((e.clientY - box.top) / box.height) * 2 - 1;
+  el.style.setProperty("--px", Math.max(-1, Math.min(1, x)).toFixed(3));
+  el.style.setProperty("--py", Math.max(-1, Math.min(1, y)).toFixed(3));
+}
+
+function settle(e: PointerEvent<HTMLDivElement>) {
+  e.currentTarget.style.removeProperty("--px");
+  e.currentTarget.style.removeProperty("--py");
+}
+
 function Portrait({ person, ripple }: { person: DirectoryPerson; ripple?: string | undefined }) {
   return (
     <span className="dir-slot" data-photo={person.photo ? "" : undefined} aria-hidden="true">
@@ -70,8 +89,11 @@ function Portrait({ person, ripple }: { person: DirectoryPerson; ripple?: string
           <Ripple
             className="dir-ripple absolute inset-0 h-full"
             images={[{ src: ripple, x: 0, y: 0, widthScale: 1, heightScale: 1.25 }]}
-            waveSize={36}
-            waveCount={60}
+            distortionStrength={0.05}
+            waveSize={34}
+            waveCount={50}
+            waveFadeMultiplier={0.94}
+            waveGrowth={0.13}
           />
         </Suspense>
       ) : null}
@@ -212,7 +234,7 @@ export function TeamDirectory() {
         }}
       >
         {open ? (
-          <div className="dir-profile">
+          <div className="dir-profile" onPointerMove={parallax} onPointerLeave={settle}>
             <button
               type="button"
               className="dir-close"

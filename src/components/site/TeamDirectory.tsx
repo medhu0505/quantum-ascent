@@ -1,4 +1,3 @@
-import { X } from "lucide-react";
 import { lazy, Suspense, useEffect, useRef, useState, type PointerEvent } from "react";
 import { Reveal } from "@/components/scene/Reveal";
 import {
@@ -6,8 +5,6 @@ import {
   type DirectoryPerson,
   type DirectoryTeam,
 } from "@/components/site/crewDirectory";
-import { listOf } from "@/data/quantum";
-import { telHref } from "@/lib/utils";
 import { portraitTexture } from "@/components/site/portraitTexture";
 
 /**
@@ -18,28 +15,22 @@ import { portraitTexture } from "@/components/site/portraitTexture";
  * Every card has a slot of its own, the same shape whether it holds a picture
  * or the placeholder, so adding a picture later moves nothing.
  *
- * The cards answer you. With a mouse one tilts toward the pointer and catches
- * the light where it is. Choosing one, by click, tap, Enter or Space, opens
- * that person's profile in a dialog: the larger portrait, their team and part
- * in it and, for the coordinators and the teacher in charge, whose numbers the
- * site already prints, a button to call.
+ * With a mouse a card tilts toward the pointer, catches the light where it is,
+ * and its portrait ripples like water under the pointer.
  */
 
-type Profile = { team: DirectoryTeam; person: DirectoryPerson };
-
 /*
- * With a mouse, the portrait under the pointer ripples like water. One WebGL
- * canvas follows the mouse from card to card, because a browser keeps only a
- * handful of WebGL contexts alive and the directory has thirty-odd cards. It
- * is three.js, so it loads on its own, once the page is idle, and never for
- * touch or reduced motion.
+ * One WebGL canvas follows the mouse from card to card, because a browser
+ * keeps only a handful of WebGL contexts alive and the directory has
+ * thirty-odd cards. It is three.js, so it loads on its own, once the page is
+ * idle, and never for touch or reduced motion.
  */
 const loadRipple = () => import("@/components/ui/image-ripple-effect");
 const Ripple = lazy(() => loadRipple().then((m) => ({ default: m.ImageRippleEffect })));
 const keyOf = (team: DirectoryTeam, person: DirectoryPerson) => `${team.id}:${person.name}`;
 
 /** Points the tilt and the glare at the pointer; the stylesheet decides whether to use them. */
-function aim(e: PointerEvent<HTMLButtonElement>) {
+function aim(e: PointerEvent<HTMLElement>) {
   if (e.pointerType === "touch") return;
   const card = e.currentTarget;
   const box = card.getBoundingClientRect();
@@ -51,27 +42,8 @@ function aim(e: PointerEvent<HTMLButtonElement>) {
   card.style.setProperty("--ry", `${(x - 0.5) * 14}deg`);
 }
 
-function release(e: PointerEvent<HTMLButtonElement>) {
+function release(e: PointerEvent<HTMLElement>) {
   for (const name of ["--mx", "--my", "--rx", "--ry"]) e.currentTarget.style.removeProperty(name);
-}
-
-/**
- * The profile's portrait in depth: --px and --py run from -1 to 1 across the
- * profile, and the stylesheet moves the picture, its frame and its ground by
- * different amounts against them. Touch steers it too, while a finger drags.
- */
-function parallax(e: PointerEvent<HTMLDivElement>) {
-  const el = e.currentTarget;
-  const box = el.getBoundingClientRect();
-  const x = ((e.clientX - box.left) / box.width) * 2 - 1;
-  const y = ((e.clientY - box.top) / box.height) * 2 - 1;
-  el.style.setProperty("--px", Math.max(-1, Math.min(1, x)).toFixed(3));
-  el.style.setProperty("--py", Math.max(-1, Math.min(1, y)).toFixed(3));
-}
-
-function settle(e: PointerEvent<HTMLDivElement>) {
-  e.currentTarget.style.removeProperty("--px");
-  e.currentTarget.style.removeProperty("--py");
 }
 
 function Portrait({ person, ripple }: { person: DirectoryPerson; ripple?: string | undefined }) {
@@ -89,11 +61,11 @@ function Portrait({ person, ripple }: { person: DirectoryPerson; ripple?: string
           <Ripple
             className="dir-ripple absolute inset-0 h-full"
             images={[{ src: ripple, x: 0, y: 0, widthScale: 1, heightScale: 1.25 }]}
-            distortionStrength={0.05}
-            waveSize={34}
+            distortionStrength={0.03}
+            waveSize={30}
             waveCount={50}
-            waveFadeMultiplier={0.94}
-            waveGrowth={0.13}
+            waveFadeMultiplier={0.93}
+            waveGrowth={0.11}
           />
         </Suspense>
       ) : null}
@@ -102,18 +74,8 @@ function Portrait({ person, ripple }: { person: DirectoryPerson; ripple?: string
 }
 
 export function TeamDirectory() {
-  const [open, setOpen] = useState<Profile | null>(null);
-  const dialog = useRef<HTMLDialogElement | null>(null);
-  const invoker = useRef<HTMLElement | null>(null);
-  // Whether the press that ended in a click began on the backdrop too.
-  const pressedBackdrop = useRef(false);
-
   const [canRipple, setCanRipple] = useState(false);
   const [ripple, setRipple] = useState<{ key: string; src: string } | null>(null);
-  // The open profile's portrait ripples too, with a finger as well as a mouse.
-  const [profileRipple, setProfileRipple] = useState<string | null>(null);
-  const shown = useRef<DirectoryPerson | null>(null);
-  shown.current = open?.person ?? null;
   const hovered = useRef<string | null>(null);
   const letGo = useRef(0);
 
@@ -128,11 +90,7 @@ export function TeamDirectory() {
     return () => window.clearTimeout(letGo.current);
   }, []);
 
-  const enter = (
-    e: PointerEvent<HTMLButtonElement>,
-    team: DirectoryTeam,
-    person: DirectoryPerson,
-  ) => {
+  const enter = (e: PointerEvent<HTMLElement>, team: DirectoryTeam, person: DirectoryPerson) => {
     if (!canRipple || e.pointerType !== "mouse") return;
     const key = keyOf(team, person);
     hovered.current = key;
@@ -155,29 +113,6 @@ export function TeamDirectory() {
     }, 700);
   };
 
-  const wake = (e: PointerEvent<HTMLDivElement>) => {
-    if (!open || profileRipple || window.matchMedia("(prefers-reduced-motion: reduce)").matches)
-      return;
-    const person = open.person;
-    const accent = getComputedStyle(e.currentTarget).getPropertyValue("--accent-hue").trim();
-    portraitTexture(person.photo, accent || "oklch(0.84 0.13 215)")
-      .then((src) => {
-        if (shown.current === person) setProfileRipple((now) => now ?? src);
-      })
-      .catch(() => {});
-  };
-
-  // The dialog is only ever opened by a card, and only by this.
-  useEffect(() => {
-    const el = dialog.current;
-    if (open && el && !el.open) el.showModal();
-  }, [open]);
-
-  // Everyone this person is listed under: Rudransh Singh runs two events.
-  const teams = open
-    ? crewDirectory.filter((t) => t.people.some((p) => p.name === open.person.name))
-    : [];
-
   return (
     <div className="dir">
       {/* The placeholder's figure, drawn once and used by every card. */}
@@ -187,8 +122,6 @@ export function TeamDirectory() {
           <path d="M16 125c0-26 14-41 34-41s34 15 34 41z" />
         </symbol>
       </svg>
-
-      <p className="dir-hint">Select a card for details.</p>
 
       <div className="dir-teams">
         {crewDirectory.map((team) => (
@@ -200,20 +133,8 @@ export function TeamDirectory() {
             <ul className="dir-grid" role="list">
               {team.people.map((person) => (
                 <li key={person.name}>
-                  <button
-                    type="button"
+                  <figure
                     className="dir-card"
-                    aria-haspopup="dialog"
-                    data-cursor-label="Open"
-                    onClick={(e) => {
-                      invoker.current = e.currentTarget;
-                      // The card's canvas goes, so the profile can have the one.
-                      window.clearTimeout(letGo.current);
-                      hovered.current = null;
-                      setRipple(null);
-                      setProfileRipple(null);
-                      setOpen({ team, person });
-                    }}
                     onPointerEnter={(e) => enter(e, team, person)}
                     onPointerMove={aim}
                     onPointerLeave={(e) => {
@@ -225,68 +146,14 @@ export function TeamDirectory() {
                       person={person}
                       ripple={ripple?.key === keyOf(team, person) ? ripple.src : undefined}
                     />
-                    <span className="dir-name">{person.name}</span>
-                  </button>
+                    <figcaption className="dir-name">{person.name}</figcaption>
+                  </figure>
                 </li>
               ))}
             </ul>
           </Reveal>
         ))}
       </div>
-
-      <dialog
-        ref={dialog}
-        className="dir-dialog"
-        aria-labelledby={open ? "dir-profile-name" : undefined}
-        data-accent={open?.team.accent}
-        onClose={() => {
-          setOpen(null);
-          setProfileRipple(null);
-          invoker.current?.focus();
-        }}
-        onPointerDown={(e) => {
-          pressedBackdrop.current = e.target === e.currentTarget;
-        }}
-        onClick={(e) => {
-          // The profile fills the dialog, so a click that lands on the dialog
-          // itself is one on the dim backdrop. Dragging a selection out of the
-          // profile and letting go over the backdrop is not.
-          if (pressedBackdrop.current && e.target === e.currentTarget) e.currentTarget.close();
-          pressedBackdrop.current = false;
-        }}
-      >
-        {open ? (
-          <div
-            className="dir-profile"
-            onPointerMove={parallax}
-            onPointerLeave={settle}
-            onPointerDown={wake}
-            onPointerEnter={wake}
-          >
-            <button
-              type="button"
-              className="dir-close"
-              aria-label="Close"
-              onClick={() => dialog.current?.close()}
-            >
-              <X size={16} aria-hidden="true" />
-            </button>
-            <Portrait person={open.person} ripple={profileRipple ?? undefined} />
-            <div className="dir-profile-body">
-              <p className="dir-profile-team">{listOf(teams.map((t) => t.heading))}</p>
-              <h3 id="dir-profile-name" className="dir-profile-name">
-                {open.person.name}
-              </h3>
-              <p className="dir-profile-role">{open.team.role}</p>
-              {open.person.phone ? (
-                <a className="btn btn-accent" href={telHref(open.person.phone)}>
-                  Call {open.person.phone}
-                </a>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
-      </dialog>
     </div>
   );
 }

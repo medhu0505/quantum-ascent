@@ -50,11 +50,10 @@ export function FloatingDock() {
               onBlurCapture={() => setActiveIndex(null)}
             >
               {"to" in item ? (
-                <Link to={item.to} className="floating-dock-link">
+                <Link to={item.to} className="floating-dock-link" aria-label={item.label}>
                   <span className="floating-dock-icon" aria-hidden="true">
                     {item.icon}
                   </span>
-                  <span className="sr-only">{item.label}</span>
                 </Link>
               ) : isTodo(BROCHURE_URL) ? (
                 <span
@@ -73,11 +72,11 @@ export function FloatingDock() {
                   target="_blank"
                   rel="noreferrer"
                   className="floating-dock-link"
+                  aria-label={item.label}
                 >
                   <span className="floating-dock-icon" aria-hidden="true">
                     {item.icon}
                   </span>
-                  <span className="sr-only">{item.label}</span>
                 </a>
               )}
               <span className="floating-dock-tooltip" aria-hidden="true">

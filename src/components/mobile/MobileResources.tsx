@@ -6,7 +6,6 @@ import {
   BROCHURE_URL,
   FEST_DATES,
   about,
-  contact,
   contactPage,
   eventDay,
   events,
@@ -144,11 +143,7 @@ function About() {
   );
 }
 
-/**
- * The event in-charges are the fest's public contacts, so they lead the tab.
- * The teacher in charge follows under General inquiries, in a card of the
- * same kind. Her email is not published anywhere on the site.
- */
+/** The people to contact about each event, plus the fest's update channels. */
 function Contact() {
   return (
     <>
@@ -176,24 +171,6 @@ function Contact() {
           ))}
         </dl>
       </div>
-      <p className="m-muted m-small m-contact-faculty">{contactPage.faculty}</p>
-
-      <div className="m-contact m-contact-general">
-        <p className="m-contact-who">
-          <span className="m-contact-name">{contactPage.general.heading}</span>
-          <span className="m-contact-role">{contactPage.general.note}</span>
-        </p>
-        <dl className="m-contact-events">
-          <div data-accent="violet">
-            <dt>{contact.role}</dt>
-            <dd>
-              <span>{contactPage.general.name}</span>
-              <a href={telHref(contact.phone)}>{contact.phone}</a>
-            </dd>
-          </div>
-        </dl>
-      </div>
-
       <h3 className="m-h3">Updates</h3>
       <dl className="m-details">
         {updateChannels.map((channel) => (

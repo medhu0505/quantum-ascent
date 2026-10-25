@@ -5,7 +5,6 @@ import { ExitToCrossroads, RegisterChip } from "@/components/site/Bits";
 import { FloatingDock } from "@/components/site/FloatingDock";
 import { Beam, Reveal } from "@/components/scene/Reveal";
 import { RevealText } from "@/components/scene/RevealText";
-import { telHref } from "@/lib/utils";
 
 /**
  * Layout for the conventional pages.
@@ -116,13 +115,7 @@ export function SiteFooter() {
           </nav>
 
           <div>
-            <p className="footer-heading">Contact</p>
-            <p className="footer-line">
-              {contact.name} · {contact.role}
-            </p>
-            <p className="footer-line">
-              <a href={telHref(contact.phone)}>{contact.phone}</a>
-            </p>
+            <p className="footer-heading">Connect</p>
             <p className="footer-line">
               <Link to="/contact">Event contacts</Link>
             </p>
@@ -157,12 +150,17 @@ export function SiteFooter() {
  * "floating UI" looks like on this site.
  */
 /**
- * The floating shortcuts.
+ * The floating pill.
  *
- * On the crossroads the links use the magnifying dock and wait behind
- * [data-hub="arrived"] until the descent lands. On interiors they stay in a
- * text pill at the top: a room's content runs to an unpredictable length, so
- * a control pinned to the bottom could cover a carousel, fan of cards or photo.
+ * On the crossroads it parks on the road, gated behind [data-hub="arrived"]
+ * so it waits for the descent to actually land there. Everywhere else there
+ * is no road and no arrival to wait for — a room's own content runs to an
+ * unpredictable length (a carousel, a fan of cards, a photo), so a pill
+ * pinned to the bottom of the viewport would drift over whatever that room
+ * happens to be showing. `variant="interior"` instead sits it at the top,
+ * in the same fixed chrome band as the exit and register chips, which is
+ * clear of body content on every room by construction rather than by
+ * checking each room's layout by hand.
  */
 export function CrossroadsFooter({
   variant = "crossroads",
@@ -194,10 +192,6 @@ export function CrossroadsFooter({
               <Link to="/about">About</Link>
             </li>
             <li>
-              {/* The PDF, not a page: a plain anchor into a new tab. Until
-                  BROCHURE_URL is a real address it is a label and not a link,
-                  the same as the brochure board on the crossroads — a pill
-                  entry that 404s is worse than one that says it is coming. */}
               {isTodo(BROCHURE_URL) ? (
                 <span className="nav-pending" aria-disabled="true" title="Brochure coming soon">
                   Brochure

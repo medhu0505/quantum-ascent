@@ -33,8 +33,8 @@ export function isTodo(value: string): boolean {
 export const REGISTRATION_ENDPOINT =
   "https://script.google.com/macros/s/AKfycbwa6zpLvsYhGfnQOZTFf64d2wl6-oxAh8dMaLrprT8beOEHwBj1ynQ3cjKVwi8ZVVar/exec";
 
-/** TODO: swap for the real brochure PDF once design signs it off. */
-export const BROCHURE_URL = `${TODO} — brochure PDF URL`;
+/** The brochure shipped from the public assets directory. */
+export const BROCHURE_URL = "/brochure.pdf";
 
 /**
  * The two fest days, from the brochure: every online event runs on the first
@@ -42,14 +42,14 @@ export const BROCHURE_URL = `${TODO} — brochure PDF URL`;
  * structured data needs; `label` is what a person reads.
  */
 export const FEST_DAYS = {
-  online: { iso: "2026-10-08", label: "8 October 2026" },
-  offline: { iso: "2026-10-09", label: "9 October 2026" },
+  online: { iso: "2026-11-19", label: "19 November 2026" },
+  offline: { iso: "2026-11-20", label: "20 November 2026" },
 } as const;
 
 /** The dates as one line, wherever a page answers "when is it". */
 export const FEST_DATES = `${FEST_DAYS.online.label} online, ${FEST_DAYS.offline.label} at the school`;
 
-/** Both days as one phrase, "8 and 9 October 2026". They share a month. */
+/** Both days as one phrase, "19 and 20 November 2026". They share a month. */
 export const FEST_SPAN = `${FEST_DAYS.online.label.split(" ")[0]} and ${FEST_DAYS.offline.label}`;
 
 /** Last day to register for any event, from the brochure. */
@@ -297,7 +297,7 @@ export function getEvent(id: string): QuantumEvent | undefined {
   return events.find((e) => e.id === id);
 }
 
-/** When and how an event runs, in the words a page shows it: "9 October 2026, at the school". */
+/** When and how an event runs, in the words a page shows it. */
 export function eventDay(event: QuantumEvent): string {
   return `${FEST_DAYS[event.mode].label}, ${event.mode === "online" ? "online" : "at the school"}`;
 }
@@ -461,9 +461,7 @@ export const scenes: Scene[] = [
      * Resources room — and a brochure is the thing people actually ask for
      * when they are deciding whether to enter.
      *
-     * Its address is BROCHURE_URL, which is still a placeholder. Until it is
-     * a real one the board renders as a board and not as a link, rather than
-     * putting a 404 on the crossroads.
+     * Its address is BROCHURE_URL, the PDF shipped with the site.
      */
     id: "brochure",
     label: "Brochure",
@@ -514,21 +512,6 @@ export const descentFilm = {
  * ------------------------------------------------------------------ */
 
 export const contact = {
-  /**
-   * The teacher in charge. Her number is on Contact, under General inquiries,
-   * and in the footer, for anything that is not about one event; questions
-   * about an event go to its coordinators, whose numbers are on each event
-   * above. Her email is deliberately not in this file, so no page can print
-   * it.
-   *
-   * The name is written the way the organisers address her, honorific and
-   * all, so every page that prints it prints the same thing: the footers, the
-   * Contact page and the crew on Meet the Team.
-   */
-  name: "Mrs. Anjali Rawlley",
-  role: "Teacher in charge",
-  /** Written the way the brochure writes the in-charges' numbers. */
-  phone: "+91 98713 79429",
   /** The fest's own account: shown as the handle, linked to the profile. */
   instagram: "@quantum.afbbs",
   instagramUrl: "https://www.instagram.com/quantum.afbbs/",
@@ -569,10 +552,6 @@ export type CrewSection = {
 
 export const crew: CrewSection[] = [
   {
-    heading: "Faculty",
-    groups: [{ role: contact.role, names: [contact.name] }],
-  },
-  {
     heading: "Event coordinators",
     noun: "coordinators",
     groups: events.map((event) => ({
@@ -599,7 +578,7 @@ export const crew: CrewSection[] = [
 
 /** The last line on Meet the Team, on both layouts. */
 export const teamClosing =
-  "Quantum is student-run end to end. Students write the quiz, judge the prelims, cut the highlight reel, run the brackets and staff the help desk. Faculty is in-charge of coordination.";
+  "Quantum is student-run end to end. Students write the quiz, judge the prelims, cut the highlight reel, run the brackets and staff the help desk.";
 
 /** "A", "A and B", "A, B and C". */
 export function listOf(items: readonly string[]): string {
@@ -631,7 +610,7 @@ export const faqs = [
   },
   {
     q: "Can individual students register?",
-    a: "No. Entries must go through schools. Every team's points count toward its school's overall championship. The school's teacher in-charge registers its teams, one per event, and comes with the students on the offline day.",
+    a: "No. Entries must go through schools. Every team's points count toward its school's overall championship. A school representative submits its entries, one team per event.",
   },
   {
     q: "Can a student take part in more than one event?",
@@ -643,7 +622,7 @@ export const faqs = [
   },
   {
     q: "Important information to know before Quantum",
-    a: `Schools must reach ${school.name} by 7:30 a.m. on ${FEST_DAYS.offline.label}, and the registration desk will be open from 7:30 to 8:00 a.m. Participants to come in school uniforms with a teacher in charge. Every school is required to stay for both the opening and closing ceremonies. Arriving late can cut into preparation or performance time and can lead to disqualification.`,
+    a: `Schools must reach ${school.name} by 7:30 a.m. on ${FEST_DAYS.offline.label}, and the registration desk will be open from 7:30 to 8:00 a.m. Participants should come in school uniform. Every school is required to stay for both the opening and closing ceremonies. Arriving late can cut into preparation or performance time and can lead to disqualification.`,
   },
   {
     q: "Where will updates and announcements be shared?",
@@ -671,7 +650,7 @@ export const festFacts: readonly { value: string; label: string; note: string }[
   { value: String(events.length), label: "events", note: "One championship" },
   { value: "2", label: "days", note: "8 Oct online · 9 Oct offline" },
   { value: "9–12", label: "classes", note: "Open to Grades 9–12" },
-  { value: "100%", label: "student-run", note: "Faculty is in-charge of coordination." },
+  { value: "100%", label: "student-run", note: "Students organise every event and competition." },
 ];
 
 export const about = {
@@ -735,14 +714,6 @@ export function resourceTabAt(pathname: string): ResourceTab | null {
 export const contactPage = {
   title: "Contact",
   lede: "Questions about an event go to its student in-charges, whose numbers are on this page. For live updates through both fest days, follow the WhatsApp community, Discord or Instagram.",
-  /** Under the event contacts. */
-  faculty: `Teacher in-charge is ${contact.name}. For information about a particular event, the event's in-charges are to be contacted.`,
-  /** Anything that is not about one event goes to the teacher in charge. */
-  general: {
-    heading: "General inquiries",
-    note: "For anything that is not about a particular event.",
-    name: contact.name,
-  },
 } as const;
 
 /** Where the fest posts its updates, and what each one is for. */
@@ -774,7 +745,7 @@ export const updateChannels = [
 ] as const;
 
 /** What to do on the offline day, from the brochure. The FAQ says the same at more length. */
-export const onTheDay = `On ${FEST_DAYS.offline.label}, be at the school by 7:30 a.m.: the registration desk will be open from 7:30 to 8:00 a.m. Bring your confirmation email, and come in school uniform. Come with your respective teacher in-charges.`;
+export const onTheDay = `On ${FEST_DAYS.offline.label}, be at the school by 7:30 a.m.: the registration desk will be open from 7:30 to 8:00 a.m. Bring your confirmation email and come in school uniform.`;
 
 /** The lines that send a visitor from one tab to the other when the answer is there. */
 export const resourceHints = {

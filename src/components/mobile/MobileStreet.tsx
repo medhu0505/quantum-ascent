@@ -12,7 +12,6 @@ import {
 } from "@/data/quantum";
 import { TextRepel } from "@/components/ui/text-repel";
 import { usePreloadWhenIdle } from "@/lib/preload";
-import { telHref } from "@/lib/utils";
 
 /**
  * The street: the phone app's crossroads.
@@ -162,12 +161,6 @@ export function MobileStreet() {
         <footer className="m-foot">
           <p className="m-foot-mark">
             <span className="m-gradient-text">{fest.name}</span>
-          </p>
-          <p className="m-muted">
-            {contact.name} · {contact.role}
-          </p>
-          <p>
-            <a href={telHref(contact.phone)}>{contact.phone}</a>
           </p>
           <p>
             <ScreenLink to="/contact">Event contacts</ScreenLink>

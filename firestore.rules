@@ -65,8 +65,8 @@ service cloud.firestore {
       return m.keys().hasOnly(['name', 'grade', 'phone', 'discord', 'email'])
         && m.name is string && m.name.size() > 0 && m.name.size() <= 120
         && m.grade is string && (m.grade == '' || m.grade in ['9', '10', '11', '12'])
-        && m.phone is string && m.phone.size() <= 120
-        && (m.phone == '' || m.phone.replace('[^0-9]', '').size() >= 10)
+        && m.phone is string && m.phone.size() > 0 && m.phone.size() <= 120
+        && m.phone.replace('[^0-9]', '').size() >= 10
         && m.discord is string && m.discord.size() <= 120
         && (m.discord == '' || m.discord.matches('^\\S{2,37}$'))
         && m.email is string && m.email.size() <= 120
@@ -113,7 +113,7 @@ service cloud.firestore {
      */
     function registrationOk(key, data) {
       return data.keys().hasOnly(['id', 'type', 'student', 'school', 'grade', 'email',
-          'emailLower', 'phone', 'discord', 'events', 'members', 'teamSize', 'createdAt',
+          'emailLower', 'phone', 'leadPhone', 'discord', 'events', 'members', 'teamSize', 'createdAt',
           'teacher', 'teacherPhone', 'teacherEmail'])
         && (!('teacher' in data)
           || (data.teacher is string && data.teacher.size() > 0 && data.teacher.size() <= 120))
@@ -132,6 +132,8 @@ service cloud.firestore {
         && data.emailLower == data.email.lower()
         && data.phone is string && data.phone.size() <= 120
         && data.phone.replace('[^0-9]', '').size() >= 10
+        && data.leadPhone is string && data.leadPhone.size() > 0 && data.leadPhone.size() <= 120
+        && data.leadPhone.replace('[^0-9]', '').size() >= 10
         && data.discord is string && data.discord.size() <= 120
         && (data.discord == '' || data.discord.matches('^\\S{2,37}$'))
         && data.teamSize == data.members.size() + 1

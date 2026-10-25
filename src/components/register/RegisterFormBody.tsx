@@ -30,11 +30,11 @@ import {
 /**
  * The registration form.
  *
- * One page, for a school. At the top, whom the organisers write to and call,
- * and the teacher in-charge who brings the teams. Under that the six events,
- * each its own section: ticking one opens that
- * event's team right beneath it, with exactly as many places as the event
- * takes, and every place asks for a name, a class and a Discord ID. A student
+ * One page, for a school. At the top, where to send confirmations and a school
+ * contact number. Under that
+ * are six event choices, each opening that event's team underneath with the
+ * required number of participant places. Each place asks for a name, a class,
+ * a phone number and, optionally, a Discord ID. A student
  * can compete in only one event, so the same student under two events is
  * caught before anything is sent.
  *
@@ -250,7 +250,7 @@ export function RegisterFormBody({
   return (
     <PageShell
       title="Register"
-      lede={`Enter your school's details and its teacher in-charge, then select every event your school is entering for and list its team under it. Registrations close on ${REGISTRATION_CLOSES.label}.`}
+      lede={`Enter your school's details, then select every event your school is entering for and list its team under it. Registrations close on ${REGISTRATION_CLOSES.label}.`}
       registerChip={false}
     >
       {!registrationOpen ? (
@@ -319,50 +319,14 @@ export function RegisterFormBody({
             />
             <Field
               id="phone"
-              label="Phone"
+              label="School contact phone"
               type="tel"
-              hint="10 digits, reachable on both fest days. No +91 needed."
+              inputMode="tel"
+              hint="10 digits, reachable during the fest."
               error={errors.phone}
               value={contact.phone}
               onChange={setField("phone")}
               autoComplete="tel"
-              required
-            />
-          </div>
-        </fieldset>
-
-        <fieldset className="form-block">
-          <legend className="form-block-title">Teacher in-charge</legend>
-          <Field
-            id="teacher"
-            label="Teacher's name"
-            hint="The teacher who will bring the teams on the day."
-            error={errors.teacher}
-            value={contact.teacher}
-            onChange={setField("teacher")}
-            autoComplete="off"
-            required
-          />
-          <div className="field-row">
-            <Field
-              id="teacherPhone"
-              label="Teacher's phone"
-              type="tel"
-              hint="10 digits. No +91 needed."
-              error={errors.teacherPhone}
-              value={contact.teacherPhone}
-              onChange={setField("teacherPhone")}
-              autoComplete="off"
-              required
-            />
-            <Field
-              id="teacherEmail"
-              label="Teacher's email"
-              type="email"
-              error={errors.teacherEmail}
-              value={contact.teacherEmail}
-              onChange={setField("teacherEmail")}
-              autoComplete="off"
               required
             />
           </div>
@@ -377,8 +341,8 @@ export function RegisterFormBody({
           </legend>
           <p id="hint-events" className="field-hint">
             Select every event your school is entering for, and its team opens under it. A student
-            can compete in only one event, so each event needs different students. Add each
-            participant's Discord ID: briefings and results go out on the fest Discord server.
+            can compete in only one event, so each event needs different students. Enter a phone
+            number for every participant; Discord IDs are optional.
           </p>
           <FieldError id="error-events" message={errors.events} />
 
@@ -540,6 +504,18 @@ function TeamFields({
                 <FieldError id={`error-${base}-grade`} message={err.grade} />
               </div>
               <Field
+                id={`${base}-phone`}
+                label="Phone number"
+                type="tel"
+                inputMode="tel"
+                hint="10 digits, no +91 needed."
+                error={err.phone}
+                value={p.phone}
+                onChange={set("phone")}
+                autoComplete="off"
+                required={needed}
+              />
+              <Field
                 id={`${base}-discord`}
                 label="Discord ID"
                 error={err.discord}
@@ -599,6 +575,7 @@ function Field({
   error,
   required,
   type = "text",
+  inputMode,
   ...rest
 }: {
   id: string;
@@ -607,6 +584,7 @@ function Field({
   error?: string | undefined;
   required?: boolean | undefined;
   type?: string | undefined;
+  inputMode?: "email" | "tel" | "text" | undefined;
   value: string;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
   autoComplete?: string | undefined;
@@ -624,6 +602,7 @@ function Field({
         id={`field-${id}`}
         name={id}
         type={type}
+        inputMode={inputMode}
         maxLength={MAX_TEXT}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy || undefined}

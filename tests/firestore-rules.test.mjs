@@ -40,7 +40,14 @@ function idFor(key) {
 }
 
 function member(overrides = {}) {
-  return { name: "Ravi Menon", grade: "10", phone: "", discord: "", email: "", ...overrides };
+  return {
+    name: "Ravi Menon",
+    grade: "10",
+    phone: "9810012345",
+    discord: "",
+    email: "",
+    ...overrides,
+  };
 }
 
 /** A valid entry, with a unique email so each test writes its own document. */
@@ -58,6 +65,7 @@ function entry(overrides = {}) {
     email,
     emailLower: email.toLowerCase(),
     phone: "+91 98100 12345",
+    leadPhone: "9810012345",
     discord: "",
     events,
     members,
@@ -170,6 +178,7 @@ function worstCase({ members }) {
       teacher: "T".repeat(120),
       teacherPhone: "9".repeat(120),
       teacherEmail: `${"t".repeat(107)}@example.com`,
+      leadPhone: "9".repeat(120),
       student: "A".repeat(120),
       school: "B".repeat(120),
       discord: "c".repeat(37),
@@ -350,6 +359,8 @@ describe("field validation", () => {
     "an address with a space": ["email", "aarav sharma@example.com"],
     "a phone number with too few digits": ["phone", "98100"],
     "a phone number that is words": ["phone", "call the school"],
+    "a team lead phone with too few digits": ["leadPhone", "98100"],
+    "a team lead phone that is words": ["leadPhone", "call the school"],
     "a discord handle with a space": ["discord", "aarav sharma"],
     "no events": ["events", []],
     "an event that does not exist": ["events", ["archery"]],
@@ -360,6 +371,7 @@ describe("field validation", () => {
     "a member with no name": ["members", [member({ name: "" })]],
     "a member with a bad email": ["members", [member({ email: "ravi@" })]],
     "a member with a bad phone": ["members", [member({ phone: "12" })]],
+    "a member with no phone": ["members", [member({ phone: "" })]],
     "a member with a bad class": ["members", [member({ grade: "7" })]],
     "a member with an extra field": ["members", [{ ...member(), nickname: "Rav" }]],
     "a member missing a field": ["members", [{ name: "Ravi Menon", grade: "10" }]],

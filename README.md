@@ -24,8 +24,8 @@ receives a copy; rules are deployed and the whole path was verified end to end
 against production on 22 Sep. Nothing in this table blocks a registration any
 more — what is left is copy a visitor reads.
 
-| Value | Where | What breaks until it is set |
-| --- | --- | --- |
+| Value          | Where                 | What breaks until it is set                                                                                                                                                                                                         |
+| -------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `BROCHURE_URL` | `src/data/quantum.ts` | About shows a badge instead of a download button, and the brochure sign and card open nothing. The button appears, pointing at this URL, as soon as it is a real one. The brochure is waiting on a cosmetic pass before it goes up. |
 
 Event copy, FAQ answers and the About editorial are final — no placeholders there.
@@ -40,7 +40,7 @@ Four things outside this file are also outstanding, and none of them are code:
   protection intact; running `setup` renames all of them at once.
 
 - **Every row in the sheet is a test entry** and has to go before entries open —
-  from the sheet *and* from Firestore's `registrations` collection, because both
+  from the sheet _and_ from Firestore's `registrations` collection, because both
   run a duplicate check. A real entrant whose email and events match a leftover
   test entry in either place is told they are already registered. Some test rows
   use a real address, so this is not hypothetical. Deleting from the sheet asks
@@ -116,39 +116,31 @@ registration Firestore already accepted.
 
 ### What the forms send
 
-Both forms register a school: whom to write to and call, the school's teacher
-in-charge (name, phone and email, all asked for), the events it is entering, and
-under each of those events that event's team, with every student's name, class
-and Discord ID (the Discord ID is optional). The desktop form does it on one
-page, each event a section of its own; the phone form does it in four steps. A
-student can compete in only one event, so the forms refuse the same name and
-class under two events.
+Both forms register a school: its name, a confirmation email, a school contact
+phone, the events it is entering, and each event's team. Every participant
+provides a name, class and phone number; a Discord ID is optional. The desktop
+form does it on one page, each event a section of its own; the phone form does
+it in four steps. A student can compete in only one event, so the forms refuse
+the same name and class under two events.
 
-Each event goes to the backend as an entry of its own, in the shape both
-backends have always taken, so neither needed a change or a redeploy for this:
+Each event goes to the backend as an entry of its own. The existing
+registration shape now includes a separate `leadPhone` for the lead
+participant, while `phone` remains the school's callback number:
 
-- the team's first student is the entry's lead (`student`, `grade`, `discord`),
-  and the rest are its `members`, each with its `discord`;
-- `school`, `email` and `phone` are the school's, the same on every entry, and
-  so are `teacher`, `teacherPhone` and `teacherEmail`, the teacher in-charge's;
+- the team's first student is the entry's lead (`student`, `grade`,
+  `leadPhone`, `discord`), and the rest are its `members`, each with their own
+  phone number;
+- `school`, `email` and `phone` (the school's contact number) are the same on
+  every entry;
 - `events` names that one event, and `type` is `school`.
 
 So each team gets its own registration ID, the duplicate check is one entry per
 email per event, and an event that fails can be sent again without resending the
 ones that went through. The Apps Script mails one confirmation per entry.
 
-`teacher`, `teacherPhone` and `teacherEmail` are optional in the rules and the
-Apps Script, each checked when it is there, so an entry from a page opened before
-the form asked for them is still taken. The forms always send all three.
-
 **Deploy the rules and the script with this release** (`npm run firebase:rules`,
-and a new version of the Apps Script). Rules deployed before the teacher's
-fields existed refuse an entry that carries them, and `registrations.ts` reads a
-refused write as a duplicate. So it tries once more without the three fields:
-until the rules are deployed, Firestore holds each entry without the teacher's
-details (the browser console says so), and only the sheet has them, through the
-Apps Script, once that is deployed too. Neither is lost silently, but the
-teacher's details live in one place until both are.
+and a new version of the Apps Script) so each participant's phone number is
+validated and stored by both backends.
 
 ### Firebase
 
@@ -178,8 +170,8 @@ unauthenticated. They enforce three things rather than assume them:
   document that does not exist. The rules recompute that hash, so a client
   cannot pick its own id and write the same entrant a thousand times.
 - **Every field.** Type, class, email, phone, Discord handle, event list,
-  length caps, each of the five possible team members, and the optional
-  teacher in-charge's name, phone and email.
+  length caps, each of the five possible team members, and every participant's
+  phone number, including the team lead.
 
 The visible `QV2-XXXXXXXX` ID is the first eight digits of that same hash, so a
 resubmit is answered with the original ID having read nothing back.
@@ -188,10 +180,8 @@ Rules are capped at 1000 expression evaluations per request. The checks in
 `firestore.rules` are inlined and repetitive for that reason — a factored
 version of exactly the same checks exceeded the cap on a five-member team, and
 failed only for the largest teams. `tests/firestore-rules.test.mjs` submits that
-worst case deliberately. The teacher's three fields use some of that room: all
-six events with four full members and a full teacher still fit, and a fifth
-member beside one does not. No event takes a team of six, so no form sends it,
-and the test file holds both edges.
+worst case deliberately. No event takes a team of six, so no form sends it, and
+the test file holds both edges.
 
 **App Check** is the control the rules cannot be. Rules see the shape of a
 write, never its sender, so nothing above stops a script filling the collection
@@ -215,12 +205,10 @@ and is the only thing that writes to it. The form POSTs JSON to
 `REGISTRATION_ENDPOINT`, and the script checks every field again, rejects
 anything else, and appends one row to the `Registrations` tab. It returns a
 `QV2-XXXXXXXX` ID. If the same email registers again for the same event, the
-script returns the original ID and adds no row. It also neutralises formula
-injection and ignores anything that fills in the hidden `website` field. The
-teacher in-charge goes in three columns, **Teacher in-charge**, **Teacher
-phone** and **Teacher email**, each found by its header and added past the last
-column the first time it is needed, so a column an organiser added is never
-written over.
+script returns the original ID and adds no row. It also neutralises formula injection and ignores anything that fills in the hidden
+`website` field. Participant phone numbers are saved with their team entries;
+the lead's phone is stored under its own appended header so existing columns
+and organiser annotations are not shifted.
 
 Mirrored entries arrive carrying the ID Firestore already issued, and the script
 takes it rather than minting a second one, so a registration does not end up with
@@ -230,8 +218,7 @@ shape is discarded and an ID is minted as before.
 ### The confirmation email
 
 Every accepted **new** entry is emailed to the address on the form, carrying the
-ID, the events, the lead's details, the teacher in-charge's and the rest of the
-team. It goes to the contact's email on the form, not the teacher's. It is sent
+ID, the events, and the school contact and all participants' details. It is sent
 from the Apps Script because that is the only part of the registration path
 running on a server the organisers own: the browser cannot send mail without
 shipping a provider's key in the bundle, and both the Firebase "Trigger Email"
@@ -244,7 +231,7 @@ Three properties are deliberate:
   not produce a second copy, and since anyone can POST the endpoint repeatedly,
   sending on duplicates would make it a way to flood someone else's inbox.
 - **Best-effort.** The quota is checked first and the whole send is wrapped. A row
-  already in the sheet *is* a registration, so a mail failure is logged to the
+  already in the sheet _is_ a registration, so a mail failure is logged to the
   execution log and never returned to the entrant as an error — reporting one
   would send them round again to make a duplicate.
 - **Both parts.** HTML and plain text. Every entrant-supplied value is escaped for
@@ -258,14 +245,13 @@ The sender is the account that owns the script; Apps Script cannot send as an
 arbitrary address. `MAIL_FROM_NAME` sets the display name. Replies go to the owner
 until `MAIL_REPLY_TO` is set — do that when the fest has its own address.
 
-`previewConfirmationEmail()` sends one specimen to whoever runs it from the editor,
-and `previewTeacherConfirmationEmail()` one for an entry that names a teacher.
+`previewConfirmationEmail()` sends one specimen to whoever runs it from the editor.
 It is not reachable over the web, and it writes no row, so the template can be
 checked in a real client without putting a test entry in the organisers' sheet.
 
 Changing the script: paste the new file into the sheet's Extensions > Apps Script
 editor. Then use Deploy > Manage deployments > Edit > New version. That keeps the
-same `/exec` URL. A *new* deployment gets a new URL, and `REGISTRATION_ENDPOINT`
+same `/exec` URL. A _new_ deployment gets a new URL, and `REGISTRATION_ENDPOINT`
 would have to change with it.
 
 **Deploying the current script is required** for the ID passthrough above.
@@ -298,9 +284,7 @@ sections from the same data in `src/data/quantum.ts`; a section added to
 `ResourcesPanels.tsx` belongs in `MobileResources.tsx` too.
 
 The public contacts are the event coordinators, with the numbers the brochure
-prints for them, on Contact in both layouts, and the teacher in charge, with
-her number, under General inquiries beside them. Her email is not in the
-site's data at all, so no page can print it.
+prints for them, on Contact in both layouts.
 
 Two visual registers, deliberately opposed. Scenes (hero, hub, interiors) are
 full-bleed, neon and kinetic. The conventional pages are one quiet column at a
@@ -323,12 +307,12 @@ Beat boundaries were measured, not estimated — per-frame luma delta across all
 240 frames, so each boundary sits where the camera's rate of change actually
 breaks. They live in `timeline` in `src/data/quantum.ts`:
 
-| Beat | Seconds |
-| --- | --- |
-| Wide aerial — moon, beam, skyline | 0.00 – 2.40 |
-| Skyscraper canyon of billboard panels | 2.40 – 7.00 |
-| Deceleration into the crossroads | 7.00 – 9.50 |
-| Camera holds | 9.50 – 10.006 |
+| Beat                                  | Seconds       |
+| ------------------------------------- | ------------- |
+| Wide aerial — moon, beam, skyline     | 0.00 – 2.40   |
+| Skyscraper canyon of billboard panels | 2.40 – 7.00   |
+| Deceleration into the crossroads      | 7.00 – 9.50   |
+| Camera holds                          | 9.50 – 10.006 |
 
 Only H.264 ships. A VP9/WebM alternate was encoded and measured at 3.46 MB —
 larger than the H.264, because this grade is mostly flat gradients — so it was
@@ -348,7 +332,7 @@ numbers; nothing else needs to know.
 Interiors are composed in DOM and CSS rather than generated as images. Their
 screens have to carry real readable text — six event names, eight roles, FAQ
 links — which image generation cannot do reliably. It also makes the hotspot
-*be* the element, so focus order, hit area and accessible name need no separate
+_be_ the element, so focus order, hit area and accessible name need no separate
 bookkeeping, and all four rooms share one shell.
 
 The city seen through each interior window is a real frame from the descent, so
@@ -363,7 +347,7 @@ deterministically and for free.
 
 Three registers, matched to what the visitor is doing:
 
-- **Crossroads** — the four signboards *are* the navigation. No chrome over them.
+- **Crossroads** — the four signboards _are_ the navigation. No chrome over them.
 - **Interiors** — two fixed chips: back to the crossroads on the left, Register
   on the right (suppressed on the Register scene itself). Registration is the
   site's job, so it stays one click away from every room.
@@ -390,7 +374,7 @@ on any route; a test asserts it.
 
 ## Responsive behaviour
 
-The hub is **one set of markup with two layouts**. Above `48rem` *and* wider
+The hub is **one set of markup with two layouts**. Above `48rem` _and_ wider
 than `5/4`, the four signs are absolutely positioned onto the billboards inside
 an aspect-locked 16:9 stage. Below that, the plate becomes a lit backdrop and
 the same four elements stack as cards.

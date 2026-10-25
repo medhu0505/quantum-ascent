@@ -61,11 +61,12 @@ function Portrait({ person, ripple }: { person: DirectoryPerson; ripple?: string
           <Ripple
             className="dir-ripple absolute inset-0 h-full"
             images={[{ src: ripple, x: 0, y: 0, widthScale: 1, heightScale: 1.25 }]}
-            distortionStrength={0.03}
-            waveSize={30}
-            waveCount={50}
-            waveFadeMultiplier={0.93}
-            waveGrowth={0.11}
+            distortionStrength={0.012}
+            waveSize={24}
+            waveCount={30}
+            waveFadeMultiplier={0.95}
+            waveGrowth={0.07}
+            waveSpawnThreshold={0.16}
           />
         </Suspense>
       ) : null}

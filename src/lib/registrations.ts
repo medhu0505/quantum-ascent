@@ -33,14 +33,8 @@ export type RegistrationPayload = {
   grade: string;
   email: string;
   phone: string;
+  leadPhone: string;
   discord: string;
-  /**
-   * The school's teacher in-charge: all three or none. The forms send all
-   * three; an entry from before they did carries none of them.
-   */
-  teacher?: string;
-  teacherPhone?: string;
-  teacherEmail?: string;
   /** Canonically ordered: the order `events` declares, not the order ticked. */
   events: string[];
   members: Participant[];
@@ -152,14 +146,6 @@ function tooLong(value: string): boolean {
   return value.length > MAX_FIELD_LENGTH;
 }
 
-function hasTeacher(payload: RegistrationPayload): boolean {
-  return (
-    payload.teacher !== undefined ||
-    payload.teacherPhone !== undefined ||
-    payload.teacherEmail !== undefined
-  );
-}
-
 /** The offending field name, or null when the payload is sound. */
 function firstProblem(payload: RegistrationPayload): string | null {
   if (!TYPES.includes(payload.type)) return "type";
@@ -168,15 +154,8 @@ function firstProblem(payload: RegistrationPayload): string | null {
   if (!CLASSES.includes(payload.grade)) return "grade";
   if (!EMAIL.test(payload.email) || tooLong(payload.email)) return "email";
   if (digits(payload.phone) < 10 || tooLong(payload.phone)) return "phone";
+  if (digits(payload.leadPhone) < 10 || tooLong(payload.leadPhone)) return "leadPhone";
   if (payload.discord && !DISCORD.test(payload.discord)) return "discord";
-
-  if (hasTeacher(payload)) {
-    if (!payload.teacher || tooLong(payload.teacher)) return "teacher";
-    const phone = payload.teacherPhone ?? "";
-    if (digits(phone) < 10 || tooLong(phone)) return "teacherPhone";
-    const email = payload.teacherEmail ?? "";
-    if (!EMAIL.test(email) || tooLong(email)) return "teacherEmail";
-  }
 
   // Canonical: the declared order, no repeats, nothing unknown. The document
   // id is a hash of this list, so a reordered or repeated list would hash to a
@@ -191,7 +170,7 @@ function firstProblem(payload: RegistrationPayload): string | null {
     if (!member.name || tooLong(member.name)) return "members";
     if (member.grade && !CLASSES.includes(member.grade)) return "members";
     if (member.email && !EMAIL.test(member.email)) return "members";
-    if (member.phone && digits(member.phone) < 10) return "members";
+    if (!member.phone || digits(member.phone) < 10) return "members";
     if (member.discord && !DISCORD.test(member.discord)) return "members";
     if ([member.grade, member.phone, member.discord, member.email].some(tooLong)) return "members";
   }
@@ -268,6 +247,7 @@ async function submitToFirestore(payload: RegistrationPayload): Promise<BackendR
     // entrant" query needs a folded copy to match against.
     emailLower: payload.email.toLowerCase(),
     phone: payload.phone,
+    leadPhone: payload.leadPhone,
     discord: payload.discord,
     events: payload.events,
     members: payload.members,
@@ -275,55 +255,29 @@ async function submitToFirestore(payload: RegistrationPayload): Promise<BackendR
     createdAt: serverTimestamp(),
   };
 
-  // With the teacher's details first, and, if the rules turn that down, once
-  // more without them. The rules deployed in production can predate those
-  // fields, and a rejected write is read as a duplicate below, so without the
-  // second try every entry would be told it was already registered and none
-  // would be saved. The sheet copy still carries the teacher either way.
-  const attempts = hasTeacher(payload)
-    ? [
-        {
-          ...record,
-          teacher: payload.teacher ?? "",
-          teacherPhone: payload.teacherPhone ?? "",
-          teacherEmail: payload.teacherEmail ?? "",
-        },
-        record,
-      ]
-    : [record];
+  try {
+    await withTimeout(setDoc(doc(db, REGISTRATIONS, key), record));
+    return { ok: true, id };
+  } catch (error) {
+    const code = errorCode(error);
 
-  for (const [attempt, data] of attempts.entries()) {
-    try {
-      await withTimeout(setDoc(doc(db, REGISTRATIONS, key), data));
-      if (attempt > 0) {
-        console.warn("firestore rules predate the teacher fields; entry stored without them");
-      }
-      return { ok: true, id };
-    } catch (error) {
-      const code = errorCode(error);
+    // The rules allow create and deny update, so writing over an existing
+    // document is a permission error rather than an "already exists" one.
+    // Everything in `record` was checked against those same rules a few
+    // lines above, which leaves the document already being there as the
+    // explanation. If the two validations ever drift, this reads a rejected
+    // entry as a duplicate — so they are kept in one place and tested
+    // against the emulator rather than trusted to stay in step.
+    if (code === "permission-denied") return { ok: true, id, duplicate: true };
 
-      if (code === "permission-denied" && attempt < attempts.length - 1) continue;
+    // Transport failures are rethrown so they land in the caller's offline
+    // path, the same way a failed fetch does.
+    if (code === "unavailable" || code === "deadline-exceeded") throw error;
+    if (error instanceof Error && error.message === "registration_timeout") throw error;
 
-      // The rules allow create and deny update, so writing over an existing
-      // document is a permission error rather than an "already exists" one.
-      // Everything in `record` was checked against those same rules a few
-      // lines above, which leaves the document already being there as the
-      // explanation. If the two validations ever drift, this reads a rejected
-      // entry as a duplicate — so they are kept in one place and tested
-      // against the emulator rather than trusted to stay in step.
-      if (code === "permission-denied") return { ok: true, id, duplicate: true };
-
-      // Transport failures are rethrown so they land in the caller's offline
-      // path, the same way a failed fetch does.
-      if (code === "unavailable" || code === "deadline-exceeded") throw error;
-      if (error instanceof Error && error.message === "registration_timeout") throw error;
-
-      console.error("registration write failed", error);
-      return { ok: false, error: "server" };
-    }
+    console.error("registration write failed", error);
+    return { ok: false, error: "server" };
   }
-
-  return { ok: false, error: "server" };
 }
 
 /**

@@ -9,9 +9,9 @@ import { crew, events, type Accent } from "@/data/quantum";
  * is listed under two teams is on both, with the same picture.
  *
  * Pictures go in src/assets/team, one file per person, named for them in
- * lower case with hyphens: aadi.jpg, linisha-das.webp, anjali-rawlley.png. A
- * person with a file there has it on their card, and the card does not change
- * shape; one without shows the placeholder.
+ * lower case with hyphens, such as aadi.jpeg or linisha-das.webp. A person
+ * with a file there has it on their card, and the card does not change shape;
+ * one without shows the placeholder.
  */
 const pictures = import.meta.glob<string>("/src/assets/team/*.{jpg,jpeg,png,webp,avif}", {
   eager: true,
@@ -19,7 +19,7 @@ const pictures = import.meta.glob<string>("/src/assets/team/*.{jpg,jpeg,png,webp
   import: "default",
 });
 
-/** "Mrs. Anjali Rawlley" is anjali-rawlley, the way her file is named. */
+/** Honorifics are dropped before names are matched to image filenames. */
 export function slugOf(name: string): string {
   return name
     .toLowerCase()
@@ -52,10 +52,10 @@ export type DirectoryTeam = {
 const ACCENTS: readonly Accent[] = ["cyan", "magenta", "violet"];
 
 /**
- * A section of one group is that group under the section's own name: Faculty,
- * with the teacher in charge. Otherwise each group is a team under its own
- * name, an event or an organising team. An event keeps the accent the rest of
- * the site gives it; the others take them in turn.
+ * A section of one group is that group under the section's own name.
+ * Otherwise each group is a team under its own name, an event or an
+ * organising team. An event keeps the accent the rest of the site gives it;
+ * the others take them in turn.
  */
 export const crewDirectory: DirectoryTeam[] = crew.flatMap((section) => {
   const alone = section.groups.length === 1;

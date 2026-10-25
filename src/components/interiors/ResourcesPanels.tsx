@@ -6,7 +6,6 @@ import {
   BROCHURE_URL,
   FEST_DATES,
   about,
-  contact,
   contactPage,
   eventDay,
   events,
@@ -181,16 +180,7 @@ const CHANNEL_ICONS = {
   discord: MessagesSquare,
 } as const;
 
-/**
- * Contact: the people to call about each event, the teacher in charge for
- * anything else, then where the fest posts its updates, then where and when
- * it happens.
- *
- * The event in-charges are the fest's public contacts, one card per event
- * with the numbers the brochure prints for them. The teacher in charge gets a
- * card of the same kind under General inquiries. Her email is not published
- * anywhere on the site.
- */
+/** Event contacts, update channels, and venue details. */
 export function ContactPanel() {
   return (
     <>
@@ -216,28 +206,6 @@ export function ContactPanel() {
               <p className="channel-note">{eventDay(event)}</p>
             </li>
           ))}
-        </ul>
-        <p className="channel-note measure contact-faculty">{contactPage.faculty}</p>
-      </section>
-
-      <section aria-labelledby="general-inquiries">
-        <h2 id="general-inquiries" className="page-subhead">
-          {contactPage.general.heading}
-        </h2>
-        <ul className="channels">
-          <li className="contact-event" data-accent="violet">
-            <div className="channel-head">
-              <Phone className="channel-icon" aria-hidden="true" strokeWidth={1.75} />
-              <h3 className="channel-label">{contact.role}</h3>
-            </div>
-            <ul className="contact-people">
-              <li>
-                <span className="contact-person">{contactPage.general.name}</span>
-                <a href={telHref(contact.phone)}>{contact.phone}</a>
-              </li>
-            </ul>
-            <p className="channel-note">{contactPage.general.note}</p>
-          </li>
         </ul>
       </section>
 

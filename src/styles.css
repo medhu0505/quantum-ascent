@@ -1225,7 +1225,6 @@
   }
 }
 
-
 /* Headlights crossing the junction, well behind the signage. */
 .ambient-pass {
   position: absolute;
@@ -1888,7 +1887,6 @@ button.screen:active {
   transition: opacity var(--dur-2) var(--ease);
 }
 
-
 @media (hover: hover) {
   .dir-card:hover {
     transform: translateY(-4px);
@@ -2066,12 +2064,7 @@ button.screen:active {
   /* Same glass as the pill: these sit in the same band at the top of a room
      and two different materials an inch apart read as a mistake. */
   background:
-    linear-gradient(
-      180deg,
-      oklch(1 0 0 / 0.12) 0%,
-      oklch(1 0 0 / 0.035) 38%,
-      transparent 62%
-    ),
+    linear-gradient(180deg, oklch(1 0 0 / 0.12) 0%, oklch(1 0 0 / 0.035) 38%, transparent 62%),
     oklch(0.15 0.03 265 / 0.58);
   box-shadow:
     inset 0 1px 0 0 oklch(1 0 0 / 0.24),
@@ -2869,10 +2862,6 @@ button.screen:active {
   text-underline-offset: 3px;
 }
 
-.contact-faculty {
-  margin: calc(var(--s-4) - var(--s-7)) 0 var(--s-7);
-}
-
 .venue + .venue {
   margin-top: var(--s-7);
 }
@@ -2948,8 +2937,7 @@ button.screen:active {
      pill and the chips use, dialled down to a hairline so a form field
      still reads as a form field rather than a floating panel. */
   background:
-    linear-gradient(180deg, oklch(1 0 0 / 0.05), transparent 55%),
-    oklch(0.2 0.035 267 / 0.9);
+    linear-gradient(180deg, oklch(1 0 0 / 0.05), transparent 55%), oklch(0.2 0.035 267 / 0.9);
   box-shadow: inset 0 0 0 1px var(--input);
   transition:
     box-shadow var(--dur-ui) var(--ease-out),
@@ -3200,8 +3188,7 @@ button.screen:active {
   color: var(--muted-foreground);
 }
 
-/* Name, class and Discord ID on one line once there is room: the name gets
-   the most of it, and the class what "Choose a class" and its chevron need. */
+/* Participant details share a row on wide screens and wrap cleanly on narrow ones. */
 .entry-grid {
   display: grid;
   gap: var(--s-3);
@@ -3209,13 +3196,18 @@ button.screen:active {
 
 @media (min-width: 36rem) {
   .entry-grid {
-    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1.1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
   }
 }
 
-/* A select's usual clearance is sized for a full-width field. A third of a
-   row needs only enough to keep the words off the chevron. */
+@media (min-width: 64rem) {
+  .entry-grid {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.8fr) minmax(0, 1.1fr) minmax(0, 1.1fr);
+  }
+}
+
+/* A select's usual clearance is sized for a full-width field. */
 .entry-grid select {
   padding-inline-end: 2.25rem;
 }
@@ -3387,7 +3379,7 @@ button.screen:active {
   color: var(--foreground);
 }
 
-/* ---- The crossroads' own footer: a floating dock ------------------- *
+/* ---- The crossroads' own footer: a floating pill ------------------- *
  * Same glass as .chip (dark, blurred, a hairline inset border) so it reads
  * as the same floating-UI system as the exit/register chips fixed to the
  * top of the screen, just parked at the bottom instead.
@@ -3457,12 +3449,7 @@ button.screen:active {
      rectangle with rounded ends — the blur was doing all the work and
      nothing was reflecting. */
   background:
-    linear-gradient(
-      180deg,
-      oklch(1 0 0 / 0.12) 0%,
-      oklch(1 0 0 / 0.035) 38%,
-      transparent 62%
-    ),
+    linear-gradient(180deg, oklch(1 0 0 / 0.12) 0%, oklch(1 0 0 / 0.035) 38%, transparent 62%),
     oklch(0.15 0.03 265 / 0.52);
   box-shadow:
     inset 0 1px 0 0 oklch(1 0 0 / 0.24),
@@ -3600,34 +3587,13 @@ button.screen:active {
   width: 100%;
 }
 
-/* The pill's own narrow-width tuning used to live here: tighter gaps so the
-   six labels fit, and a trailing fade below 372px where they cannot. Both
-   are gone with it — the pill is display:none below 48rem now, and the menu
-   button carries a phone's navigation, so nothing here was ever reached. The
-   pill only renders at widths that had room for it all along. */
-
-@media (prefers-reduced-motion: reduce) {
-  .crossroads-footer-nav a,
-  .crossroads-footer-nav a::before,
-  .crossroads-footer-nav a::after {
-    transition: none;
-  }
-}
-
-/* The crossroads dock keeps the existing arrival gate and glass treatment,
-   but trades the text row for magnifying icon targets. */
 .crossroads-footer-nav.floating-dock {
   width: max-content;
   max-width: calc(100dvw - 2rem);
   padding: 0.55rem;
   border-radius: 1.4rem;
   background:
-    linear-gradient(
-      180deg,
-      oklch(1 0 0 / 0.14) 0%,
-      oklch(1 0 0 / 0.04) 44%,
-      transparent 72%
-    ),
+    linear-gradient(180deg, oklch(1 0 0 / 0.14) 0%, oklch(1 0 0 / 0.04) 44%, transparent 72%),
     oklch(0.15 0.03 265 / 0.68);
   box-shadow:
     inset 0 1px 0 0 oklch(1 0 0 / 0.26),
@@ -3739,9 +3705,23 @@ button.screen:active {
   opacity: 1;
 }
 
+@media (max-width: 48rem) {
+  .crossroads-footer[data-variant="crossroads"] {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .crossroads-footer-nav .floating-dock-link,
   .crossroads-footer-nav .floating-dock-tooltip {
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crossroads-footer-nav a,
+  .crossroads-footer-nav a::before,
+  .crossroads-footer-nav a::after {
     transition: none;
   }
 }
@@ -4061,7 +4041,6 @@ button.screen:active {
 .descent[data-film="failed"] .descent-film {
   display: none;
 }
-
 
 /* ------------------------------------------------------------------ *
  * Reduced motion.
@@ -4937,7 +4916,8 @@ button.screen:active {
 .stack-nav-item[aria-current] {
   color: var(--foreground);
   background: color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 22%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 70%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in oklab, var(--accent-hue, var(--neon-cyan)) 70%, transparent);
 }
 
 .stack-nav-item:focus-visible {
@@ -5774,7 +5754,8 @@ html[data-layout="phone"] body {
 }
 
 .m-event-card {
-  --m-art: radial-gradient(
+  --m-art:
+    radial-gradient(
       120% 140% at 22% 12%,
       color-mix(in oklab, oklch(0.84 0.13 215) 52%, transparent),
       transparent 68%
@@ -5801,7 +5782,8 @@ html[data-layout="phone"] body {
 }
 
 .m-event-card[data-accent="magenta"] {
-  --m-art: radial-gradient(
+  --m-art:
+    radial-gradient(
       120% 140% at 22% 12%,
       color-mix(in oklab, oklch(0.75 0.2 325) 52%, transparent),
       transparent 68%
@@ -5810,7 +5792,8 @@ html[data-layout="phone"] body {
 }
 
 .m-event-card[data-accent="violet"] {
-  --m-art: radial-gradient(
+  --m-art:
+    radial-gradient(
       120% 140% at 22% 12%,
       color-mix(in oklab, oklch(0.7 0.17 280) 52%, transparent),
       transparent 68%
@@ -6312,17 +6295,6 @@ html[data-layout="phone"] body {
   color: oklch(0.99 0 0 / 0.66);
 }
 
-.m-contact-faculty {
-  margin: 12px 4px 0;
-  line-height: 1.6;
-}
-
-/* General inquiries: the same card as the event contacts, set off from the
-   line above it. */
-.m-contact-general {
-  margin-top: 18px;
-}
-
 /* About's six events, each opening its own panel on the Events screen. The
    bar down the edge is the event's colour, as it is everywhere else. */
 .m-res-events {
@@ -6506,28 +6478,6 @@ html[data-layout="phone"] body {
   margin: 0;
   padding: 0;
   border: 0;
-}
-
-/* A set of related fields under a small heading, set off by a rule: the
-   teacher in-charge, under the school's own. */
-.m-group {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  min-width: 0;
-  margin: 6px 0 0;
-  padding: 20px 0 0;
-  border: 0;
-  border-top: 1px solid oklch(1 0 0 / 0.1);
-}
-
-.m-group-title {
-  margin-bottom: 18px;
-  padding: 0;
-  font: 600 12px/1.2 var(--font-display);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--m-muted);
 }
 
 .m-label {

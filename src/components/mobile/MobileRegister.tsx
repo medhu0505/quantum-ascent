@@ -26,9 +26,8 @@ import { REGISTRATION_CLOSES, events, listOf } from "@/data/quantum";
 import { isRegistrationOpen } from "@/lib/registrations";
 
 /**
- * Registering on a phone, in four steps: the school and its teacher in-charge,
- * the events, a team for each of those events, and a last look before it is
- * sent.
+ * Registering on a phone, in four steps: the school's details, the events, a
+ * team for each of those events, and a last look before it is sent.
  *
  * One long form is a lot of scrolling on a phone, and an error at the top is
  * out of sight by the time the button at the bottom is pressed. Split into
@@ -46,7 +45,7 @@ const STEPS = [
   {
     label: "School",
     title: "Your school",
-    lede: `Enter your school's details and its teacher in-charge. Registrations close on ${REGISTRATION_CLOSES.label}.`,
+    lede: `Enter your school's details. Registrations close on ${REGISTRATION_CLOSES.label}.`,
   },
   {
     label: "Events",
@@ -56,7 +55,7 @@ const STEPS = [
   {
     label: "Teams",
     title: "The teams",
-    lede: "List each event's team. Add each participant's Discord ID: briefings and results go out on the fest Discord server.",
+    lede: "List each event's team. Enter a phone number for every participant; Discord IDs are optional.",
   },
   { label: "Review", title: "Check it", lede: "" },
 ] as const;
@@ -393,52 +392,16 @@ export function MobileRegister({
             />
             <Field
               id="phone"
-              label="Phone"
+              label="School contact phone"
               type="tel"
               inputMode="tel"
               required
-              hint="10 digits, reachable on both fest days. No +91 needed."
+              hint="10 digits, reachable during the fest."
               value={contact.phone}
               error={errors.phone}
               autoComplete="tel"
               onChange={(v) => setField("phone", v)}
             />
-            <fieldset className="m-group">
-              <legend className="m-group-title">Teacher in-charge</legend>
-              <Field
-                id="teacher"
-                label="Teacher's name"
-                required
-                hint="The teacher who will bring the teams on the day."
-                value={contact.teacher}
-                error={errors.teacher}
-                autoComplete="off"
-                onChange={(v) => setField("teacher", v)}
-              />
-              <Field
-                id="teacherPhone"
-                label="Teacher's phone"
-                type="tel"
-                inputMode="tel"
-                required
-                hint="10 digits. No +91 needed."
-                value={contact.teacherPhone}
-                error={errors.teacherPhone}
-                autoComplete="off"
-                onChange={(v) => setField("teacherPhone", v)}
-              />
-              <Field
-                id="teacherEmail"
-                label="Teacher's email"
-                type="email"
-                inputMode="email"
-                required
-                value={contact.teacherEmail}
-                error={errors.teacherEmail}
-                autoComplete="off"
-                onChange={(v) => setField("teacherEmail", v)}
-              />
-            </fieldset>
           </div>
         ) : null}
 
@@ -546,6 +509,18 @@ export function MobileRegister({
                             <FieldError id={`m-error-${base}-grade`} message={err.grade} />
                           </fieldset>
                           <Field
+                            id={`${base}-phone`}
+                            label="Phone number"
+                            type="tel"
+                            inputMode="tel"
+                            required={needed}
+                            hint="10 digits, no +91 needed."
+                            value={p.phone}
+                            error={err.phone}
+                            autoComplete="off"
+                            onChange={(v) => setPlayer(event.id, i, "phone", v)}
+                          />
+                          <Field
                             id={`${base}-discord`}
                             label="Discord ID"
                             value={p.discord}
@@ -570,10 +545,7 @@ export function MobileRegister({
                 [
                   ["School", contact.school || "—", 0],
                   ["Email", contact.email || "—", 0],
-                  ["Phone", contact.phone || "—", 0],
-                  ["Teacher in-charge", contact.teacher || "—", 0],
-                  ["Teacher's phone", contact.teacherPhone || "—", 0],
-                  ["Teacher's email", contact.teacherEmail || "—", 0],
+                  ["School contact phone", contact.phone || "—", 0],
                   ["Events", listOf(chosen.map((e) => e.name)) || "—", 1],
                   ...chosen.map(
                     (e) =>

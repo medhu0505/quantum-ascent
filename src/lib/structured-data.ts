@@ -43,8 +43,7 @@ export function festJsonLd() {
     },
   };
 
-  // No email: the fest's contacts are its event coordinators, listed on the
-  // Contact page, and the teacher in charge's own address is not published.
+  // The fest's public contacts are its event coordinators, listed on Contact.
   const organizer = {
     "@type": "EducationalOrganization",
     name: school.name,

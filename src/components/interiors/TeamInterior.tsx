@@ -7,10 +7,10 @@ import { Carousel360 } from "@/components/ui/image-fan-carousel";
 /**
  * Meet the Team: the ring of cards, and under it the crew directory.
  *
- * The brochure names the people running Quantum by what they run: the
- * teacher in charge, the student coordinators of each event, and the four
- * organising teams. The ring shows each of those as a card; the directory
- * names every person in them, a portrait card each, under their team.
+ * The brochure names the people running Quantum by what they run: the student
+ * coordinators of each event and the organising teams. The ring shows each
+ * of those as a card; the directory names every person in them, a portrait
+ * card each, under their team.
  */
 export function TeamInterior() {
   const scene = getScene("team")!;

@@ -35,6 +35,10 @@ const pictureOf = new Map(
   ]),
 );
 
+const PHOTO_ALIASES: Record<string, string> = {
+  rudransh: "rudransh-singh",
+};
+
 export type DirectoryPerson = {
   name: string;
   photo?: string;
@@ -71,7 +75,8 @@ export const crewDirectory: DirectoryTeam[] = crew.flatMap((section) => {
       ...(tag ? { tag } : {}),
       accent: event?.accent ?? ACCENTS[index % ACCENTS.length] ?? "cyan",
       people: group.names.map((name) => {
-        const photo = pictureOf.get(slugOf(name));
+        const slug = slugOf(name);
+        const photo = pictureOf.get(slug) ?? pictureOf.get(PHOTO_ALIASES[slug] ?? "");
         return { name, ...(photo ? { photo } : {}) };
       }),
     };

@@ -93,8 +93,9 @@ export function StickyCard002({
           },
         });
         for (let i = 0; i < total - 1; i++) {
-          tl.to(els[i]!, { scale: 0.7, rotation: 5, duration: 1, ease: "none" }, i);
-          tl.to(els[i + 1]!, { yPercent: 0, duration: 1, ease: "none" }, i);
+          tl.to(els[i]!, { scale: 0.88, rotation: 2, duration: 0.22, ease: "none" }, i);
+          tl.to(els[i + 1]!, { yPercent: 0, duration: 0.22, ease: "none" }, i);
+          tl.to({}, { duration: 0.78 }, i + 0.22);
         }
 
         const st = tl.scrollTrigger ?? null;

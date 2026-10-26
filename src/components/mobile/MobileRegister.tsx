@@ -431,9 +431,7 @@ export function MobileRegister({
               </label>
             ))}
             <p id="m-hint-events" className="m-pick-hint">
-              <span>
-                A student can compete in only one event, so each event needs different students.
-              </span>
+              <span>Each student may enter one online event and one offline event.</span>
               {picked.length ? (
                 <span className="m-pick-count" aria-live="polite">
                   {picked.length} selected

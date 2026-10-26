@@ -9,7 +9,7 @@ export const Route = createFileRoute("/team")({
   head: () =>
     seo({
       title: "Meet the Team",
-      description: `${getScene("team")!.room} Quantum V2.0 is student-run end to end — events, tech, design, media and logistics.`,
+      description: `${getScene("team")!.room} Meet the student event coordinators and organising teams behind Quantum V2.0.`,
       path: "/team",
     }),
   component: TeamRoute,

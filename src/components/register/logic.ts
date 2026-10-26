@@ -10,8 +10,9 @@ import { submitEach, type BackendReply, type RegistrationPayload } from "@/lib/r
  *
  * A school registers on one form: where to send confirmations, the events it
  * is entering, and under each event, that event's team. Every participant
- * needs a name, class, phone number and Discord ID. A student can compete in
- * only one event, so duplicates are caught here rather than at the desk.
+ * needs a name, class and phone number; a Discord ID is optional. A student
+ * may enter one online and one offline event, but not multiple events in the
+ * same mode.
  */
 
 export type Contact = {
@@ -120,11 +121,11 @@ const studentKey = (p: Player) => `${p.name.trim().toLowerCase().replace(/\s+/g,
  * Every picked event's team, checked against its own size and against the
  * others, in the order the events are listed. A needed place has to be filled
  * in; an optional one is skipped while it is empty and checked like the rest
- * once anything is typed in it. The same student under a second event is
- * flagged where they turn up second.
+ * once anything is typed in it. A student may appear in one event of each
+ * mode; a second event in the same mode is flagged where they turn up.
  */
 export function checkTeams(picked: string[], teams: Teams): Record<string, PlayerErrors[]> {
-  const seen = new Map<string, string>();
+  const seen = new Map<string, Partial<Record<QuantumEvent["mode"], string>>>();
   const out: Record<string, PlayerErrors[]> = {};
   for (const event of events) {
     if (!picked.includes(event.id)) continue;
@@ -140,11 +141,12 @@ export function checkTeams(picked: string[], teams: Teams): Record<string, Playe
       if (discord && !DISCORD.test(discord))
         e.discord = "A Discord ID has no spaces in it. Check this one.";
       if (name && p.grade) {
-        const where = seen.get(studentKey(p));
+        const modes = seen.get(studentKey(p));
+        const where = modes?.[event.mode];
         if (where === event.name) e.name = "This student is already on this team.";
         else if (where)
-          e.name = `Already entered for ${where}. A student can compete in only one event.`;
-        else seen.set(studentKey(p), event.name);
+          e.name = `Already entered for ${where}. A student can enter only one ${event.mode} event.`;
+        else seen.set(studentKey(p), { ...modes, [event.mode]: event.name });
       }
       return e;
     });

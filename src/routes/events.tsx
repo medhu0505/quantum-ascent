@@ -20,7 +20,7 @@ export const Route = createFileRoute("/events")({
   head: () =>
     seo({
       title: "Events",
-      description: `Six events at Quantum V2.0: ${events.map((e) => e.name).join(", ")}. ${getScene("events")!.room} Team sizes, formats and how each one is scored.`,
+      description: `Six events at Quantum V2.0: ${events.map((e) => e.name).join(", ")}. ${getScene("events")!.room} Team sizes, dates, modes and event rules.`,
       path: "/events",
     }),
   component: EventsRoute,

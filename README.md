@@ -120,8 +120,8 @@ Both forms register a school: its name, a confirmation email, a school contact
 phone, the events it is entering, and each event's team. Every participant
 provides a name, class and phone number; a Discord ID is optional. The desktop
 form does it on one page, each event a section of its own; the phone form does
-it in four steps. A student can compete in only one event, so the forms refuse
-the same name and class under two events.
+it in four steps. The brochure allows each student one online and one offline
+event, so the forms refuse a second event in the same mode.
 
 Each event goes to the backend as an entry of its own. The existing
 registration shape now includes a separate `leadPhone` for the lead

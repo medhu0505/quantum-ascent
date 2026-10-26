@@ -134,11 +134,11 @@ export function AboutPanel() {
         </div>
       </section>
 
-      <section className="about-events" aria-labelledby="about-scoring">
-        <h2 id="about-scoring" className="page-subhead">
-          {about.scoring.heading}
+      <section className="about-events" aria-labelledby="about-participation">
+        <h2 id="about-participation" className="page-subhead">
+          {about.participation.heading}
         </h2>
-        <p className="pull-quote about-scoring-line">{about.scoring.line}</p>
+        <p className="pull-quote about-participation-line">{about.participation.line}</p>
         <ul className="about-list">
           {events.map((event) => (
             <li key={event.id} data-accent={event.accent}>

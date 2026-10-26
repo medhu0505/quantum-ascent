@@ -122,17 +122,15 @@ export function MobileEvents({ initial }: { initial?: string | undefined }) {
       <section className="m-pad m-after">
         <h2 className="m-h2 m-h2-lg">Picked your events?</h2>
         <p className="m-muted m-body">
-          Each student can compete in only one event, so a school entering several events sends a
-          different team to each and lists every team under its event on the registration form.
-          Registrations close on {REGISTRATION_CLOSES.label}.
+          Each student may enter one online event and one offline event. A school can enter one team
+          per event. Registrations close on {REGISTRATION_CLOSES.label}.
         </p>
         <ScreenLink to="/faq" className="m-btn m-btn-ghost">
           Read the FAQ first
         </ScreenLink>
         <p className="m-muted m-small">
-          Six events run across two days: the online events on {FEST_DAYS.online.label} and the rest
-          at the school on {FEST_DAYS.offline.label}. Every one is scored the same way and carries
-          the same weight, so cumulative points across all six decide the overall school champion.
+          The online events take place on {FEST_DAYS.online.label}; the in-person events are at the
+          school on {FEST_DAYS.offline.label}. Students may enter one event in each mode.
         </p>
       </section>
     </MobileShell>

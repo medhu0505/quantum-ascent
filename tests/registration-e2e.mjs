@@ -101,13 +101,14 @@ console.log(
 
 const EMAIL = `coordinator.${Date.now()}@example.com`;
 
-/** A school entering two events, each with its own team and Discord IDs. */
+/** A school entering two offline events and one online event. */
 async function fillForm() {
   await page.fill("#field-school", "Air Force Bal Bharati School");
   await page.fill("#field-email", EMAIL);
   await page.fill("#field-phone", "9810099999");
   await page.check("#field-event-quiz");
   await page.check("#field-event-pitch");
+  await page.check("#field-event-online-gaming");
   await page.fill("#field-team-quiz-0-name", "Aarav Sharma");
   await page.selectOption("#field-team-quiz-0-grade", "11");
   await page.fill("#field-team-quiz-0-phone", "9810012345");
@@ -122,6 +123,9 @@ async function fillForm() {
   await page.fill("#field-team-pitch-1-name", "Sara Ali");
   await page.selectOption("#field-team-pitch-1-grade", "12");
   await page.fill("#field-team-pitch-1-phone", "9810012348");
+  await page.fill("#field-team-online-gaming-0-name", "Aarav Sharma");
+  await page.selectOption("#field-team-online-gaming-0-grade", "11");
+  await page.fill("#field-team-online-gaming-0-phone", "9810012345");
 }
 
 /** The receipt's ids, one per team, in the order the events are listed. */
@@ -136,7 +140,9 @@ const receipt = await page.locator(".notice-ok").innerText();
 const ids = await receiptIds();
 check(
   "the receipt carries an id for each team",
-  ids.length === 2 && ids.every((i) => /^QV2-[0-9A-F]{8}$/.test(i)) && ids[0] !== ids[1],
+  ids.length === 3 &&
+    ids.every((i) => /^QV2-[0-9A-F]{8}$/.test(i)) &&
+    new Set(ids).size === ids.length,
   ids.join(" "),
 );
 check("the receipt reports new registrations", receipt.includes("Registrations received"));
@@ -175,7 +181,7 @@ check(
 const docs = (await fetch(REST, ADMIN).then((r) => r.json())).documents ?? [];
 check(
   "the emulator holds exactly one entry per team",
-  docs.length === 2,
+  docs.length === 3,
   `${docs.length} document(s)`,
 );
 const byEvent = Object.fromEntries(
@@ -183,15 +189,18 @@ const byEvent = Object.fromEntries(
 );
 const quiz = byEvent["quiz"]?.fields;
 const pitch = byEvent["pitch"]?.fields;
+const gaming = byEvent["online-gaming"]?.fields;
 check(
   "each entry names exactly one event",
-  Boolean(quiz && pitch),
+  Boolean(quiz && pitch && gaming),
   Object.keys(byEvent).join(" | "),
 );
-if (quiz && pitch) {
+if (quiz && pitch && gaming) {
   check(
     "the stored ids match the receipt",
-    quiz.id.stringValue === ids[0] && pitch.id.stringValue === ids[1],
+    quiz.id.stringValue === ids[0] &&
+      gaming.id.stringValue === ids[1] &&
+      pitch.id.stringValue === ids[2],
   );
   check(
     "the document ids are sha-256 keys",
@@ -215,6 +224,11 @@ if (quiz && pitch) {
     "a team with no Discord IDs is stored with them empty",
     pitch.student.stringValue === "Kabir Mehta" && pitch.discord.stringValue === "",
   );
+  check(
+    "a student may enter one online and one offline event",
+    quiz.student.stringValue === gaming.student.stringValue &&
+      quiz.grade.stringValue === gaming.grade.stringValue,
+  );
 }
 
 console.log("\n5. A participant without a phone number cannot be submitted\n");
@@ -231,10 +245,39 @@ const summary = await page.locator(".form-summary").innerText();
 check("the form requires the participant's phone number", /phone number/i.test(summary));
 check(
   "and nothing reached the database",
-  ((await fetch(REST, ADMIN).then((r) => r.json())).documents ?? []).length === 2,
+  ((await fetch(REST, ADMIN).then((r) => r.json())).documents ?? []).length === 3,
 );
 
-console.log("\n6. The honeypot must never reach the database\n");
+console.log("\n6. A student cannot enter two events in the same mode\n");
+
+await page.goto(`${BASE}/register/form`, { waitUntil: "networkidle" });
+await page.fill("#field-school", "Nowhere");
+await page.fill("#field-email", `same-mode.${Date.now()}@example.com`);
+await page.fill("#field-phone", "9810099999");
+await page.check("#field-event-quiz");
+await page.check("#field-event-pitch");
+for (const [event, participant] of [
+  ["quiz", 0],
+  ["quiz", 1],
+  ["pitch", 0],
+  ["pitch", 1],
+]) {
+  await page.fill(
+    `#field-team-${event}-${participant}-name`,
+    participant === 0 ? "Kiran" : `${event}-${participant}`,
+  );
+  await page.selectOption(`#field-team-${event}-${participant}-grade`, "9");
+  await page.fill(`#field-team-${event}-${participant}-phone`, `981001234${participant}`);
+}
+await page.click("button[type=submit]");
+const sameModeSummary = await page.locator(".form-summary").innerText();
+check("the form rejects a second offline event", /one offline event/i.test(sameModeSummary));
+check(
+  "and nothing reached the database",
+  ((await fetch(REST, ADMIN).then((r) => r.json())).documents ?? []).length === 3,
+);
+
+console.log("\n7. The honeypot must never reach the database\n");
 
 await page.goto(`${BASE}/register/form`, { waitUntil: "networkidle" });
 await page.fill("#field-school", "Nowhere");
@@ -255,7 +298,7 @@ await page.waitForSelector(".notice-ok", { timeout: 25_000 });
 check("the bot is answered", (await receiptIds()).includes("QV2-RECEIVED"));
 
 const after = await fetch(REST, ADMIN).then((r) => r.json());
-check("nothing was written", (after.documents ?? []).length === 2);
+check("nothing was written", (after.documents ?? []).length === 3);
 
 await browser.close();
 

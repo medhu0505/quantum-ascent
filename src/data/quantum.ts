@@ -1,15 +1,10 @@
 /**
- * Single source of truth for every piece of Quantum V2.0 content.
- *
- * Anything whose value is not yet confirmed by the organising team is marked
- * with a `TODO` constant below and rendered through `isTodo()` so it is visible
- * in the UI instead of silently shipping as fake data. Everything else —
- * event copy, FAQ answers, About editorial — is final.
+ * Single source of truth for public Quantum V2.0 content, aligned to the
+ * published brochure. Event, registration and contact views derive from here.
  */
 
 /* ------------------------------------------------------------------ *
- * Settings, dates and the one value still to come. BROCHURE_URL is the
- * only placeholder left in this file.
+ * Settings, dates and public links.
  * ------------------------------------------------------------------ */
 
 /** Marks a value the organisers still have to supply. */
@@ -23,12 +18,10 @@ export function isTodo(value: string): boolean {
  * The Google Apps Script web app bound to the "Quantum V2.0 Registrations"
  * sheet (source in backend/registrations.gs).
  *
- * No longer the only backend. When the Firebase environment variables are
- * set, Firestore takes each entry and this endpoint receives a copy so the
- * organisers' sheet keeps filling; when they are not, this is still the whole
- * backend on its own. Either way nothing here decides that —
- * src/lib/registrations.ts does, and `isRegistrationOpen()` is what the form
- * asks. Leave it as the TODO and the site says entries are not open.
+ * When Firebase is configured, Firestore takes each entry and this endpoint
+ * receives a copy so the organisers' sheet keeps filling; otherwise the
+ * endpoint is the registration backend. src/lib/registrations.ts decides
+ * which configured backend is used.
  */
 export const REGISTRATION_ENDPOINT =
   "https://script.google.com/macros/s/AKfycbwa6zpLvsYhGfnQOZTFf64d2wl6-oxAh8dMaLrprT8beOEHwBj1ynQ3cjKVwi8ZVVar/exec";
@@ -53,7 +46,7 @@ export const FEST_DATES = `${FEST_DAYS.online.label} online, ${FEST_DAYS.offline
 export const FEST_SPAN = `${FEST_DAYS.online.label.split(" ")[0]} and ${FEST_DAYS.offline.label}`;
 
 /** Last day to register for any event, from the brochure. */
-export const REGISTRATION_CLOSES = { iso: "2026-10-05", label: "5 October 2026" } as const;
+export const REGISTRATION_CLOSES = { iso: "2026-11-12", label: "12 November 2026" } as const;
 
 export const school = {
   name: "Air Force Bal Bharati School",
@@ -198,31 +191,33 @@ export const events: QuantumEvent[] = [
     ...sized(4),
     mode: "online",
     description:
-      "An online short-film event. Each team is given a theme and a constraint in advance and makes an original film of up to five minutes around them. All footage must be shot by the team, and stock footage is not allowed.",
+      "An online short-film event. Each team receives a theme and constraint in advance and makes an original film of up to five minutes. All footage must be shot by the team; stock footage and plagiarism are not allowed.",
     format: [
       "Team numbers, themes and constraints are shared before the event",
       "Give the film a title; anything over five minutes can be marked down or disqualified",
       "Submit an MP4 of at least 1080p, up to 5 GB, as a Google Drive link",
+      "Keep content appropriate: no graphic violence or explicit depictions of self-harm or substance abuse",
       "Judged on creativity, technical skill, relevance to the theme and narrative clarity",
     ],
     accent: "magenta",
     coordinators: [
-      { name: "Rudransh Singh", phone: "+91 93118 98350" },
-      { name: "Riddhiman Srivastava", phone: "+91 88004 30107" },
+      { name: "Rudransh", phone: "+91 93118 98350" },
+      { name: "Ishita", phone: "+91 95610 26991" },
     ],
   },
   {
     id: "ad-shoot",
     name: "Mirage.exe",
-    tagline: "Recreate a game's home screen in two hours.",
+    tagline: "Recreate a game's iconic home screen in two hours.",
     ...sized(2),
     mode: "offline",
     description:
-      "Choose a game and recreate its iconic home screen on film, shooting and editing everything in a two-hour window on the day. All footage is shot during the competition on your own devices, and AI-generated content is not allowed.",
+      "Choose a game and recreate its iconic home screen on film, shooting and editing everything in a two-hour window on the day. Use your own devices and chargers; all footage must be shot during the competition, and AI-generated content is prohibited.",
     format: [
       "Two hours to shoot and edit, using only footage filmed during the competition",
       "Shoot and edit on your own devices, phones included, and bring chargers: the venue has sockets but no internet",
-      "Submit the recreation, a short write-up and the software you used by Google Drive link when the two hours end",
+      "Submit the edited recreation and a short write-up by Google Drive link when the two hours end",
+      "Mention the editing software used; AI-generated content is prohibited",
       "Judged on creativity, visual accuracy, technical skill, conceptual understanding and time management",
     ],
     accent: "violet",
@@ -234,36 +229,38 @@ export const events: QuantumEvent[] = [
   {
     id: "surprise",
     name: "Surprise",
-    tagline: "Classified until the doors open.",
-    ...sized(2, 3),
+    tagline: "An engineering challenge, revealed on the day.",
+    ...sized(2),
     mode: "offline",
     description:
-      "Nothing about this event is revealed before the day. Teams get the brief on the spot, with time to prepare there, and every material they need is provided. The round runs for 60 to 90 minutes.",
+      "Teams of two take on an engineering challenge revealed on the day. Participants prepare on the spot for 60 to 90 minutes; materials are provided, and devices are allowed, but the host school does not provide internet.",
     format: [
-      "The brief is revealed on the day, with time to prepare on the spot",
-      "All materials are provided, and technology is not allowed unless the organisers say so",
-      "Teams must finish inside the time limit of 60 to 90 minutes",
+      "Each team receives one engineering challenge on the day",
+      "Prepare on the spot; all materials are provided",
+      "Devices are allowed, but internet is not provided by the host school",
+      "Finish within the 60-to-90-minute time limit",
       "Judged on creativity, innovation, execution, teamwork and overall performance",
     ],
     accent: "cyan",
     coordinators: [
       { name: "Shayan Khan", phone: "+91 84475 85283" },
       { name: "Hamza", phone: "+91 93557 55528" },
-      { name: "Ishita", phone: "+91 95610 26991" },
+      { name: "Parth", phone: "+91 85069 73675" },
     ],
   },
   {
     id: "online-gaming",
     name: "Ryoken",
-    tagline: "A solo bracket that opens on Brawlhalla.",
+    tagline: "Three online rounds: Brawlhalla, Valorant and Fall Guys.",
     ...sized(1),
     mode: "online",
     description:
-      "A solo gaming tournament. Round one is Brawlhalla, played 1v1 against an assigned opponent, and winners move on through the bracket. Each player is responsible for their own game, controls and internet connection.",
+      "A solo online gaming tournament across three rounds: Brawlhalla, Valorant and Fall Guys. Players face assigned opponents in the 1v1 rounds and advance according to the tournament format. Each participant is responsible for their game, controls and internet connection.",
     format: [
       "Round 1: Brawlhalla, 1v1 against an assigned opponent",
-      "Winners advance through the tournament bracket",
-      "Check your game, controls and connection before your match",
+      "Round 2: Valorant, 1v1 against an assigned opponent",
+      "Round 3: Fall Guys, played in the assigned rounds",
+      "Check your game, controls and internet connection before your match",
       "Report a technical problem to the organisers rather than leaving the match",
     ],
     accent: "magenta",
@@ -275,20 +272,22 @@ export const events: QuantumEvent[] = [
   {
     id: "pitch",
     name: "Innopreneur",
-    tagline: "A two-page brief, then the pitch.",
+    tagline: "Innovation pitch, finale and a two-page brief.",
     ...sized(2),
     mode: "offline",
     description:
-      "An innovation and entrepreneurship event. Each team sends in a two-page PDF brief on its idea, covering the problem, the proposed solution, what is new about it and the impact it could have, then presents it to the judges, who use the brief as their reference.",
+      "An inter-school innovation challenge focused on real-world problems and original, impactful solutions. Teams present a compulsory PPT in an Innovation Pitch, then selected teams advance to the Grand Innovation Finale. A two-page PDF brief is also submitted after registration closes and used by the judges as a reference.",
     format: [
-      "Submit a two-page PDF brief: the problem, your solution, the innovation and the expected impact",
-      "The deadline and submission guidelines are sent once registration closes",
-      "Present the idea to the judges, who read the brief as their reference",
+      "Innovation Pitch: 3-minute PPT presentation and 2-minute Q&A",
+      "Selected teams advance to the Grand Innovation Finale: 5-minute PPT and 3-minute Q&A",
+      "Submit a two-page PDF brief covering the problem, proposed solution, innovation and expected impact; deadline and instructions follow registration",
+      "Prototypes and models are optional; the focus is innovation, problem-solving and impact",
     ],
     accent: "violet",
     coordinators: [
       { name: "Aditya Singh", phone: "+91 89293 22752" },
       { name: "Mehal Khanna", phone: "+91 88262 46555" },
+      { name: "Nitya", phone: "+91 88009 13357" },
     ],
   },
 ];
@@ -372,7 +371,7 @@ export const scenes: Scene[] = [
   {
     id: "events",
     label: "Events",
-    blurb: "Six events. One championship.",
+    blurb: "Six events across two days.",
     to: "/events",
     accent: "cyan",
     sign: {
@@ -566,11 +565,11 @@ export const crew: CrewSection[] = [
         role: "PR Team",
         names: ["Aadi", "Arnav", "Tejasvi", "Tejbir", "Vidushi", "Avni", "Utkarsh"],
       },
-      { role: "Web Design Team", names: ["Medansh", "Mudit", "Naman"] },
+      { role: "Web Design Team", names: ["Medansh", "Mudit"] },
       { role: "Creative Team", names: ["Sudeeti", "Anushri", "Shagun", "Vidisha"] },
       {
         role: "Social Media Team",
-        names: ["Vihaan", "Amrita", "Ananya", "Majesta", "Anamta", "Mannat"],
+        names: ["Anamta", "Ananya", "Mannat", "Amrita", "Vihaan"],
       },
     ],
   },
@@ -578,7 +577,7 @@ export const crew: CrewSection[] = [
 
 /** The last line on Meet the Team, on both layouts. */
 export const teamClosing =
-  "Quantum is student-run end to end. Students write the quiz, judge the prelims, cut the highlight reel, run the brackets and staff the help desk.";
+  "Student coordinators and organising teams bring six events to life across online and in-person competitions.";
 
 /** "A", "A and B", "A, B and C". */
 export function listOf(items: readonly string[]): string {
@@ -610,31 +609,23 @@ export const faqs = [
   },
   {
     q: "Can individual students register?",
-    a: "No. Entries must go through schools. Every team's points count toward its school's overall championship. A school representative submits its entries, one team per event.",
+    a: "Entries are submitted by schools. Each school may enter one team per event through its school representative.",
   },
   {
     q: "Can a student take part in more than one event?",
-    a: "No. Each student can compete in only one event, so a school entering several events needs a team comprising of different students for each event.",
-  },
-  {
-    q: "Is there any registration fee?",
-    a: "No. Entry to Quantum V2.0 is completely free for all invited schools and confirmed delegations.",
+    a: "Yes. The brochure allows each student to participate in one online event and one offline event. A student cannot enter more than one event in the same mode.",
   },
   {
     q: "Important information to know before Quantum",
-    a: `Schools must reach ${school.name} by 7:30 a.m. on ${FEST_DAYS.offline.label}, and the registration desk will be open from 7:30 to 8:00 a.m. Participants should come in school uniform. Every school is required to stay for both the opening and closing ceremonies. Arriving late can cut into preparation or performance time and can lead to disqualification.`,
+    a: `Schools must reach ${school.name} by 7:30 a.m. on ${FEST_DAYS.offline.label}; registration is from 7:30 to 8:00 a.m. Participants must wear school uniform, and schools must stay for both the opening and closing ceremonies. Late arrival may reduce preparation or performance time or result in disqualification. The host school does not provide internet access.`,
   },
   {
     q: "Where will updates and announcements be shared?",
-    a: `On the Quantum WhatsApp community, the Discord server and Instagram at ${contact.instagram}, as well as on this website. Join the WhatsApp community and the Discord server for updates about your events; both links are on the Contact page. All links have been provided in the brochure.`,
+    a: `On the Quantum WhatsApp community, the Discord server and Instagram at ${contact.instagram}, as well as on this website. Join the WhatsApp community and the Discord server for updates about your events; both links are on the Contact page.`,
   },
   {
     q: "What equipment or software do participants need to prepare?",
     a: `The host school does not provide internet access. ${getEvent("ad-shoot")!.name} is to be shot and edited on your own devices, so bring them with their chargers, and ${getEvent("online-gaming")!.name} players need their game, controls and connection working before their match. Whether phones, AI tools or other technology are allowed is set by each event's own rules.`,
-  },
-  {
-    q: "How are ties and disputes resolved?",
-    a: "All entries and submissions undergo blinded evaluation under structured judging rubrics. In the event of a points tie or technical dispute, the decision of the AFBBS Organising Committee and judging panel is absolute and binding.",
   },
 ];
 
@@ -647,25 +638,25 @@ export const faqs = [
  * bare number cannot carry on its own.
  */
 export const festFacts: readonly { value: string; label: string; note: string }[] = [
-  { value: String(events.length), label: "events", note: "One championship" },
-  { value: "2", label: "days", note: "8 Oct online · 9 Oct offline" },
+  { value: String(events.length), label: "events", note: "Online and in person" },
+  { value: "2", label: "days", note: "19 Nov online · 20 Nov offline" },
   { value: "9–12", label: "classes", note: "Open to Grades 9–12" },
-  { value: "100%", label: "student-run", note: "Students organise every event and competition." },
+  { value: "1 + 1", label: "per student", note: "One online and one offline event" },
 ];
 
 export const about = {
   title: "About Quantum V2.0",
-  tagline: "The intersection of intellect, code, and digital warfare.",
+  tagline: "An inter-school fest for ideas, skill and friendly competition.",
   intro: {
-    heading: "The Descent into Excellence",
+    heading: "Six events, two days",
     body: [
-      "Organised by the Computer Club of Air Force Bal Bharati School, Quantum is an inter-school technology symposium designed to test the limits of modern digital literacy and technical problem-solving. Across six events, all teams take on a two-stage quiz, an online short film, a recreation of a game's home screen, a Brawlhalla bracket, an innovation pitch and one event that stays sealed until the final day.",
-      "Following its debut edition, Quantum V2.0 raises the benchmark with more rigorous prompts, refined tournament brackets, and a cyber-kinetic competitive atmosphere.",
+      `Quantum V2.0 is an inter-school fest hosted by ${school.name}. Its six events cover a team quiz, short filmmaking, a game-inspired video recreation, an engineering challenge, online gaming and an innovation pitch.`,
+      `The online events take place on ${FEST_DAYS.online.label}; the in-person events are hosted at the school on ${FEST_DAYS.offline.label}. Students in classes 9–12 may enter one online event and one offline event.`,
     ],
   },
-  scoring: {
-    heading: "The Championship & Scoring",
-    line: "Six standalone events. One ultimate championship.",
+  participation: {
+    heading: "How students can participate",
+    line: "Each student may enter one online event and one offline event.",
   },
 } as const;
 
@@ -688,13 +679,13 @@ export const resourceTabs = [
     id: "faq",
     to: "/faq",
     label: "FAQ",
-    blurb: `${faqs.length} answers on eligibility, registration, fees and rules.`,
+    blurb: `${faqs.length} answers on eligibility, registration and event rules.`,
   },
   {
     id: "about",
     to: "/about",
     label: "About",
-    blurb: "What Quantum is, how it is scored, and who runs it.",
+    blurb: "What Quantum is, how to take part, and who runs it.",
   },
   {
     id: "contact",
@@ -745,7 +736,7 @@ export const updateChannels = [
 ] as const;
 
 /** What to do on the offline day, from the brochure. The FAQ says the same at more length. */
-export const onTheDay = `On ${FEST_DAYS.offline.label}, be at the school by 7:30 a.m.: the registration desk will be open from 7:30 to 8:00 a.m. Bring your confirmation email and come in school uniform.`;
+export const onTheDay = `On ${FEST_DAYS.offline.label}, be at the school by 7:30 a.m.: registration is from 7:30 to 8:00 a.m. Wear your school uniform and stay for the opening and closing ceremonies. The host school does not provide internet access.`;
 
 /** The lines that send a visitor from one tab to the other when the answer is there. */
 export const resourceHints = {
@@ -754,5 +745,5 @@ export const resourceHints = {
     "Not answered here? Call the in-charges of the event you are asking about. Their numbers are under Contact.",
   /** At the foot of Contact. */
   beforeYouCall:
-    "Most questions we get are already answered in the FAQ: who can enter, how entries are submitted, fees, and what you need to prepare.",
+    "Most questions we get are already answered in the FAQ: who can enter, how entries are submitted, and what to prepare.",
 } as const;

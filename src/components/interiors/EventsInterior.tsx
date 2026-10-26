@@ -122,7 +122,7 @@ export function EventsInterior() {
     <InteriorShell
       scene={scene}
       leadBelow
-      lead={`Six events run across two days: the online events on ${FEST_DAYS.online.label} and the rest at the school on ${FEST_DAYS.offline.label}. Every one is scored the same way and carries the same weight, so cumulative points across all six decide the overall school champion.`}
+      lead={`The online events take place on ${FEST_DAYS.online.label}; the in-person events are at the school on ${FEST_DAYS.offline.label}. Students may enter one event in each mode. Each event's team size and rules are listed below.`}
     >
       <section className="rail" aria-labelledby="rail-head">
         <h2 id="rail-head" className="page-subhead">
@@ -142,9 +142,8 @@ export function EventsInterior() {
           Picked your events?
         </h2>
         <p className="room-cta-note">
-          Each student can compete in only one event, so a school entering several events sends a
-          different team to each and lists every team under its event on the registration form.
-          Registrations close on {REGISTRATION_CLOSES.label}.
+          Each student may enter one online event and one offline event. A school can enter one team
+          per event. Registrations close on {REGISTRATION_CLOSES.label}.
         </p>
         <div className="page-actions">
           <Link to="/register" className="btn btn-accent" data-magnetic>

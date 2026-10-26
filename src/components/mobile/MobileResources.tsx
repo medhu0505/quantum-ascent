@@ -110,8 +110,8 @@ function About() {
           {paragraph}
         </p>
       ))}
-      <h3 className="m-h3">{about.scoring.heading}</h3>
-      <p className="m-muted m-prose">{about.scoring.line}</p>
+      <h3 className="m-h3">{about.participation.heading}</h3>
+      <p className="m-muted m-prose">{about.participation.line}</p>
       <ul className="m-res-events">
         {events.map((event) => (
           <li key={event.id} data-accent={event.accent}>

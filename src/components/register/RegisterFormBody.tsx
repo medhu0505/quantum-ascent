@@ -34,9 +34,9 @@ import {
  * contact number. Under that
  * are six event choices, each opening that event's team underneath with the
  * required number of participant places. Each place asks for a name, a class,
- * a phone number and, optionally, a Discord ID. A student
- * can compete in only one event, so the same student under two events is
- * caught before anything is sent.
+ * a phone number and, optionally, a Discord ID. A student may enter one event
+ * in each mode; entering multiple events in the same mode is caught before
+ * anything is sent.
  *
  * Plain controlled state rather than a form library, so the error wiring —
  * aria-invalid, aria-describedby, focus on the first bad field, a summary that
@@ -340,9 +340,9 @@ export function RegisterFormBody({
             Events and teams <RequiredMark />
           </legend>
           <p id="hint-events" className="field-hint">
-            Select every event your school is entering for, and its team opens under it. A student
-            can compete in only one event, so each event needs different students. Enter a phone
-            number for every participant; Discord IDs are optional.
+            Select every event your school is entering for, and its team opens under it. Each
+            student may enter one online event and one offline event. Enter a phone number for every
+            participant; Discord IDs are optional.
           </p>
           <FieldError id="error-events" message={errors.events} />
 

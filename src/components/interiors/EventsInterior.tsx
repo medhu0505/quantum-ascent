@@ -84,6 +84,17 @@ export function EventsInterior() {
                     <li key={line}>{line}</li>
                   ))}
                 </ol>
+                {event.links?.map((link) => (
+                  <a
+                    key={link.href}
+                    className="btn btn-ghost"
+                    href={link.href}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {link.label} ↗
+                  </a>
+                ))}
               </div>
               <a
                 href={`/register?event=${event.id}`}

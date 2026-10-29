@@ -37,6 +37,11 @@ const pictureOf = new Map(
 
 const PHOTO_ALIASES: Record<string, string> = {
   rudransh: "rudransh-singh",
+  "ishita-sehrawat": "ishita",
+  "mohd-naved": "naved",
+  "hamza-ali": "hamza",
+  "parth-negi": "parth",
+  "nitya-sah": "nitya",
 };
 
 export type DirectoryPerson = {

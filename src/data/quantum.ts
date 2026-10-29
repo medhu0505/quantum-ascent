@@ -140,6 +140,7 @@ export type QuantumEvent = {
   mode: EventMode;
   description: string;
   format: string[];
+  links?: readonly { label: string; href: string }[];
   accent: Accent;
   /** The student in-charges, with the numbers the brochure prints for them. */
   coordinators: Coordinator[];
@@ -196,14 +197,21 @@ export const events: QuantumEvent[] = [
       "Team numbers, themes and constraints are shared before the event",
       "Give the film a title; anything over five minutes can be marked down or disqualified",
       "Submit an MP4 of at least 1080p, up to 5 GB, as a Google Drive link",
+      "Submission deadline: 18 November 2026",
       "Keep content appropriate: no graphic violence or explicit depictions of self-harm or substance abuse",
       "Judged on creativity, technical skill, relevance to the theme and narrative clarity",
     ],
+    links: [
+      {
+        label: "Take Two themes and constraints",
+        href: "https://docs.google.com/document/d/1te72ma64QHnQnujrH_D9CuLdD2a9dlkS/edit?usp=sharing&ouid=118398184924451221296&rtpof=true&sd=true",
+      },
+    ],
     accent: "magenta",
     coordinators: [
-      { name: "Rudransh", phone: "+91 93118 98350" },
-      { name: "Ishita", phone: "+91 95610 26991" },
-      { name: "Riddhiman", phone: "+91 88004 30107" },
+      { name: "Rudransh Singh", phone: "+91 93118 98350" },
+      { name: "Ishita Sehrawat", phone: "+91 95610 26991" },
+      { name: "Riddhiman Srivastava", phone: "+91 88004 30107" },
     ],
   },
   {
@@ -213,18 +221,18 @@ export const events: QuantumEvent[] = [
     ...sized(2),
     mode: "offline",
     description:
-      "Choose a game and recreate its iconic home screen on film, shooting and editing everything in a two-hour window on the day. Use your own devices and chargers; all footage must be shot during the competition, and AI-generated content is prohibited.",
+      "Choose a game and recreate its iconic home screen on film, shooting and editing everything in a two-hour window on the day. Use your own devices; all footage must be shot during the competition, and AI-generated content is prohibited.",
     format: [
       "Two hours to shoot and edit, using only footage filmed during the competition",
-      "Shoot and edit on your own devices, phones included, and bring chargers: the venue has sockets but no internet",
-      "Submit the edited recreation and a short write-up by Google Drive link when the two hours end",
+      "Use your own devices; mobile phones are permitted, but the venue has no internet connection",
+      "Submit the edited recreation and a short write-up by Google Drive link at the end of the two-hour window",
       "Mention the editing software used; AI-generated content is prohibited",
       "Judged on creativity, visual accuracy, technical skill, conceptual understanding and time management",
     ],
     accent: "violet",
     coordinators: [
-      { name: "Rudransh", phone: "+91 93118 98350" },
-      { name: "Nitya", phone: "+91 88009 13357" },
+      { name: "Manasvi Singh", phone: "+91 93113 89955" },
+      { name: "Mohd. Naved", phone: "+91 98996 48234" },
     ],
   },
   {
@@ -244,9 +252,9 @@ export const events: QuantumEvent[] = [
     ],
     accent: "cyan",
     coordinators: [
-      { name: "Naved", phone: "+91 98996 48234" },
-      { name: "Manasvi Singh", phone: "+91 93113 89955" },
-      { name: "Rudransh", phone: "+91 93118 98350" },
+      { name: "Shayan Khan", phone: "+91 84475 85283" },
+      { name: "Hamza Ali", phone: "+91 93557 55528" },
+      { name: "Parth Negi", phone: "+91 85069 73675" },
     ],
   },
   {
@@ -266,9 +274,8 @@ export const events: QuantumEvent[] = [
     ],
     accent: "magenta",
     coordinators: [
-      { name: "Shayan Khan", phone: "+91 84475 85283" },
-      { name: "Hamza", phone: "+91 93557 55528" },
-      { name: "Parth", phone: "+91 85069 73675" },
+      { name: "Rudransh Singh", phone: "+91 93118 98350" },
+      { name: "Nitya Sah", phone: "+91 88009 13357" },
     ],
   },
   {
@@ -289,6 +296,7 @@ export const events: QuantumEvent[] = [
     coordinators: [
       { name: "Aditya Singh", phone: "+91 89293 22752" },
       { name: "Mehal Khanna", phone: "+91 88262 46555" },
+      { name: "Nitya Sah", phone: "+91 88009 13357" },
     ],
   },
 ];
@@ -618,7 +626,7 @@ export const faqs = [
   },
   {
     q: "Important information to know before Quantum",
-    a: `Schools must reach ${school.name} by 7:30 a.m. on ${FEST_DAYS.offline.label}; registration is from 7:30 to 8:00 a.m. Participants must wear school uniform, and schools must stay for both the opening and closing ceremonies. Late arrival may reduce preparation or performance time or result in disqualification. The host school does not provide internet access.`,
+    a: `Schools must reach ${school.name} by 7:30 a.m. on ${FEST_DAYS.offline.label}; registration is from 7:30 to 8:30 a.m. Participants must wear school uniform, and schools must stay for both the opening and closing ceremonies. Late arrival may reduce preparation or performance time or result in disqualification. The host school does not provide internet access.`,
   },
   {
     q: "Where will updates and announcements be shared?",
@@ -626,7 +634,7 @@ export const faqs = [
   },
   {
     q: "What equipment or software do participants need to prepare?",
-    a: `The host school does not provide internet access. ${getEvent("ad-shoot")!.name} is to be shot and edited on your own devices, so bring them with their chargers, and ${getEvent("online-gaming")!.name} players need their game, controls and connection working before their match. Whether phones, AI tools or other technology are allowed is set by each event's own rules.`,
+    a: `The host school does not provide internet access. ${getEvent("ad-shoot")!.name} teams must use their own devices for shooting and editing, and ${getEvent("online-gaming")!.name} players need their game, controls and connection working before their match. Whether phones, AI tools or other technology are allowed is set by each event's own rules.`,
   },
 ];
 
@@ -737,7 +745,7 @@ export const updateChannels = [
 ] as const;
 
 /** What to do on the offline day, from the brochure. The FAQ says the same at more length. */
-export const onTheDay = `On ${FEST_DAYS.offline.label}, be at the school by 7:30 a.m.: registration is from 7:30 to 8:00 a.m. Wear your school uniform and stay for the opening and closing ceremonies. The host school does not provide internet access.`;
+export const onTheDay = `On ${FEST_DAYS.offline.label}, be at the school by 7:30 a.m.: registration is from 7:30 to 8:30 a.m. Wear your school uniform and stay for the opening and closing ceremonies. The host school does not provide internet access.`;
 
 /** The lines that send a visitor from one tab to the other when the answer is there. */
 export const resourceHints = {

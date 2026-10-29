@@ -109,6 +109,17 @@ export function MobileEvents({ initial }: { initial?: string | undefined }) {
             </li>
           ))}
         </ol>
+        {event.links?.map((link) => (
+          <a
+            key={link.href}
+            className="m-btn m-btn-ghost"
+            href={link.href}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {link.label} ↗
+          </a>
+        ))}
         <ScreenLink
           to="/register"
           search={{ event: event.id }}

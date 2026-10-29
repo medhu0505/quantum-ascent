@@ -244,8 +244,9 @@ export const events: QuantumEvent[] = [
     ],
     accent: "cyan",
     coordinators: [
-      { name: "Aditya Singh", phone: "+91 89293 22752" },
-      { name: "Mehal Khanna", phone: "+91 88262 46555" },
+      { name: "Naved", phone: "+91 98996 48234" },
+      { name: "Manasvi Singh", phone: "+91 93113 89955" },
+      { name: "Rudransh", phone: "+91 93118 98350" },
     ],
   },
   {
@@ -265,9 +266,9 @@ export const events: QuantumEvent[] = [
     ],
     accent: "magenta",
     coordinators: [
-      { name: "Naved", phone: "+91 98996 48234" },
-      { name: "Manasvi Singh", phone: "+91 93113 89955" },
-      { name: "Rudransh", phone: "+91 93118 98350" },
+      { name: "Shayan Khan", phone: "+91 84475 85283" },
+      { name: "Hamza", phone: "+91 93557 55528" },
+      { name: "Parth", phone: "+91 85069 73675" },
     ],
   },
   {
@@ -286,9 +287,8 @@ export const events: QuantumEvent[] = [
     ],
     accent: "violet",
     coordinators: [
-      { name: "Shayan Khan", phone: "+91 84475 85283" },
-      { name: "Hamza", phone: "+91 93557 55528" },
-      { name: "Parth", phone: "+91 85069 73675" },
+      { name: "Aditya Singh", phone: "+91 89293 22752" },
+      { name: "Mehal Khanna", phone: "+91 88262 46555" },
     ],
   },
 ];
@@ -570,7 +570,7 @@ export const crew: CrewSection[] = [
       { role: "Creative Team", names: ["Sudeeti", "Anushri", "Shagun", "Vidisha"] },
       {
         role: "Social Media Team",
-        names: ["Anamta", "Ananya", "Mannat", "Amrita", "Vihaan"],
+        names: ["Vihaan", "Amrita", "Mannat", "Ananya", "Anamta"],
       },
     ],
   },

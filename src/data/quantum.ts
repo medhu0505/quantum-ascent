@@ -203,6 +203,7 @@ export const events: QuantumEvent[] = [
     coordinators: [
       { name: "Rudransh", phone: "+91 93118 98350" },
       { name: "Ishita", phone: "+91 95610 26991" },
+      { name: "Riddhiman", phone: "+91 88004 30107" },
     ],
   },
   {
@@ -222,8 +223,8 @@ export const events: QuantumEvent[] = [
     ],
     accent: "violet",
     coordinators: [
-      { name: "Manasvi Singh", phone: "+91 93113 89955" },
-      { name: "Naved", phone: "+91 98996 48234" },
+      { name: "Rudransh", phone: "+91 93118 98350" },
+      { name: "Nitya", phone: "+91 88009 13357" },
     ],
   },
   {
@@ -243,9 +244,8 @@ export const events: QuantumEvent[] = [
     ],
     accent: "cyan",
     coordinators: [
-      { name: "Shayan Khan", phone: "+91 84475 85283" },
-      { name: "Hamza", phone: "+91 93557 55528" },
-      { name: "Parth", phone: "+91 85069 73675" },
+      { name: "Aditya Singh", phone: "+91 89293 22752" },
+      { name: "Mehal Khanna", phone: "+91 88262 46555" },
     ],
   },
   {
@@ -265,8 +265,9 @@ export const events: QuantumEvent[] = [
     ],
     accent: "magenta",
     coordinators: [
-      { name: "Rudransh Singh", phone: "+91 93118 98350" },
-      { name: "Nitya", phone: "+91 88009 13357" },
+      { name: "Naved", phone: "+91 98996 48234" },
+      { name: "Manasvi Singh", phone: "+91 93113 89955" },
+      { name: "Rudransh", phone: "+91 93118 98350" },
     ],
   },
   {
@@ -285,9 +286,9 @@ export const events: QuantumEvent[] = [
     ],
     accent: "violet",
     coordinators: [
-      { name: "Aditya Singh", phone: "+91 89293 22752" },
-      { name: "Mehal Khanna", phone: "+91 88262 46555" },
-      { name: "Nitya", phone: "+91 88009 13357" },
+      { name: "Shayan Khan", phone: "+91 84475 85283" },
+      { name: "Hamza", phone: "+91 93557 55528" },
+      { name: "Parth", phone: "+91 85069 73675" },
     ],
   },
 ];
